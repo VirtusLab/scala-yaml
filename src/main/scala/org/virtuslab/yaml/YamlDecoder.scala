@@ -1,0 +1,30 @@
+package org.virtuslab.yaml
+
+import scala.deriving._
+import scala.compiletime._
+
+import org.virtuslab.internal.load.parse.ParserImpl
+import org.virtuslab.internal.load.YamlReader
+import org.virtuslab.internal.load.StringYamlReader
+import org.virtuslab.internal.load.compose.NodeTransformer
+import org.virtuslab.internal.load.construct.Construct
+import org.virtuslab.internal.load.compose.Node
+
+trait YamlDecoder[T: Mirror.Of]:
+
+  given yamlWriter: Construct[T] = Construct.derived[T]
+
+  final def from(yaml: String): Either[Any, T] =
+    for {
+      events <- ParserImpl.getEvents(StringYamlReader(yaml), ???)
+      node <- NodeTransformer.fromEvents(events)
+    } yield apply(node)
+
+  def apply(node: Node): T = ???
+
+object YamlDecoder:
+  inline def derived[T](using m: Mirror.Of[T]): YamlDecoder[T] = {
+    new YamlDecoder[T] {
+      override def apply(node: Node): T = ???
+    }
+  }
