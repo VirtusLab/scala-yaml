@@ -6,7 +6,7 @@ import org.virtuslab.internal.load.compose.Node.*
 
 class ComposerSuite extends munit.FunSuite:
 
-  test("compose-sequence".only) {
+  test("compose-sequence") {
     val events = List(
       StreamStart,
       DocumentStart,
@@ -25,7 +25,6 @@ class ComposerSuite extends munit.FunSuite:
     )
     assertEquals(ComposerImpl.fromEvents(events), expected)
   }
-
 
   test("compose-mapping") {
     val events = List(
