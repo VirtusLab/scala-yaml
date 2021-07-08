@@ -1,15 +1,14 @@
 package org.virtuslab.internal.load.parse
 
 import org.virtuslab.internal.load.YamlReader
-
-sealed trait ParserError
+import org.virtuslab.internal.YamlError
 
 case class ParserCtx(
     state: ParserState
 )
 
 trait Parser:
-  def getEvents(in: YamlReader, ctx: ParserCtx): Either[ParserError, Seq[Event]]
+  def getEvents(in: YamlReader, ctx: ParserCtx): Either[YamlError, Seq[Event]]
 
 /** Valid sequence of events should obey following grammar so parser states
   * should mirror that grammar stream ::= STREAM-START document* STREAM-END
