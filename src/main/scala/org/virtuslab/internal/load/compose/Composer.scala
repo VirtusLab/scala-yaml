@@ -1,11 +1,10 @@
 package org.virtuslab.internal.load.compose
 
-import org.virtuslab.internal.load.{YamlReader, StringYamlReader}
-import org.virtuslab.internal.load.parse.Event
 import org.virtuslab.internal.YamlError
-import org.virtuslab.internal.load.parse.Event.{Node => _, *}
-import org.virtuslab.internal.load.parse.ParserImpl
-import org.virtuslab.internal.load.compose.Node.*
+import org.virtuslab.internal.load.{YamlReader, StringYamlReader}
+import org.virtuslab.internal.load.parse.{Event, ParserImpl}
+import org.virtuslab.internal.load.compose.Node
+
 import scala.annotation.tailrec
 
 trait Composer:
@@ -36,10 +35,10 @@ object ComposerImpl extends Composer with NodeTransform:
     events match
       case head :: tail =>
         head match
-          case StreamStart | DocumentStart => composeNode(tail)
-          case SequenceStart               => composeSequenceNode(tail)
-          case MappingStart                => composeMappingNode(tail)
-          case s: Scalar                   => (composeScalarNode(s), tail)
+          case Event.StreamStart | Event.DocumentStart => composeNode(tail)
+          case Event.SequenceStart               => composeSequenceNode(tail)
+          case Event.MappingStart                => composeMappingNode(tail)
+          case s: Event.Scalar                   => (composeScalarNode(s), tail)
           case event                       => (Left(YamlError(s"Unexpected event $event")), events)
       case Nil => (Left(YamlError("No events available")), Nil)
 
@@ -51,7 +50,7 @@ object ComposerImpl extends Composer with NodeTransform:
     ): (Either[YamlError, List[Node]], List[Event]) = {
       events match
         case Nil                 => (Left(YamlError("No events available")), Nil)
-        case SequenceEnd :: tail => (Right(children), tail)
+        case Event.SequenceEnd :: tail => (Right(children), tail)
         case _ =>
           val (node, rest) = composeNode(events)
           node match
@@ -60,7 +59,7 @@ object ComposerImpl extends Composer with NodeTransform:
     }
 
     val (result, rest) = parseChildren(events, Nil)
-    val node           = result.map(SequenceNode(_))
+    val node           = result.map(Node.SequenceNode(_))
     (node, rest)
   }
 
@@ -68,18 +67,18 @@ object ComposerImpl extends Composer with NodeTransform:
     @tailrec
     def parseMappings(
         events: List[Event],
-        mappings: List[Node.Mapping]
-    ): (Either[YamlError, List[Node.Mapping]], List[Event]) = {
+        mappings: List[Node.KeyValueNode]
+    ): (Either[YamlError, List[Node.KeyValueNode]], List[Event]) = {
       events match
         case Nil                => (Left(YamlError("No events available")), Nil)
-        case MappingEnd :: tail => (Right(mappings), tail)
-        case (s: Scalar) :: tail =>
+        case Event.MappingEnd :: tail => (Right(mappings), tail)
+        case (s: Event.Scalar) :: tail =>
           lazy val (eitherValue, rest) = composeNode(tail)
           val mapping =
             for
               key   <- composeScalarNode(s)
               value <- eitherValue
-            yield Node.Mapping(key, value)
+            yield Node.KeyValueNode(key, value)
 
           mapping match
             case Right(value) => parseMappings(rest, mappings :+ value)
@@ -90,10 +89,10 @@ object ComposerImpl extends Composer with NodeTransform:
     }
 
     val (result, rest) = parseMappings(events, Nil)
-    val node           = result.map(MappingNode(_))
+    val node           = result.map(Node.MappingNode(_))
     (node, rest)
   }
 
-  private def composeScalarNode(event: Scalar): Either[YamlError, ScalarNode] = Right(
-    ScalarNode(event.value)
+  private def composeScalarNode(event: Event.Scalar): Either[YamlError, Node.ScalarNode] = Right(
+    Node.ScalarNode(event.value)
   )

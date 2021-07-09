@@ -48,9 +48,9 @@ class ComposerSuite extends munit.FunSuite:
     )
     val expected = Right(
       MappingNode(
-        Mapping(ScalarNode("hr"), ScalarNode("65")),
-        Mapping(ScalarNode("avg"), ScalarNode("0.278")),
-        Mapping(ScalarNode("rbi"), ScalarNode("147"))
+        KeyValueNode(ScalarNode("hr"), ScalarNode("65")),
+        KeyValueNode(ScalarNode("avg"), ScalarNode("0.278")),
+        KeyValueNode(ScalarNode("rbi"), ScalarNode("147"))
       )
     )
 
@@ -81,7 +81,7 @@ class ComposerSuite extends munit.FunSuite:
     val expected = Right(
       MappingNode(
         List(
-          Mapping(
+          KeyValueNode(
             ScalarNode("american"),
             SequenceNode(
               ScalarNode("Boston Red Sox"),
@@ -89,7 +89,7 @@ class ComposerSuite extends munit.FunSuite:
               ScalarNode("New York Yankees")
             )
           ),
-          Mapping(
+          KeyValueNode(
             ScalarNode("national"),
             SequenceNode(
               ScalarNode("New York Mets"),
@@ -132,14 +132,14 @@ class ComposerSuite extends munit.FunSuite:
     val expected = Right(
       SequenceNode(
         MappingNode(
-          Mapping(ScalarNode("name"), ScalarNode("Mark McGwire")),
-          Mapping(ScalarNode("hr"), ScalarNode("65")),
-          Mapping(ScalarNode("avg"), ScalarNode("0.278"))
+          KeyValueNode(ScalarNode("name"), ScalarNode("Mark McGwire")),
+          KeyValueNode(ScalarNode("hr"), ScalarNode("65")),
+          KeyValueNode(ScalarNode("avg"), ScalarNode("0.278"))
         ),
         MappingNode(
-          Mapping(ScalarNode("name"), ScalarNode("Sammy Sosa")),
-          Mapping(ScalarNode("hr"), ScalarNode("63")),
-          Mapping(ScalarNode("avg"), ScalarNode("0.288"))
+          KeyValueNode(ScalarNode("name"), ScalarNode("Sammy Sosa")),
+          KeyValueNode(ScalarNode("hr"), ScalarNode("63")),
+          KeyValueNode(ScalarNode("avg"), ScalarNode("0.288"))
         )
       )
     )
