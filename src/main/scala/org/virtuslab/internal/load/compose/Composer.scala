@@ -25,28 +25,23 @@ object ComposerImpl extends Composer with NodeTransform:
     yield node
 
   override def fromEvents(events: List[Event]): Either[YamlError, Node] =
-    events match {
+    events match
       case Nil =>
         Left(YamlError("No events available"))
       case _ =>
         val (node, _) = composeNode(events)
         node
-    }
 
-  private def composeNode(events: List[Event]): ComposeResult = {
-    events match {
+  private def composeNode(events: List[Event]): ComposeResult =
+    events match
       case head :: tail =>
-        head match {
+        head match
           case StreamStart | DocumentStart => composeNode(tail)
           case SequenceStart               => composeSequenceNode(tail)
           case MappingStart                => composeMappingNode(tail)
           case s: Scalar                   => (composeScalarNode(s), tail)
-          case _                           => (Left(YamlError("No events available")), events)
-        }
-      case Nil =>
-        (Left(YamlError("No events available")), events)
-    }
-  }
+          case event                       => (Left(YamlError(s"Unexpected event $event")), events)
+      case Nil => (Left(YamlError("No events available")), Nil)
 
   private def composeSequenceNode(events: List[Event]): ComposeResult = {
     @tailrec
