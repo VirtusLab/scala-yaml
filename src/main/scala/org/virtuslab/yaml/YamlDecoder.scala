@@ -2,14 +2,12 @@ package org.virtuslab.yaml
 
 import scala.deriving._
 import scala.compiletime._
-
 import org.virtuslab.internal.load.parse.ParserImpl
-import org.virtuslab.internal.load.YamlReader
-import org.virtuslab.internal.load.StringYamlReader
 import org.virtuslab.internal.load.construct.Construct
 import org.virtuslab.internal.load.compose.Node
 import org.virtuslab.internal.YamlError
 import org.virtuslab.internal.load.compose.ComposerImpl
+import org.virtuslab.internal.load.reader.YamlReader
 
 trait YamlDecoder[T: Mirror.Of]:
 
