@@ -36,10 +36,10 @@ object ComposerImpl extends Composer with NodeTransform:
       case head :: tail =>
         head match
           case Event.StreamStart | Event.DocumentStart => composeNode(tail)
-          case Event.SequenceStart               => composeSequenceNode(tail)
-          case Event.MappingStart                => composeMappingNode(tail)
-          case s: Event.Scalar                   => (composeScalarNode(s), tail)
-          case event                       => (Left(YamlError(s"Unexpected event $event")), events)
+          case Event.SequenceStart                     => composeSequenceNode(tail)
+          case Event.MappingStart                      => composeMappingNode(tail)
+          case s: Event.Scalar                         => (composeScalarNode(s), tail)
+          case event => (Left(YamlError(s"Unexpected event $event")), Nil)
       case Nil => (Left(YamlError("No events available")), Nil)
 
   private def composeSequenceNode(events: List[Event]): ComposeResult = {
@@ -49,7 +49,7 @@ object ComposerImpl extends Composer with NodeTransform:
         children: List[Node]
     ): (Either[YamlError, List[Node]], List[Event]) = {
       events match
-        case Nil                 => (Left(YamlError("No events available")), Nil)
+        case Nil => (Left(YamlError("Not found SequenceEnd event for sequence")), Nil)
         case Event.SequenceEnd :: tail => (Right(children), tail)
         case _ =>
           val (node, rest) = composeNode(events)
@@ -70,7 +70,7 @@ object ComposerImpl extends Composer with NodeTransform:
         mappings: List[Node.KeyValueNode]
     ): (Either[YamlError, List[Node.KeyValueNode]], List[Event]) = {
       events match
-        case Nil                => (Left(YamlError("No events available")), Nil)
+        case Nil => (Left(YamlError("Not found MappingEnd event for mapping")), Nil)
         case Event.MappingEnd :: tail => (Right(mappings), tail)
         case (s: Event.Scalar) :: tail =>
           lazy val (eitherValue, rest) = composeNode(tail)
@@ -85,7 +85,7 @@ object ComposerImpl extends Composer with NodeTransform:
             case Left(err)    => (Left(err), rest)
 
         case head :: tail =>
-          (Left(YamlError(s"Invalid event, got: $head, expected Scalar")), events)
+          (Left(YamlError(s"Invalid event, got: $head, expected Scalar")), Nil)
     }
 
     val (result, rest) = parseMappings(events, Nil)
