@@ -6,19 +6,19 @@ import scala.compiletime._
 import org.virtuslab.internal.load.parse.ParserImpl
 import org.virtuslab.internal.load.YamlReader
 import org.virtuslab.internal.load.StringYamlReader
-import org.virtuslab.internal.load.compose.NodeTransformer
 import org.virtuslab.internal.load.construct.Construct
 import org.virtuslab.internal.load.compose.Node
+import org.virtuslab.internal.YamlError
+import org.virtuslab.internal.load.compose.ComposerImpl
 
 trait YamlDecoder[T: Mirror.Of]:
 
   given yamlWriter: Construct[T] = Construct.derived[T]
 
-  final def from(yaml: String): Either[Any, T] =
-    for {
-      events <- ParserImpl.getEvents(StringYamlReader(yaml), ???)
-      node <- NodeTransformer.fromEvents(events)
-    } yield apply(node)
+  final def from(yaml: String): Either[YamlError, T] =
+    for
+      node <- ComposerImpl.compose(yaml)
+    yield apply(node)
 
   def apply(node: Node): T = ???
 

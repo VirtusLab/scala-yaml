@@ -1,10 +1,11 @@
 package org.virtuslab.internal.load.parse
 
-/** Valid sequence of events should obey following grammar stream ::=
-  * STREAM-START document* STREAM-END document ::= DOCUMENT-START node
-  * DOCUMENT-END node ::= ALIAS | SCALAR | sequence | mapping sequence ::=
-  * SEQUENCE-START node* SEQUENCE-END mapping ::= MAPPING-START (node node)*
-  * MAPPING-END
+/** Valid sequence of events should obey following grammar 
+  * stream ::= STREAM-START document* STREAM-END 
+  * document ::= DOCUMENT-START node DOCUMENT-END 
+  * node ::= ALIAS | SCALAR | sequence | mapping 
+  * sequence ::= SEQUENCE-START node* SEQUENCE-END 
+  * mapping ::= MAPPING-START (node node)* MAPPING-END
   */
 
 sealed trait Event
