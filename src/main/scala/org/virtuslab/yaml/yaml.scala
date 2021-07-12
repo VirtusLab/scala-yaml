@@ -7,8 +7,8 @@ import org.virtuslab.internal.YamlError
 
 import scala.deriving._
 
-def deriveEncoder[T](using m: Mirror.Of[T]) = YamlEncoder.derived
-def deriveDecoder[T](using m: Mirror.Of[T]) = YamlDecoder.derived
+// def deriveEncoder[T](using m: Mirror.Of[T]) = YamlEncoder.derived
+// def deriveDecoder[T](using m: Mirror.Of[T]) = YamlDecoder.derived
 
 def parse(yaml: String): Either[YamlError, Node] = ComposerImpl.compose(yaml)
 extension (str: String)
