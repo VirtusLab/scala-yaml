@@ -1,12 +1,13 @@
 package org.virtuslab.internal.load.construct
 
-import scala.deriving._
-import scala.compiletime._
-import scala.compiletime.summonFrom
-
+import org.virtuslab.internal.YamlError
 import org.virtuslab.internal.load.compose.Node
 import org.virtuslab.internal.load.compose.Node.*
-import org.virtuslab.internal.YamlError
+
+import scala.compiletime._
+import scala.compiletime.summonFrom
+import scala.deriving._
+import scala.util.Try
 
 sealed trait Construct[T]:
   def construct(node: Node): Either[YamlError, T]
@@ -22,16 +23,16 @@ object Construct:
         else Left(YamlError(s"Could't create Construct instance for $node"))
     }
 
-  given (using der: Der[Int]): Construct[Int] = Construct { case ScalarNode(value) =>
-    der.read(value)
+  given Construct[Int] = Construct { case ScalarNode(value) =>
+    Try(value.toInt).toEither
   }
 
-  given (using der: Der[Double]): Construct[Double] = Construct { case ScalarNode(value) =>
-    der.read(value)
+  given Construct[Double] = Construct { case ScalarNode(value) =>
+    Try(value.toDouble).toEither
   }
 
-  given (using der: Der[String]): Construct[String] = Construct { case ScalarNode(value) =>
-    der.read(value)
+  given Construct[String] = Construct { case ScalarNode(value) =>
+    Right(value)
   }
 
   inline given derived[T](using m: Mirror.Of[T]): Construct[T] = inline m match
@@ -60,17 +61,11 @@ object Construct:
   inline def sumOf[T](s: Mirror.SumOf[T]) =
     val instances = summonAll[s.MirroredElemTypes].asInstanceOf[List[Construct[T]]]
     new Construct[T]:
-      override def construct(node: Node): Either[YamlError, T] = {
-        def loop(
-            constructs: List[Construct[T]],
-            acc: Either[YamlError, T]
-        ): Either[YamlError, T] =
-          constructs match
-            case head :: tail => if acc.isLeft then loop(tail, head.construct(node)) else acc
-            case Nil          => acc
-
-        loop(instances.tail, instances.head.construct(node))
-      }
+      override def construct(node: Node): Either[YamlError, T] = LazyList
+        .from(instances)
+        .map(c => c.construct(node))
+        .collectFirst { case r @ Right(_) => r }
+        .getOrElse(Left(YamlError(s"Cannot parse $node")))
 
   inline def summonAll[T <: Tuple]: List[Construct[_]] = inline erasedValue[T] match
     case _: EmptyTuple => Nil
