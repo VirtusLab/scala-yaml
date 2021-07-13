@@ -1,9 +1,9 @@
 package org.virtuslab.internal.load.compose
 
 import org.virtuslab.internal.YamlError
-import org.virtuslab.internal.load.{YamlReader, StringYamlReader}
 import org.virtuslab.internal.load.parse.{Event, ParserImpl}
 import org.virtuslab.internal.load.compose.Node
+import org.virtuslab.internal.load.reader.YamlReader
 
 import scala.annotation.tailrec
 
@@ -15,11 +15,11 @@ object ComposerImpl extends Composer with NodeTransform:
 
   type ComposeResult[T] = Either[YamlError, (T, List[Event])]
 
-  override def compose(yaml: String): Either[YamlError, Node] = compose(StringYamlReader(yaml))
+  override def compose(yaml: String): Either[YamlError, Node] = compose(YamlReader(yaml))
 
   override def compose(reader: YamlReader): Either[YamlError, Node] =
     for
-      events <- ParserImpl.getEvents(reader, ???)
+      events <- ParserImpl.getEvents(reader)
       node   <- fromEvents(events)
     yield node
 
