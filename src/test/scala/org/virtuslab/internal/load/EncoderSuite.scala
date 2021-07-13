@@ -1,15 +1,14 @@
 package org.virtuslab.internal.load
 
+import munit.Clue.generate
 import org.virtuslab.internal.YamlError
 import org.virtuslab.internal.load.construct.Construct
-import org.virtuslab.yaml.YamlDecoder
+import org.virtuslab.internal.load.compose.ComposerImpl
+import org.virtuslab.yaml.Util.*
 
 class EncoderSuite extends munit.FunSuite:
 
-  case class Person(name: String, age: Int) derives YamlDecoder
-
-  extension (str: String)
-    def as[T](using decoder: YamlDecoder[T]): Either[YamlError, T] = decoder.from(str)
+  case class Person(name: String, age: Int) derives Construct
 
   test("derives yaml encoder") {
     val yamlString =
