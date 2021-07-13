@@ -39,7 +39,7 @@ object Construct:
     case p: Mirror.ProductOf[T] => product(p)
     case s: Mirror.SumOf[T]     => sumOf(s)
 
-  inline def product[T](p: Mirror.ProductOf[T]) =
+  private inline def product[T](p: Mirror.ProductOf[T]) =
     val instances  = summonAll[p.MirroredElemTypes]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
     new Construct[T] {
@@ -58,7 +58,7 @@ object Construct:
           case _ => Left(YamlError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
     }
 
-  inline def sumOf[T](s: Mirror.SumOf[T]) =
+  private inline def sumOf[T](s: Mirror.SumOf[T]) =
     val instances = summonAll[s.MirroredElemTypes].asInstanceOf[List[Construct[T]]]
     new Construct[T]:
       override def construct(node: Node): Either[YamlError, T] = LazyList
@@ -67,10 +67,10 @@ object Construct:
         .collectFirst { case r @ Right(_) => r }
         .getOrElse(Left(YamlError(s"Cannot parse $node")))
 
-  inline def summonAll[T <: Tuple]: List[Construct[_]] = inline erasedValue[T] match
+  private inline def summonAll[T <: Tuple]: List[Construct[_]] = inline erasedValue[T] match
     case _: EmptyTuple => Nil
     case _: (t *: ts)  => summonInline[Construct[t]] :: summonAll[ts]
 
-  inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match
+  private inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match
     case _: EmptyTuple     => Nil
     case _: (head *: tail) => constValue[head].toString :: getElemLabels[tail]
