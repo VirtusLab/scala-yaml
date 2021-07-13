@@ -14,8 +14,7 @@ trait YamlDecoder[T: Mirror.Of]:
   given yamlWriter: Construct[T] = Construct.derived[T]
 
   final def from(yaml: String): Either[YamlError, T] =
-    for
-      node <- ComposerImpl.compose(yaml)
+    for node <- ComposerImpl.compose(yaml)
     yield apply(node)
 
   def apply(node: Node): T = ???

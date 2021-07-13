@@ -19,6 +19,6 @@ case object Token:
   case class Scalar(value: String, scalarStyle: ScalarStyle) extends Token
   case object Scalar:
     def from(value: String): Scalar = value match
-      case s""""$v"""" => Scalar(v, ScalarStyle.DopubleQuoted)
-      case s"""'$v'""" => Scalar(v, ScalarStyle.SingleQuoted)
+      case s""""$v"""" => Scalar(v, ScalarStyle.DoubleQuoted)
+      case s"'$v'"     => Scalar(v, ScalarStyle.SingleQuoted)
       case v           => Scalar(v, ScalarStyle.Plain)

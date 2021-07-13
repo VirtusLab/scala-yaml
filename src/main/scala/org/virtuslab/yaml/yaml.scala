@@ -14,5 +14,4 @@ def parse(yaml: String): Either[YamlError, Node] = ComposerImpl.compose(yaml)
 extension (str: String)
   def fromYaml[T](using decoder: YamlDecoder[T]): Either[Any, T] = decoder.from(str)
 
-extension [T](t: T)
-  def asYaml(using encoder: YamlEncoder[T]): String = encoder.toYaml(t)
+extension [T](t: T) def asYaml(using encoder: YamlEncoder[T]): String = encoder.toYaml(t)

@@ -1,9 +1,7 @@
 package org.virtuslab.internal.load.reader
 
 import org.virtuslab.internal.load.reader
-import token.Token
-
-import sun.security.util.Length
+import org.virtuslab.internal.load.reader.token.Token
 
 import scala.util.Try
 
@@ -13,9 +11,9 @@ trait Reader:
 
 class YamlReader(in: CharSequence) extends Reader {
 
-  val ctx: ReaderCtx      = ReaderCtx.init
-  private var indent: Int = 0
-  private var offset      = 0
+  val ctx: ReaderCtx = ReaderCtx.init
+  private var indent = 0
+  private var offset = 0
 
   def getToken(): Token =
 
@@ -23,7 +21,7 @@ class YamlReader(in: CharSequence) extends Reader {
     peek() match
       case Some('-') => {
         if (ctx.shouldParseSequenceNode(indent)) then
-          read()
+          skipCharacter()
           indent += 1
           fetchValue()
         else
@@ -31,10 +29,10 @@ class YamlReader(in: CharSequence) extends Reader {
           token
       }
       case Some('[') =>
-        read()
+        skipCharacter()
         ctx.appendSequence(indent)
       case Some(']') =>
-        read()
+        skipCharacter()
         ctx.popTokenFromStack
       case Some(_) => fetchValue()
       case None    => ctx.popTokenFromStack
@@ -48,7 +46,7 @@ class YamlReader(in: CharSequence) extends Reader {
         case Some(':') if peekNext() == Some(' ') || peekNext() == Some('\n') => sb.result()
         case Some('\n') | Some('#') | Some(']') | None                        => sb.result()
         case Some(',') =>
-          read()
+          skipCharacter()
           sb.result()
         case Some(char) =>
           sb.append(read())
@@ -66,7 +64,7 @@ class YamlReader(in: CharSequence) extends Reader {
     peek() match {
       case Some(':') => {
         if (ctx.shouldParseMappingNode(indent)) {
-          read()
+          skipCharacter()
           Token.Scalar.from(value)
         } else {
           val token = ctx.appendMapping(indent)
@@ -86,14 +84,17 @@ class YamlReader(in: CharSequence) extends Reader {
     in.charAt(offset - 1)
   }
 
+  def skipCharacter(): Unit =
+    read()
+
   def skipUntilNextToken(): Unit =
     while (peek() == Some(' ')) {
       indent += 1
-      read()
+      skipCharacter()
     }
 
     if peek() == Some('\n') then {
-      read()
+      skipCharacter()
       indent = 0
       skipUntilNextToken()
     }

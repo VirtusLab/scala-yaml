@@ -3,8 +3,6 @@ package org.virtuslab.internal.load.reader
 sealed trait ReaderState:
   def indent: Int
 
-/** Parser in state X expects to parse X event
-  */
 case object ReaderState:
 
   case class Stream(indent: Int)   extends ReaderState
