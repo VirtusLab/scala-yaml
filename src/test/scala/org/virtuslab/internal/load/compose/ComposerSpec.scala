@@ -11,13 +11,13 @@ class ComposerSuite extends munit.FunSuite:
   test("sequence of scalars") {
     val events = List(
       StreamStart,
-      DocumentStart,
+      DocumentStart(),
       SequenceStart,
       Scalar("Mark McGwire"),
       Scalar("Sammy Sosa"),
       Scalar("Ken Griffey"),
       SequenceEnd,
-      DocumentEnd,
+      DocumentEnd(),
       StreamEnd
     )
     val expected = Right(
@@ -34,7 +34,7 @@ class ComposerSuite extends munit.FunSuite:
   test("mapping of scalars") {
     val events = List(
       StreamStart,
-      DocumentStart,
+      DocumentStart(),
       MappingStart,
       Scalar("hr"),
       Scalar("65"),
@@ -43,7 +43,7 @@ class ComposerSuite extends munit.FunSuite:
       Scalar("rbi"),
       Scalar("147"),
       MappingEnd,
-      DocumentEnd,
+      DocumentEnd(),
       StreamEnd
     )
     val expected = Right(
@@ -60,7 +60,7 @@ class ComposerSuite extends munit.FunSuite:
   test("mapping of sequences") {
     val events = List(
       StreamStart,
-      DocumentStart,
+      DocumentStart(),
       MappingStart,
       Scalar("american"),
       SequenceStart,
@@ -75,7 +75,7 @@ class ComposerSuite extends munit.FunSuite:
       Scalar("Atlanta Braves"),
       SequenceEnd,
       MappingEnd,
-      DocumentEnd,
+      DocumentEnd(),
       StreamEnd
     )
     val expected = Right(
@@ -107,7 +107,7 @@ class ComposerSuite extends munit.FunSuite:
   test("sequence of mappings") {
     val events = List(
       StreamStart,
-      DocumentStart,
+      DocumentStart(),
       SequenceStart,
       MappingStart,
       Scalar("name"),
@@ -126,7 +126,7 @@ class ComposerSuite extends munit.FunSuite:
       Scalar("0.288"),
       MappingEnd,
       SequenceEnd,
-      DocumentEnd,
+      DocumentEnd(),
       StreamEnd
     )
     val expected = Right(
@@ -143,6 +143,6 @@ class ComposerSuite extends munit.FunSuite:
         )
       )
     )
-    
+
     assertEquals(ComposerImpl.fromEvents(events), expected)
   }

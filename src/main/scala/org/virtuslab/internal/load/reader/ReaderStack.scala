@@ -1,6 +1,6 @@
 package org.virtuslab.internal.load.reader
 
-case class StateStack(var stack: List[ReaderState]):
+case class ReaderStack(var stack: List[ReaderState]):
 
   def push(state: ReaderState) =
     stack = state :: stack
