@@ -10,14 +10,11 @@ trait YamlWriter[T]:
 object YamlWriter:
   extension [T: YamlWriter](t: T) def toYaml(): String = summon[YamlWriter[T]].toYaml(t)
 
-  given YamlWriter[Int] with
-    override def toYaml(obj: Int): String = obj.toString
+  given YamlWriter[Int] = _.toString
 
-  given YamlWriter[String] with
-    override def toYaml(obj: String): String = obj.toString
+  given YamlWriter[String] = _.toString
 
-  given YamlWriter[Double] with
-    override def toYaml(obj: Double): String = obj.toString
+  given YamlWriter[Double] = _.toString
 
   given seqWriter[T](using writer: YamlWriter[T]): YamlWriter[Seq[T]] with
     override def toYaml(elements: Seq[T]): String = {
@@ -28,16 +25,17 @@ object YamlWriter:
   inline given derived[T](using m: Mirror.Of[T]): YamlWriter[T] =
     val yamlEncoders = summonAll[m.MirroredElemTypes]
     inline m match
-      case p: Mirror.ProductOf[T] => productOf(yamlEncoders)
+      case p: Mirror.ProductOf[T] => productOf(p, yamlEncoders)
       case s: Mirror.SumOf[T]     => sumOf(s, yamlEncoders)
 
   inline def productOf[T](
+      p: Mirror.ProductOf[T],
       yamlEncoders: List[YamlWriter[_]]
-  )(using m: Mirror.Of[T]): YamlWriter[T] =
+  ): YamlWriter[T] =
     new YamlWriter[T] {
       override def toYaml(obj: T): String =
         val products   = obj.asInstanceOf[Product].productIterator
-        val elemLabels = getElemLabels[m.MirroredElemLabels]
+        val elemLabels = getElemLabels[p.MirroredElemLabels]
 
         val values =
           elemLabels.zip(products).zip(yamlEncoders).map { case ((label, value), yamlWriter) =>
