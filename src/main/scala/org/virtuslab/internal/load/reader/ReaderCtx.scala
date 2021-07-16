@@ -24,16 +24,16 @@ case class ReaderCtx(
         closeOpenedCollectionForSequences(indent)
       case _ => ()
 
-  def closeOpenedFlowCollectionMapping(indent: Int): Unit =
+  def closeOpenedCollectionMapping(indent: Int): Unit =
     stateStack.peek() match
       case Some(ReaderState.Sequence(i)) if i >= indent =>
         stateStack.pop()
         tokens.append(Token.SequenceEnd)
-        closeOpenedFlowCollectionMapping(indent)
+        closeOpenedCollectionMapping(indent)
       case Some(ReaderState.Mapping(i)) if i > indent =>
         stateStack.pop()
         tokens.append(Token.MappingEnd)
-        closeOpenedFlowCollectionMapping(indent)
+        closeOpenedCollectionMapping(indent)
       case _ => ()
 
   def appendSequence(indent: Int): Token =
@@ -51,12 +51,12 @@ case class ReaderCtx(
       case Some(ReaderState.Document(_)) => popTokenFromStack
       case _                             => Token.StreamEnd
 
-  def shouldParseSequenceNode(indent: Int): Boolean =
+  def shouldParseSequenceEntry(indent: Int): Boolean =
     stateStack.peek() match
       case Some(ReaderState.Sequence(i)) if i == indent => true
       case _                                            => false
 
-  def shouldParseMappingNode(indent: Int): Boolean =
+  def shouldParseMappingEntry(indent: Int): Boolean =
     stateStack.peek() match
       case Some(ReaderState.Mapping(i)) if i == indent => true
       case _                                           => false

@@ -30,19 +30,12 @@ class YamlReader(in: CharSequence) extends Reader {
     ctx.tokens.appendAll(getNextTokens())
     ctx.tokens.head
 
+  @tailrec
   private def getNextTokens(): List[Token] =
     skipUntilNextToken()
     peek() match
-      case Some('-') =>
-        ctx.closeOpenedCollectionForSequences(indent)
-        if isDocumentStart then parseDocumentStart()
-        else if (ctx.shouldParseSequenceNode(indent)) then
-          skipCharacter()
-          indent += 1
-          fetchValue()
-        else
-          val token = ctx.appendSequence(indent)
-          List(token)
+      case Some('-') if isDocumentStart  => parseDocumentStart()
+      case Some('-') if isNextWhitespace => parseBlockSequence()
       case Some('[') =>
         skipCharacter()
         List(ctx.appendSequence(indent))
@@ -62,6 +55,18 @@ class YamlReader(in: CharSequence) extends Reader {
         fetchValue()
       case None =>
         List(ctx.popTokenFromStack)
+
+  private def isNextWhitespace = peekNext().exists(_.isWhitespace)
+
+  private def parseBlockSequence() =
+    ctx.closeOpenedCollectionForSequences(indent)
+    if (ctx.shouldParseSequenceEntry(indent)) then
+      skipCharacter()
+      indent += 1
+      getNextTokens()
+    else
+      val token = ctx.appendSequence(indent)
+      List(token)
 
   private def fetchDoubleQuoteValue(): List[Token] = {
     val sb = new StringBuilder
@@ -160,9 +165,9 @@ class YamlReader(in: CharSequence) extends Reader {
 
     peek() match
       case Some(':') =>
-        ctx.closeOpenedFlowCollectionMapping(indent)
+        ctx.closeOpenedCollectionMapping(indent)
 
-        if (ctx.shouldParseMappingNode(indent)) {
+        if (ctx.shouldParseMappingEntry(indent)) {
           skipCharacter()
           List(Token.Scalar.from(value))
         } else {
@@ -175,16 +180,11 @@ class YamlReader(in: CharSequence) extends Reader {
   private def fetchValue(): List[Token] =
     skipUntilNextToken()
 
-    peek() match {
-      case Some('"') =>
-        fetchDoubleQuoteValue()
-      case Some('\'') =>
-        fetchSingleQuoteValue()
-      case Some('>') =>
-        fetchFoldedValue()
-      case _ => parseScalarValue()
-
-    }
+    peek() match
+      case Some('"')  => fetchDoubleQuoteValue()
+      case Some('\'') => fetchSingleQuoteValue()
+      case Some('>')  => fetchFoldedValue()
+      case _          => parseScalarValue()
 
   inline private def peek(n: Int = 0): Option[Char] = Try(in.charAt(offset + n)).toOption
   private def peekNext(): Option[Char]              = peek(1)
