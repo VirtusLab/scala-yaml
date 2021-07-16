@@ -1,10 +1,11 @@
 package org.virtuslab.internal.load.parse
 
-import scala.annotation.tailrec
-import org.virtuslab.internal.load.reader.Reader
 import org.virtuslab.internal.YamlError
-import org.virtuslab.internal.load.reader.token.Token
+import org.virtuslab.internal.load.reader.Reader
 import org.virtuslab.internal.load.reader.token.ScalarStyle
+import org.virtuslab.internal.load.reader.token.Token
+
+import scala.annotation.tailrec
 
 private enum Production:
   case ParseStreamStart
