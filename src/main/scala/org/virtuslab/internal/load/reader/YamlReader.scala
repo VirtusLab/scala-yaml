@@ -36,6 +36,7 @@ class YamlReader(in: CharSequence) extends Reader {
     peek() match
       case Some('-') if isDocumentStart  => parseDocumentStart()
       case Some('-') if isNextWhitespace => parseBlockSequence()
+      case Some('.') if isDocumentEnd    => parseDocumentEnd()
       case Some('[') =>
         skipCharacter()
         List(ctx.appendSequence(indent))
@@ -55,8 +56,6 @@ class YamlReader(in: CharSequence) extends Reader {
         fetchValue()
       case None =>
         List(ctx.popTokenFromStack)
-
-  private def isNextWhitespace = peekNext().exists(_.isWhitespace)
 
   private def parseBlockSequence() =
     ctx.closeOpenedCollectionForSequences(indent)
@@ -142,7 +141,14 @@ class YamlReader(in: CharSequence) extends Reader {
 
   private def parseDocumentStart(): List[Token] =
     skipN(4)
-    ctx.parseDocumentStart(indent)
+    ctx.parseDocumentStart()
+
+  private def isDocumentEnd =
+    peekN(3) == "..." && peek(3).exists(_.isWhitespace)
+
+  private def parseDocumentEnd(): List[Token] =
+    skipN(4)
+    ctx.parseDocumentEnd()
 
   private def getScalar(): String = {
     val sb = new StringBuilder
@@ -189,6 +195,7 @@ class YamlReader(in: CharSequence) extends Reader {
   inline private def peek(n: Int = 0): Option[Char] = Try(in.charAt(offset + n)).toOption
   private def peekNext(): Option[Char]              = peek(1)
   private def peekN(n: Int): String                 = (0 until n).map(peek(_)).flatten.mkString("")
+  private def isNextWhitespace                      = peekNext().exists(_.isWhitespace)
 
   private def skipCharacter(): Unit = if (offset + 1 > in.length) then () else offset += 1
   private def skipN(n: Int): Unit   = (1 to n).foreach(_ => skipCharacter())
