@@ -1,10 +1,8 @@
 package org.virtuslab.internal.load.reader
 
-import org.virtuslab.internal.load.reader
 import org.virtuslab.internal.load.reader.token.Token
 import org.virtuslab.internal.load.reader.token.Token._
 import org.virtuslab.internal.load.reader.token.ScalarStyle
-import scala.collection.mutable.ArrayDeque
 
 import scala.util.Try
 import scala.annotation.tailrec
@@ -12,7 +10,6 @@ import scala.annotation.tailrec
 trait Reader:
   def peekToken(): Token
   def popToken(): Token
-  def skipUntilNextToken(): Unit
 
 class YamlReader(in: CharSequence) extends Reader {
 
@@ -20,11 +17,11 @@ class YamlReader(in: CharSequence) extends Reader {
   private var indent = 0
   private var offset = 0
 
-  def peekToken(): Token = ctx.tokens.headOption match
+  override def peekToken(): Token = ctx.tokens.headOption match
     case Some(token) => token
     case None        => getToken()
 
-  def popToken(): Token = ctx.tokens.removeHead()
+  override def popToken(): Token = ctx.tokens.removeHead()
 
   private def getToken(): Token =
     ctx.tokens.appendAll(getNextTokens())

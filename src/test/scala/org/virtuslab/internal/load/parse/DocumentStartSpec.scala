@@ -4,7 +4,7 @@ import com.eed3si9n.expecty.Expecty.expect
 import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
 
-class DocumentStartSpec extends munit.FunSuite {
+class DocumentStartSpec extends munit.FunSuite:
 
   test("should parse explicit document start event") {
     val yaml =
@@ -123,4 +123,3 @@ class DocumentStartSpec extends munit.FunSuite {
     )
     expect(events == expectedEvents)
   }
-}
