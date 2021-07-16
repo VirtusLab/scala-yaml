@@ -1,9 +1,10 @@
 package org.virtuslab.internal.load.parse
 
-import scala.annotation.tailrec
-import org.virtuslab.internal.load.reader.YamlReader
 import org.virtuslab.internal.YamlError
+import org.virtuslab.internal.load.reader.YamlReader
 import org.virtuslab.internal.load.reader.token.Token
+
+import scala.annotation.tailrec
 
 object ParserImpl extends Parser:
   def getEvents(

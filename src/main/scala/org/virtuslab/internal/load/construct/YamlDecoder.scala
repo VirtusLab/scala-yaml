@@ -9,12 +9,12 @@ import scala.compiletime.summonFrom
 import scala.deriving._
 import scala.util.Try
 
-sealed trait Construct[T]:
+sealed trait YamlDecoder[T]:
   def construct(node: Node): Either[YamlError, T]
 
-object Construct:
-  def apply[T](pf: PartialFunction[Node, Either[Throwable, T]]): Construct[T] =
-    new Construct[T] {
+object YamlDecoder:
+  def apply[T](pf: PartialFunction[Node, Either[Throwable, T]]): YamlDecoder[T] =
+    new YamlDecoder[T] {
       override def construct(node: Node): Either[YamlError, T] =
         if pf.isDefinedAt(node) then
           pf(node) match
@@ -23,26 +23,26 @@ object Construct:
         else Left(YamlError(s"Could't create Construct instance for $node"))
     }
 
-  given Construct[Int] = Construct { case ScalarNode(value) =>
+  given YamlDecoder[Int] = YamlDecoder { case ScalarNode(value) =>
     Try(value.toInt).toEither
   }
 
-  given Construct[Double] = Construct { case ScalarNode(value) =>
+  given YamlDecoder[Double] = YamlDecoder { case ScalarNode(value) =>
     Try(value.toDouble).toEither
   }
 
-  given Construct[String] = Construct { case ScalarNode(value) =>
+  given YamlDecoder[String] = YamlDecoder { case ScalarNode(value) =>
     Right(value)
   }
 
-  inline given derived[T](using m: Mirror.Of[T]): Construct[T] = inline m match
+  inline given derived[T](using m: Mirror.Of[T]): YamlDecoder[T] = inline m match
     case p: Mirror.ProductOf[T] => product(p)
     case s: Mirror.SumOf[T]     => sumOf(s)
 
   private inline def product[T](p: Mirror.ProductOf[T]) =
     val instances  = summonAll[p.MirroredElemTypes]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
-    new Construct[T] {
+    new YamlDecoder[T] {
       override def construct(node: Node): Either[YamlError, T] =
         node match
           case Node.MappingNode(mappings) =>
@@ -59,17 +59,17 @@ object Construct:
     }
 
   private inline def sumOf[T](s: Mirror.SumOf[T]) =
-    val instances = summonAll[s.MirroredElemTypes].asInstanceOf[List[Construct[T]]]
-    new Construct[T]:
+    val instances = summonAll[s.MirroredElemTypes].asInstanceOf[List[YamlDecoder[T]]]
+    new YamlDecoder[T]:
       override def construct(node: Node): Either[YamlError, T] = LazyList
         .from(instances)
         .map(c => c.construct(node))
         .collectFirst { case r @ Right(_) => r }
         .getOrElse(Left(YamlError(s"Cannot parse $node")))
 
-  private inline def summonAll[T <: Tuple]: List[Construct[_]] = inline erasedValue[T] match
+  private inline def summonAll[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
     case _: EmptyTuple => Nil
-    case _: (t *: ts)  => summonInline[Construct[t]] :: summonAll[ts]
+    case _: (t *: ts)  => summonInline[YamlDecoder[t]] :: summonAll[ts]
 
   private inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match
     case _: EmptyTuple     => Nil

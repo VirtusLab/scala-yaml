@@ -1,19 +1,18 @@
 package org.virtuslab.internal.load.construct
 
-import org.virtuslab.internal.load.construct.Construct
-import org.virtuslab.internal.load.compose.Node.*
-import org.virtuslab.internal.load.compose.Node
-import org.virtuslab.internal.YamlError
+import org.virtuslab.Yaml.Node.*
+import org.virtuslab.Yaml.*
 
 class ConstructSuite extends munit.FunSuite:
 
-  case class Stats(hr: Int, avg: Double, rbi: Int) derives Construct
+  case class Stats(hr: Int, avg: Double, rbi: Int) derives YamlDecoder
 
-  enum SomeEnum derives Construct:
+  enum SomeEnum derives YamlDecoder:
     case Foo(value: Int)
     case Bar(price: Double)
 
-  extension (node: Node) def as[T](using c: Construct[T]): Either[YamlError, T] = c.construct(node)
+  extension (node: Node)
+    def as[T](using c: YamlDecoder[T]): Either[YamlError, T] = c.construct(node)
 
   test("derive construct for case class") {
     val node = MappingNode(

@@ -1,8 +1,9 @@
 package org.virtuslab.internal.load.compose
 
 import org.virtuslab.internal.YamlError
-import org.virtuslab.internal.load.parse.{Event, ParserImpl}
 import org.virtuslab.internal.load.compose.Node
+import org.virtuslab.internal.load.parse.Event
+import org.virtuslab.internal.load.parse.ParserImpl
 import org.virtuslab.internal.load.reader.YamlReader
 
 import scala.annotation.tailrec
