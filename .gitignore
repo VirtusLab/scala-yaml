@@ -41,6 +41,9 @@ bin/
 .scala_dependencies
 .cache-main
 
+# scala worksheets
+*.sc
+
 #general
 *.class
 *.log

@@ -31,11 +31,11 @@ object ComposerImpl extends Composer with NodeTransform:
   private def composeNode(events: List[Event]): ComposeResult[Node] = events match
     case head :: tail =>
       head match
-        case Event.StreamStart | Event.DocumentStart => composeNode(tail)
-        case Event.SequenceStart                     => composeSequenceNode(tail)
-        case Event.MappingStart                      => composeMappingNode(tail)
-        case s: Event.Scalar                         => composeScalarNode(s, tail)
-        case event                                   => Left(YamlError(s"Unexpected event $event"))
+        case Event.StreamStart | Event.DocumentStart(_) => composeNode(tail)
+        case Event.SequenceStart                        => composeSequenceNode(tail)
+        case Event.MappingStart                         => composeMappingNode(tail)
+        case s: Event.Scalar                            => composeScalarNode(s, tail)
+        case event => Left(YamlError(s"Unexpected event $event"))
     case Nil =>
       Left(YamlError("No events available"))
 

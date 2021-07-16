@@ -1,4 +1,4 @@
-package org.virtuslab.internal.parser
+package org.virtuslab.internal.load.parse
 
 import org.virtuslab.internal.load.parse._
 import org.virtuslab.internal.load.parse.Event._
@@ -19,13 +19,13 @@ class ParserSpec extends munit.FunSuite {
     val expectedEvents = Right(
       List(
         Event.StreamStart,
-        Event.DocumentStart,
+        Event.DocumentStart(),
         Event.SequenceStart,
         Event.Scalar("Mark McGwire"),
         Event.Scalar("Sammy Sosa"),
         Event.Scalar("Ken Griffey"),
         Event.SequenceEnd,
-        Event.DocumentEnd,
+        Event.DocumentEnd(),
         Event.StreamEnd
       )
     )
@@ -45,7 +45,7 @@ class ParserSpec extends munit.FunSuite {
     val expectedEvents = Right(
       List(
         StreamStart,
-        DocumentStart,
+        DocumentStart(),
         MappingStart,
         Scalar("hr"),
         Scalar("65"),
@@ -54,7 +54,7 @@ class ParserSpec extends munit.FunSuite {
         Scalar("rbi"),
         Scalar("147"),
         MappingEnd,
-        DocumentEnd,
+        DocumentEnd(),
         StreamEnd
       )
     )
@@ -79,7 +79,7 @@ class ParserSpec extends munit.FunSuite {
     val expectedEvents = Right(
       List(
         Event.StreamStart,
-        Event.DocumentStart,
+        Event.DocumentStart(),
         Event.SequenceStart,
         Event.MappingStart,
         Event.Scalar("name"),
@@ -98,7 +98,7 @@ class ParserSpec extends munit.FunSuite {
         Event.Scalar("0.288"),
         Event.MappingEnd,
         Event.SequenceEnd,
-        Event.DocumentEnd,
+        Event.DocumentEnd(),
         Event.StreamEnd
       )
     )
@@ -123,7 +123,7 @@ class ParserSpec extends munit.FunSuite {
     val expectedEvents = Right(
       List(
         StreamStart,
-        DocumentStart,
+        DocumentStart(),
         MappingStart,
         Scalar("american"),
         SequenceStart,
@@ -138,101 +138,11 @@ class ParserSpec extends munit.FunSuite {
         Scalar("Atlanta Braves"),
         SequenceEnd,
         MappingEnd,
-        DocumentEnd,
+        DocumentEnd(),
         StreamEnd
       )
     )
 
-    expect(events == expectedEvents)
-  }
-
-  test("should parse string with double quote") {
-    val yaml =
-      s""" "/mnt/ iscsipd"
-         |""".stripMargin
-
-    val reader = YamlReader(yaml)
-    val events = ParserImpl.getEvents(reader)
-
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart,
-        Scalar("/mnt/ iscsipd"),
-        DocumentEnd,
-        StreamEnd
-      )
-    )
-    expect(events == expectedEvents)
-  }
-
-  test("should parse string with single quote") {
-    val yaml =
-      s""" '/mnt/ iscsipd'
-         |""".stripMargin
-
-    val reader = YamlReader(yaml)
-    val events = ParserImpl.getEvents(reader)
-
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart,
-        Scalar("/mnt/ iscsipd"),
-        DocumentEnd,
-        StreamEnd
-      )
-    )
-    expect(events == expectedEvents)
-  }
-
-  test("should parse host:port as scalar") {
-    val yaml =
-      s"""targetPortal: 10.0.2.15:3260:1221:1221
-         |iqn: iqn.2001-04.com.example.storage:kube.sys1.xyz
-         |""".stripMargin
-
-    val reader = YamlReader(yaml)
-    val events = ParserImpl.getEvents(reader)
-
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart,
-        MappingStart,
-        Scalar("targetPortal"),
-        Scalar("10.0.2.15:3260:1221:1221"),
-        Scalar("iqn"),
-        Scalar("iqn.2001-04.com.example.storage:kube.sys1.xyz"),
-        MappingEnd,
-        DocumentEnd,
-        StreamEnd
-      )
-    )
-    expect(events == expectedEvents)
-  }
-
-  test("should parse sequence of host:port") {
-    val yaml = s"portals: ['10.0.2.16:3260', '10.0.2.17:3260']"
-
-    val reader = YamlReader(yaml)
-    val events = ParserImpl.getEvents(reader)
-
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart,
-        MappingStart,
-        Scalar("portals"),
-        SequenceStart,
-        Scalar("10.0.2.16:3260"),
-        Scalar("10.0.2.17:3260"),
-        SequenceEnd,
-        MappingEnd,
-        DocumentEnd,
-        StreamEnd
-      )
-    )
     expect(events == expectedEvents)
   }
 
@@ -251,7 +161,7 @@ class ParserSpec extends munit.FunSuite {
     val expectedEvents = Right(
       List(
         StreamStart,
-        DocumentStart,
+        DocumentStart(),
         MappingStart,
         Scalar("spec"),
         MappingStart,
@@ -271,7 +181,7 @@ class ParserSpec extends munit.FunSuite {
         SequenceEnd,
         MappingEnd,
         MappingEnd,
-        DocumentEnd,
+        DocumentEnd(),
         StreamEnd
       )
     )
@@ -307,7 +217,7 @@ class ParserSpec extends munit.FunSuite {
     val expectedEvents = Right(
       List(
         StreamStart,
-        DocumentStart,
+        DocumentStart(),
         MappingStart,
         Scalar("apiVersion"),
         Scalar("v1"),
@@ -331,7 +241,7 @@ class ParserSpec extends munit.FunSuite {
         SequenceStart,
         MappingStart,
         Scalar("mountPath"),
-        Scalar("/mnt/iscsipd"),
+        Scalar("\"/mnt/iscsipd\""),
         Scalar("name"),
         Scalar("iscsipd-rw"),
         MappingEnd,
@@ -360,11 +270,12 @@ class ParserSpec extends munit.FunSuite {
         SequenceEnd,
         MappingEnd,
         MappingEnd,
-        DocumentEnd,
+        DocumentEnd(),
         StreamEnd
       )
     )
 
     expect(events == expectedEvents)
   }
+
 }
