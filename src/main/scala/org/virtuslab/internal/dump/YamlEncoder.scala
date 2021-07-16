@@ -4,25 +4,25 @@ import scala.deriving._
 import scala.compiletime._
 import scala.deriving.Mirror
 
-trait YamlWriter[T]:
+trait YamlEncoder[T]:
   def toYaml(obj: T): String
 
-object YamlWriter:
-  extension [T: YamlWriter](t: T) def toYaml(): String = summon[YamlWriter[T]].toYaml(t)
+object YamlEncoder:
+  extension [T: YamlEncoder](t: T) def toYaml(): String = summon[YamlEncoder[T]].toYaml(t)
 
-  given YamlWriter[Int] = _.toString
+  given YamlEncoder[Int] = _.toString
 
-  given YamlWriter[String] = _.toString
+  given YamlEncoder[String] = _.toString
 
-  given YamlWriter[Double] = _.toString
+  given YamlEncoder[Double] = _.toString
 
-  given seqWriter[T](using writer: YamlWriter[T]): YamlWriter[Seq[T]] with
+  given seqWriter[T](using writer: YamlEncoder[T]): YamlEncoder[Seq[T]] with
     override def toYaml(elements: Seq[T]): String = {
       val values = elements.map(writer.toYaml(_))
       values.mkString("- ", "\n- ", "\n")
     }
 
-  inline given derived[T](using m: Mirror.Of[T]): YamlWriter[T] =
+  inline given derived[T](using m: Mirror.Of[T]): YamlEncoder[T] =
     val yamlEncoders = summonAll[m.MirroredElemTypes]
     inline m match
       case p: Mirror.ProductOf[T] => productOf(p, yamlEncoders)
@@ -30,29 +30,29 @@ object YamlWriter:
 
   inline def productOf[T](
       p: Mirror.ProductOf[T],
-      yamlEncoders: List[YamlWriter[_]]
-  ): YamlWriter[T] =
-    new YamlWriter[T] {
+      yamlEncoders: List[YamlEncoder[_]]
+  ): YamlEncoder[T] =
+    new YamlEncoder[T] {
       override def toYaml(obj: T): String =
         val products   = obj.asInstanceOf[Product].productIterator
         val elemLabels = getElemLabels[p.MirroredElemLabels]
 
         val values =
           elemLabels.zip(products).zip(yamlEncoders).map { case ((label, value), yamlWriter) =>
-            s"$label: ${yamlWriter.asInstanceOf[YamlWriter[Any]].toYaml(value)}"
+            s"$label: ${yamlWriter.asInstanceOf[YamlEncoder[Any]].toYaml(value)}"
           }
         values.mkString("\n")
     }
 
-  inline def sumOf[T](s: Mirror.SumOf[T], yamlEncoders: List[YamlWriter[_]]) =
-    new YamlWriter[T]:
+  inline def sumOf[T](s: Mirror.SumOf[T], yamlEncoders: List[YamlEncoder[_]]) =
+    new YamlEncoder[T]:
       override def toYaml(t: T): String =
         val index = s.ordinal(t)
-        yamlEncoders(index).asInstanceOf[YamlWriter[Any]].toYaml(t)
+        yamlEncoders(index).asInstanceOf[YamlEncoder[Any]].toYaml(t)
 
-  inline def summonAll[T <: Tuple]: List[YamlWriter[_]] = inline erasedValue[T] match {
+  inline def summonAll[T <: Tuple]: List[YamlEncoder[_]] = inline erasedValue[T] match {
     case _: EmptyTuple => Nil
-    case _: (t *: ts)  => summonInline[YamlWriter[t]] :: summonAll[ts]
+    case _: (t *: ts)  => summonInline[YamlEncoder[t]] :: summonAll[ts]
   }
 
   inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match {
