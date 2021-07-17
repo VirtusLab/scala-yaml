@@ -1,6 +1,5 @@
 package org.virtuslab.internal.load.parse
 
-import com.eed3si9n.expecty.Expecty.expect
 import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
 
@@ -27,7 +26,7 @@ class DocumentStartSpec extends munit.FunSuite:
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse implicit document start event") {
@@ -50,7 +49,7 @@ class DocumentStartSpec extends munit.FunSuite:
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse implicit and multiple explicit document starts") {
@@ -89,7 +88,7 @@ class DocumentStartSpec extends munit.FunSuite:
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse multiple explicit document's start events") {
@@ -121,5 +120,5 @@ class DocumentStartSpec extends munit.FunSuite:
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
