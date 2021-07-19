@@ -12,16 +12,16 @@ case class ReaderCtx(
     tokens: ArrayDeque[Token] = ArrayDeque.empty
 ) {
 
-  def closeOpenedCollectionForSequences(indent: Int): Unit =
+  def closeOpenedCollectionSequences(indent: Int): Unit =
     stateStack.peek() match
       case Some(ReaderState.Sequence(i)) if i > indent =>
         stateStack.pop()
         tokens.append(Token.SequenceEnd)
-        closeOpenedCollectionForSequences(indent)
+        closeOpenedCollectionSequences(indent)
       case Some(ReaderState.Mapping(i)) if i > indent =>
         stateStack.pop()
         tokens.append(Token.MappingEnd)
-        closeOpenedCollectionForSequences(indent)
+        closeOpenedCollectionSequences(indent)
       case _ => ()
 
   def closeOpenedCollectionMapping(indent: Int): Unit =
@@ -36,20 +36,17 @@ case class ReaderCtx(
         closeOpenedCollectionMapping(indent)
       case _ => ()
 
-  def appendSequence(indent: Int): Token =
-    stateStack.push(ReaderState.Sequence(indent))
-    Token.SequenceStart
+  def appendState(state: ReaderState): Unit = stateStack.push(state)
 
-  def appendMapping(indent: Int): Token =
-    stateStack.push(ReaderState.Mapping(indent))
-    Token.MappingStart
-
-  def popTokenFromStack: Token =
+  def closeOpenningFlowMapping(): List[Token] =
     stateStack.pop() match
-      case Some(ReaderState.Sequence(_)) => Token.SequenceEnd
-      case Some(ReaderState.Mapping(_))  => Token.MappingEnd
-      case Some(ReaderState.Document)    => popTokenFromStack
-      case _                             => Token.StreamEnd
+      case Some(ReaderState.FlowMapping) => List(Token.FlowMappingEnd)
+      case _                             => Nil
+
+  def closeOpenningSequence(): List[Token] =
+    stateStack.pop() match
+      case Some(ReaderState.Sequence(_)) => List(Token.SequenceEnd)
+      case _                             => Nil
 
   def shouldParseSequenceEntry(indent: Int): Boolean =
     stateStack.peek() match
@@ -61,7 +58,17 @@ case class ReaderCtx(
       case Some(ReaderState.Mapping(i)) if i == indent => true
       case _                                           => false
 
-  private def closeOpenedScopes(): List[Token] =
+  def isAllowedSpecialCharacter(char: Char): Boolean =
+    stateStack.peek() match
+      case Some(ReaderState.FlowMapping) if char == '}' => false
+      case _                                            => true
+
+  def isFlowMapping(): Boolean =
+    stateStack.peek() match
+      case Some(ReaderState.FlowMapping) => true
+      case _                             => false
+
+  def closeOpenedScopes(): List[Token] =
     @tailrec
     def loop(acc: List[Token]): List[Token] =
       stateStack.peek() match

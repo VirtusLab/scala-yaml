@@ -2,9 +2,9 @@ package org.virtuslab.internal.load.parse
 
 import org.virtuslab.internal.load.parse._
 import org.virtuslab.internal.load.parse.Event._
-
 import org.virtuslab.internal.load.reader.YamlReader
 import com.eed3si9n.expecty.Expecty.expect
+import org.virtuslab.internal.load.reader.token.ScalarStyle
 
 class ParserSpec extends munit.FunSuite {
 
@@ -241,7 +241,7 @@ class ParserSpec extends munit.FunSuite {
         SequenceStart,
         MappingStart,
         Scalar("mountPath"),
-        Scalar("\"/mnt/iscsipd\""),
+        Scalar("/mnt/iscsipd", ScalarStyle.DoubleQuoted),
         Scalar("name"),
         Scalar("iscsipd-rw"),
         MappingEnd,
