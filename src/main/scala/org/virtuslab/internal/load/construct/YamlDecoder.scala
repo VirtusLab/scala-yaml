@@ -1,6 +1,7 @@
 package org.virtuslab.internal.load.construct
 
 import org.virtuslab.internal.YamlError
+import org.virtuslab.internal.ConstructError
 import org.virtuslab.internal.load.compose.Node
 import org.virtuslab.internal.load.compose.Node.*
 
@@ -19,8 +20,8 @@ object YamlDecoder:
         if pf.isDefinedAt(node) then
           pf(node) match
             case Right(value)    => Right(value)
-            case Left(throwable) => Left(YamlError(throwable.toString))
-        else Left(YamlError(s"Could't create Construct instance for $node"))
+            case Left(throwable) => Left(ConstructError(throwable.toString))
+        else Left(ConstructError(s"Could't create Construct instance for $node"))
     }
 
   given YamlDecoder[Int] = YamlDecoder { case ScalarNode(value) =>
@@ -50,12 +51,13 @@ object YamlDecoder:
             val values = elemLabels.zip(instances).map { case (label, c) =>
               valuesMap.get(label) match
                 case Some(value) => c.construct(value)
-                case None        => Left(YamlError(s"Key $label doesn't exist in parsed document"))
+                case None => Left(ConstructError(s"Key $label doesn't exist in parsed document"))
             }
             val (left, right) = values.partitionMap(identity)
             if left.nonEmpty then Left(left.head)
             else Right(p.fromProduct(Tuple.fromArray(right.toArray)))
-          case _ => Left(YamlError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
+          case _ =>
+            Left(ConstructError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
     }
 
   private inline def sumOf[T](s: Mirror.SumOf[T]) =
@@ -65,7 +67,7 @@ object YamlDecoder:
         .from(instances)
         .map(c => c.construct(node))
         .collectFirst { case r @ Right(_) => r }
-        .getOrElse(Left(YamlError(s"Cannot parse $node")))
+        .getOrElse(Left(ConstructError(s"Cannot parse $node")))
 
   private inline def summonAll[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
     case _: EmptyTuple => Nil

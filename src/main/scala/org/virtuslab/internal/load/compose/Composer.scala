@@ -1,6 +1,7 @@
 package org.virtuslab.internal.load.compose
 
 import org.virtuslab.internal.YamlError
+import org.virtuslab.internal.ComposerError
 import org.virtuslab.internal.load.compose.Node
 import org.virtuslab.internal.load.parse.Event
 import org.virtuslab.internal.load.parse.ParserImpl
@@ -25,7 +26,7 @@ object ComposerImpl extends Composer with NodeTransform:
     yield node
 
   override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match
-    case Nil => Left(YamlError("No events available"))
+    case Nil => Left(ComposerError("No events available"))
     case _   => composeNode(events).map((node, _) => node)
 
   private def composeNode(events: List[Event]): ComposeResult[Node] = events match
@@ -35,9 +36,9 @@ object ComposerImpl extends Composer with NodeTransform:
         case Event.SequenceStart                        => composeSequenceNode(tail)
         case Event.MappingStart                         => composeMappingNode(tail)
         case s: Event.Scalar                            => composeScalarNode(s, tail)
-        case event => Left(YamlError(s"Unexpected event $event"))
+        case event => Left(ComposerError(s"Unexpected event $event"))
     case Nil =>
-      Left(YamlError("No events available"))
+      Left(ComposerError("No events available"))
 
   private def composeSequenceNode(events: List[Event]): ComposeResult[Node.SequenceNode] = {
     @tailrec
@@ -45,7 +46,7 @@ object ComposerImpl extends Composer with NodeTransform:
         events: List[Event],
         children: List[Node]
     ): ComposeResult[List[Node]] = events match
-      case Nil                       => Left(YamlError("Not found SequenceEnd event for sequence"))
+      case Nil => Left(ComposerError("Not found SequenceEnd event for sequence"))
       case Event.SequenceEnd :: tail => Right((children, tail))
       case _ =>
         composeNode(events) match
@@ -62,7 +63,7 @@ object ComposerImpl extends Composer with NodeTransform:
         mappings: List[Node.KeyValueNode]
     ): ComposeResult[List[Node.KeyValueNode]] = {
       events match
-        case Nil                      => Left(YamlError("Not found MappingEnd event for mapping"))
+        case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
         case Event.MappingEnd :: tail => Right((mappings, tail))
         case (s: Event.Scalar) :: tail =>
           val mapping =
@@ -77,7 +78,7 @@ object ComposerImpl extends Composer with NodeTransform:
             case Left(err)          => Left(err)
 
         case head :: tail =>
-          Left(YamlError(s"Invalid event, got: $head, expected Scalar"))
+          Left(ComposerError(s"Invalid event, got: $head, expected Scalar"))
     }
 
     parseMappings(events, Nil).map((nodes, rest) => (Node.MappingNode(nodes), rest))

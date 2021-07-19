@@ -3,7 +3,7 @@ package org.virtuslab.internal.load.parse
 import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
 
-class DocumentStartEndSpec extends munit.FunSuite {
+class DocumentStartEndSpec extends munit.FunSuite:
 
   test("should parse explicit document start event") {
     val yaml =
@@ -149,4 +149,3 @@ class DocumentStartEndSpec extends munit.FunSuite {
     )
     assertEquals(events, expectedEvents)
   }
-}
