@@ -40,14 +40,14 @@ class YamlReader(in: CharSequence) extends Reader {
         List(SequenceStart)
       case Some(']') =>
         skipCharacter()
-        ctx.closeOpenningSequence()
+        ctx.closeOpenedSequence()
       case Some('{') =>
         skipCharacter()
         ctx.appendState(ReaderState.FlowMapping)
         List(FlowMappingStart)
       case Some('}') =>
         skipCharacter()
-        ctx.closeOpenningFlowMapping()
+        ctx.closeOpenedFlowMapping()
       case Some(',') =>
         skipCharacter()
         getNextTokens()
@@ -66,7 +66,7 @@ class YamlReader(in: CharSequence) extends Reader {
       ctx.appendState(ReaderState.Sequence(indent))
       List(SequenceStart)
 
-  private def fetchDoubleQuoteValue(): List[Token] =
+  private def parseDoubleQuoteValue(): List[Token] =
     val sb = new StringBuilder
 
     @tailrec
@@ -120,7 +120,7 @@ class YamlReader(in: CharSequence) extends Reader {
       case '\n'  => "\\n"
       case other => other.toString
 
-  private def fetchFoldedValue(): List[Token] =
+  private def parseFoldedValue(): List[Token] =
     val sb = new StringBuilder
 
     skipCharacter() // skip >
@@ -165,7 +165,7 @@ class YamlReader(in: CharSequence) extends Reader {
     val scalar = readFolded()
     List(Scalar(scalar, ScalarStyle.Folded))
 
-  private def fetchSingleQuoteValue(): List[Token] = {
+  private def parseSingleQuoteValue(): List[Token] = {
     val sb = new StringBuilder
     @tailrec
     def readScalar(): String =
@@ -241,9 +241,9 @@ class YamlReader(in: CharSequence) extends Reader {
     skipUntilNextToken()
 
     peek() match
-      case Some('"')  => fetchDoubleQuoteValue()
-      case Some('\'') => fetchSingleQuoteValue()
-      case Some('>')  => fetchFoldedValue()
+      case Some('"')  => parseDoubleQuoteValue()
+      case Some('\'') => parseSingleQuoteValue()
+      case Some('>')  => parseFoldedValue()
       case Some('|')  => parseLiteral()
       case _          => parseScalarValue()
 

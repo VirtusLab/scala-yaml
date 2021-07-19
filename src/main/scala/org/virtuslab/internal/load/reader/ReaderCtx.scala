@@ -38,12 +38,12 @@ case class ReaderCtx(
 
   def appendState(state: ReaderState): Unit = stateStack.push(state)
 
-  def closeOpenningFlowMapping(): List[Token] =
+  def closeOpenedFlowMapping(): List[Token] =
     stateStack.pop() match
       case Some(ReaderState.FlowMapping) => List(Token.FlowMappingEnd)
       case _                             => Nil
 
-  def closeOpenningSequence(): List[Token] =
+  def closeOpenedSequence(): List[Token] =
     stateStack.pop() match
       case Some(ReaderState.Sequence(_)) => List(Token.SequenceEnd)
       case _                             => Nil
