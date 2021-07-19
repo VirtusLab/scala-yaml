@@ -48,7 +48,7 @@ case class ReaderCtx(
     stateStack.pop() match
       case Some(ReaderState.Sequence(_)) => Token.SequenceEnd
       case Some(ReaderState.Mapping(_))  => Token.MappingEnd
-      case Some(ReaderState.Document(_)) => popTokenFromStack
+      case Some(ReaderState.Document)    => popTokenFromStack
       case _                             => Token.StreamEnd
 
   def shouldParseSequenceEntry(indent: Int): Boolean =
@@ -75,10 +75,13 @@ case class ReaderCtx(
 
     loop(Nil)
 
-  def parseDocumentStart(indent: Int): List[Token] =
+  def parseDocumentStart(): List[Token] =
     val closedScopes = closeOpenedScopes()
-    stateStack.push(ReaderState.Document(indent))
+    stateStack.push(ReaderState.Document)
     closedScopes :+ Token.DocumentStart
+
+  def parseDocumentEnd(): List[Token] =
+    closeOpenedScopes() :+ Token.DocumentEnd
 }
 
 case object ReaderCtx:
