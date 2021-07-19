@@ -15,7 +15,6 @@ object Yaml {
   final val Node = org.virtuslab.internal.load.compose.Node
 
   type YamlError = org.virtuslab.internal.YamlError
-  final val YamlError = org.virtuslab.internal.YamlError
 
   inline def deriveEncoder[T](using m: Mirror.Of[T]): YamlEncoder[T] = YamlEncoder.derived[T]
   inline def deriveDecoder[T](using m: Mirror.Of[T]): YamlDecoder[T] = YamlDecoder.derived[T]

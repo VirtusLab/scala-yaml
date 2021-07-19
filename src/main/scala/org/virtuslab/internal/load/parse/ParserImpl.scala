@@ -1,6 +1,7 @@
 package org.virtuslab.internal.load.parse
 
 import org.virtuslab.internal.YamlError
+import org.virtuslab.internal.ParseError
 import org.virtuslab.internal.load.reader.Reader
 import org.virtuslab.internal.load.reader.token.ScalarStyle
 import org.virtuslab.internal.load.reader.token.Token
@@ -55,12 +56,6 @@ object ParserImpl extends Parser:
 
   type EventResult = Either[YamlError, (Event, List[Production])]
 
-  private def error(expected: String, got: Token): EventResult = Left(
-    YamlError(s"Expected $expected but got $got instead of.")
-  )
-  private def error(expected: Token, got: Token): EventResult =
-    error(expected.toString, got)
-
   def getNextEvent(in: Reader, stack: List[Production]): EventResult = {
     val token = in.peekToken()
 
@@ -97,14 +92,14 @@ object ParserImpl extends Parser:
           ParseKey :: ParseNode :: ParseOptKey :: ParseMappingEnd :: stack.tail
         )
       case other @ _ =>
-        error(Token.MappingStart, other)
+        Left(ParseError.from(Token.MappingStart, other))
 
     def parseMappingEnd() = token match
       case Token.MappingEnd =>
         in.popToken()
         Right(Event.MappingEnd, stack.tail)
       case other @ _ =>
-        error(Token.MappingStart, other)
+        Left(ParseError.from(Token.MappingEnd, other))
 
     def parseSequenceStart() = token match
       case Token.SequenceStart =>
@@ -114,21 +109,21 @@ object ParserImpl extends Parser:
           ParseNode :: ParseSequenceEntryOpt :: ParseSequenceEnd :: stack.tail
         )
       case other @ _ =>
-        error(Token.SequenceStart, other)
+        Left(ParseError.from(Token.SequenceStart, other))
 
     def parseSequenceEnd() = token match
       case Token.SequenceEnd =>
         in.popToken()
         Right(Event.SequenceEnd, stack.tail)
       case other @ _ =>
-        error(Token.SequenceEnd, other)
+        Left(ParseError.from(Token.SequenceEnd, other))
 
     def parseKey() = token match
       case Token.Scalar(value, style) =>
         in.popToken()
         Right(Event.Scalar(value, style), stack.tail)
       case other @ _ =>
-        error("Token.Scalar", other)
+        Left(ParseError.from("Token.Scalar", other))
 
     def parseOptKey() = token match
       case Token.Scalar(value, style) =>
@@ -141,7 +136,7 @@ object ParserImpl extends Parser:
         in.popToken()
         Right(Event.Scalar(value, style), stack.tail)
       case other @ _ =>
-        error("Token.Scalar", other)
+        Left(ParseError.from("Token.Scalar", other))
 
     def parseScalarOpt() = token match
       case Token.Scalar(_, _) => parseScalar()
@@ -152,7 +147,7 @@ object ParserImpl extends Parser:
       case Token.SequenceStart => parseSequenceStart()
       case Token.Scalar(_, _)  => parseScalar()
       case other @ _ =>
-        error("Token: MappingStart | SequenceStart | Scalar", other)
+        Left(ParseError.from("Token: MappingStart | SequenceStart | Scalar", other))
 
     def parseNodeOpt() = token match
       case Token.MappingStart | Token.SequenceStart | Token.Scalar(_, _) => parseNode()
