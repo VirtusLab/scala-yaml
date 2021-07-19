@@ -97,22 +97,28 @@ object ParserImpl extends Parser:
       case other @ _ =>
         Left(ParseError.from(Token.MappingStart, other))
 
-    def parseFlowMappingStart() =
-      in.popToken()
-      (Event.FlowMappingStart, ParseFlowMappingEntry :: ParseFlowMappingEnd :: stack.tail)
+    def parseFlowMappingStart(): EventResult = token match
+      case Token.FlowMappingStart =>
+        in.popToken()
+        Right(Event.FlowMappingStart, ParseFlowMappingEntry :: ParseFlowMappingEnd :: stack.tail)
+      case other @ _ =>
+        Left(ParseError.from(Token.FlowMappingStart, other))
 
-    def parseFlowMappingEnd() =
-      in.popToken()
-      (Event.FlowMappingEnd, stack.tail)
+    def parseFlowMappingEnd(): EventResult = token match
+      case Token.FlowMappingEnd =>
+        in.popToken()
+        Right(Event.FlowMappingEnd, stack.tail)
+      case other @ _ =>
+        Left(ParseError.from(Token.FlowMappingEnd, other))
 
-    def parseFlowMappingEntry() =
+    def parseFlowMappingEntry(): EventResult =
       token match
         case Token.Scalar(value, style) =>
           in.popToken()
-          (Event.Scalar(value, style), ParseNode :: stack.tail)
+          Right(Event.Scalar(value, style), ParseNode :: stack.tail)
         case Token.FlowMappingStart => {
           in.popToken()
-          (
+          Right(
             Event.FlowMappingStart,
             ParseFlowMappingEntry :: ParseFlowMappingEnd :: ParseNode :: stack.tail
           )
@@ -149,7 +155,7 @@ object ParserImpl extends Parser:
         in.popToken()
         getNextEvent(in, ParseScalar :: ParseValue :: stack.tail)
       case other @ _ =>
-        Left(ParseError.from("Token.Key", other))
+        Left(ParseError.from(Token.Key, other))
 
     def parseOptKey() = token match
       case Token.Key => parseKey()
@@ -160,7 +166,7 @@ object ParserImpl extends Parser:
       case Token.Value =>
         in.popToken()
         getNextEvent(in, ParseNode :: ParseOptKey :: stack.tail)
-      case _ => throw new NotImplementedError("parse value")
+      case other @ _ => Left(ParseError.from(Token.Value, other))
 
     def parseScalar() = token match
       case Token.Scalar(value, style) =>
@@ -169,7 +175,7 @@ object ParserImpl extends Parser:
       case other @ _ =>
         Left(ParseError.from("Token.Scalar", other))
 
-    def parseNode() = token match
+    def parseNode(): EventResult = token match
       case Token.MappingStart     => parseMappingStart()
       case Token.FlowMappingStart => parseFlowMappingStart()
       case Token.SequenceStart    => parseSequenceStart()
