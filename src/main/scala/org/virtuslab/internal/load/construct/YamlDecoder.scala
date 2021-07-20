@@ -17,10 +17,7 @@ object YamlDecoder:
   def apply[T](pf: PartialFunction[Node, Either[ConstructError, T]]): YamlDecoder[T] =
     new YamlDecoder[T] {
       override def construct(node: Node): Either[ConstructError, T] =
-        if pf.isDefinedAt(node) then
-          pf(node) match
-            case Right(value)    => Right(value)
-            case Left(throwable) => Left(ConstructError(throwable.toString))
+        if pf.isDefinedAt(node) then pf(node)
         else Left(ConstructError(s"Could't create Construct instance for $node"))
     }
 

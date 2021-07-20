@@ -3,10 +3,9 @@ package org.virtuslab.internal.load.parse
 import org.virtuslab.internal.load.parse._
 import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
-import com.eed3si9n.expecty.Expecty.expect
 import org.virtuslab.internal.load.reader.token.ScalarStyle
 
-class ParserSpec extends munit.FunSuite {
+class ParserSpec extends munit.FunSuite:
 
   test("should parse sequence of scalars") {
     val yaml = s"""- Mark McGwire
@@ -30,7 +29,7 @@ class ParserSpec extends munit.FunSuite {
       )
     )
 
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse mapping scalars to scalars") {
@@ -59,7 +58,7 @@ class ParserSpec extends munit.FunSuite {
       )
     )
 
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse sequence of mapping") {
@@ -103,7 +102,7 @@ class ParserSpec extends munit.FunSuite {
       )
     )
 
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("mapping scalar to sequences") {
@@ -143,7 +142,7 @@ class ParserSpec extends munit.FunSuite {
       )
     )
 
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse mapping of sequence") {
@@ -186,7 +185,7 @@ class ParserSpec extends munit.FunSuite {
       )
     )
 
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse kubernetess config") {
@@ -275,7 +274,5 @@ class ParserSpec extends munit.FunSuite {
       )
     )
 
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
-
-}
