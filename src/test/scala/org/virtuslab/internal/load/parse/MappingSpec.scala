@@ -132,7 +132,7 @@ class MappingSpec extends munit.FunSuite {
   }
 
   test("should parse maping of mappings with {...}") {
-    val yaml   = "hostPath: {path: /dev/log}"
+    val yaml   = "hostPath: {key: value, path: /dev/log}"
     val reader = YamlReader(yaml)
     val events = ParserImpl.getEvents(reader)
 
@@ -143,6 +143,8 @@ class MappingSpec extends munit.FunSuite {
         MappingStart,
         Scalar("hostPath"),
         FlowMappingStart,
+        Scalar("key"),
+        Scalar("value"),
         Scalar("path"),
         Scalar("/dev/log"),
         FlowMappingEnd,

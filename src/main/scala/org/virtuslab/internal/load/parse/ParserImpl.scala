@@ -115,7 +115,7 @@ object ParserImpl extends Parser:
       token match
         case Token.Scalar(value, style) =>
           in.popToken()
-          Right(Event.Scalar(value, style), ParseNode :: stack.tail)
+          Right(Event.Scalar(value, style), ParseNode :: ParseFlowMappingEntry :: stack.tail)
         case Token.FlowMappingStart => {
           in.popToken()
           Right(

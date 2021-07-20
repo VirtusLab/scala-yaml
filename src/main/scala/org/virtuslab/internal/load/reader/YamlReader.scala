@@ -36,7 +36,7 @@ class YamlReader(in: CharSequence) extends Reader {
       case Some('.') if isDocumentEnd    => parseDocumentEnd()
       case Some('[') =>
         skipCharacter()
-        ctx.appendState(ReaderState.Sequence(indent))
+        ctx.appendState(ReaderState.FlowSequence)
         List(SequenceStart)
       case Some(']') =>
         skipCharacter()
@@ -207,7 +207,7 @@ class YamlReader(in: CharSequence) extends Reader {
         case Some(':')
             if peekNext() == Some(' ') || peekNext() == Some('\n') || peekNext() == Some('\r') =>
           sb.result()
-        case Some('}') if !ctx.isAllowedSpecialCharacter('}') => sb.result()
+        case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
         case Some('\n') | Some('\r') | Some('#') | None       => sb.result()
         case Some(char) =>
           sb.append(read())

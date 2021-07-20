@@ -31,31 +31,7 @@ class ScalarSpec extends munit.FunSuite {
     )
     assertEquals(events, expectedEvents)
   }
-
-  test("should parse sequence of host:port") {
-    val yaml = s"portals: ['10.0.2.16:3260', '10.0.2.17:3260']"
-
-    val reader = YamlReader(yaml)
-    val events = ParserImpl.getEvents(reader)
-
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart,
-        Scalar("portals"),
-        SequenceStart,
-        Scalar("10.0.2.16:3260", ScalarStyle.SingleQuoted),
-        Scalar("10.0.2.17:3260", ScalarStyle.SingleQuoted),
-        SequenceEnd,
-        MappingEnd,
-        DocumentEnd(),
-        StreamEnd
-      )
-    )
-    assertEquals(events, expectedEvents)
-  }
-
+  
   test("should parse value with double quote") {
     val yaml =
       s""" "/mnt/ iscsipd"

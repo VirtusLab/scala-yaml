@@ -32,10 +32,10 @@ object ComposerImpl extends Composer with NodeTransform:
   private def composeNode(events: List[Event]): ComposeResult[Node] = events match
     case head :: tail =>
       head match
-        case Event.StreamStart | Event.DocumentStart(_) => composeNode(tail)
-        case Event.SequenceStart                        => composeSequenceNode(tail)
-        case Event.MappingStart                         => composeMappingNode(tail)
-        case s: Event.Scalar                            => composeScalarNode(s, tail)
+        case Event.StreamStart | Event.DocumentStart(_)  => composeNode(tail)
+        case Event.SequenceStart                         => composeSequenceNode(tail)
+        case Event.MappingStart | Event.FlowMappingStart => composeMappingNode(tail)
+        case s: Event.Scalar                             => composeScalarNode(s, tail)
         case event => Left(ComposerError(s"Unexpected event $event"))
     case Nil =>
       Left(ComposerError("No events available"))
@@ -64,7 +64,7 @@ object ComposerImpl extends Composer with NodeTransform:
     ): ComposeResult[List[Node.KeyValueNode]] = {
       events match
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
-        case Event.MappingEnd :: tail => Right((mappings, tail))
+        case (Event.MappingEnd | Event.FlowMappingEnd) :: tail => Right((mappings, tail))
         case (s: Event.Scalar) :: tail =>
           val mapping =
             for
