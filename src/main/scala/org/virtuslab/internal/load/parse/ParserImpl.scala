@@ -16,13 +16,15 @@ private enum Production:
   case ParseDocumentEnd
   case ParseMappingStart
   case ParseMappingEnd
+  case ParseFlowMappingEnd
   case ParseSequenceStart
   case ParseSequenceEnd
   case ParseNode
-  case ParseNodeOpt
   case ParseKey
+  case ParseValue
   case ParseOptKey
   case ParseScalar
+  case ParseFlowMappingEntry
   case ParseSequenceEntryOpt
 
 /**
@@ -31,10 +33,14 @@ private enum Production:
  * ParseStreamStart      ::= <ParseDocumentStart> <ParseDocumentStartOpt> ParseStreamEnd
  * ParseDocumentStart    ::= <ParseNode> ParseDocumentEnd
  * ParseDocumentStartOpt ::= epsilon | <ParseDocumentStart> <ParseDocumentStartOpt>
- * ParseNode             ::= <ParseMappingStart> | <ParseSequenceStart> | ParseScalar
- * ParseMappingStart     ::= ParseKey <ParseNode> <ParseOptKey> ParseMappingEnd
+ * ParseNode             ::= <ParseMappingStart> | <ParseFlowMappingStart> | <ParseSequenceStart> | ParseScalar
+ * ParseMappingStart     ::= <ParseKey> ParseMappingEnd
+ * ParseFlowMappingStart ::= <ParseFlowMappingEntry> ParseFlowMappingEnd
+ * ParseFlowMappingEntry ::= <ParseScalar> | <ParseFlowMappingEntry> <ParseFlowMappingEnd> <ParseNode>
  * ParseSequenceStart    ::= <ParseNode> <ParseSequenceEntryOpt> ParseSequenceEnd
- * ParseOptKey           ::= epsilon | ParseKey <ParseNode> <ParseOptKey>
+ * ParseKey              ::= <ParseScalar> <ParseValue>
+ * ParseOptKey           ::= epsilon | <ParseKey>
+ * ParseValue            ::= <ParseNode> <ParseOptKey>
  * ParseSequenceEntryOpt ::= epsilon | <ParseNode> ParseSequenceEntryOpt
 */
 object ParserImpl extends Parser:
@@ -87,12 +93,38 @@ object ParserImpl extends Parser:
     def parseMappingStart() = token match
       case Token.MappingStart =>
         in.popToken()
-        Right(
-          Event.MappingStart,
-          ParseKey :: ParseNode :: ParseOptKey :: ParseMappingEnd :: stack.tail
-        )
+        Right(Event.MappingStart, ParseKey :: ParseMappingEnd :: stack.tail)
       case other @ _ =>
         Left(ParseError.from(Token.MappingStart, other))
+
+    def parseFlowMappingStart(): EventResult = token match
+      case Token.FlowMappingStart =>
+        in.popToken()
+        Right(Event.FlowMappingStart, ParseFlowMappingEntry :: ParseFlowMappingEnd :: stack.tail)
+      case other @ _ =>
+        Left(ParseError.from(Token.FlowMappingStart, other))
+
+    def parseFlowMappingEnd(): EventResult = token match
+      case Token.FlowMappingEnd =>
+        in.popToken()
+        Right(Event.FlowMappingEnd, stack.tail)
+      case other @ _ =>
+        Left(ParseError.from(Token.FlowMappingEnd, other))
+
+    def parseFlowMappingEntry(): EventResult =
+      token match
+        case Token.Scalar(value, style) =>
+          in.popToken()
+          Right(Event.Scalar(value, style), ParseNode :: stack.tail)
+        case Token.FlowMappingStart => {
+          in.popToken()
+          Right(
+            Event.FlowMappingStart,
+            ParseFlowMappingEntry :: ParseFlowMappingEnd :: ParseNode :: stack.tail
+          )
+        }
+        case _ =>
+          getNextEvent(in, stack.tail)
 
     def parseMappingEnd() = token match
       case Token.MappingEnd =>
@@ -119,17 +151,22 @@ object ParserImpl extends Parser:
         Left(ParseError.from(Token.SequenceEnd, other))
 
     def parseKey() = token match
-      case Token.Scalar(value, style) =>
+      case Token.Key =>
         in.popToken()
-        Right(Event.Scalar(value, style), stack.tail)
+        getNextEvent(in, ParseScalar :: ParseValue :: stack.tail)
       case other @ _ =>
-        Left(ParseError.from("Token.Scalar", other))
+        Left(ParseError.from(Token.Key, other))
 
     def parseOptKey() = token match
-      case Token.Scalar(value, style) =>
-        getNextEvent(in, ParseKey :: ParseNode :: ParseOptKey :: stack.tail)
+      case Token.Key => parseKey()
       case _ =>
         getNextEvent(in, stack.tail)
+
+    def parseValue() = token match
+      case Token.Value =>
+        in.popToken()
+        getNextEvent(in, ParseNode :: ParseOptKey :: stack.tail)
+      case other @ _ => Left(ParseError.from(Token.Value, other))
 
     def parseScalar() = token match
       case Token.Scalar(value, style) =>
@@ -138,20 +175,12 @@ object ParserImpl extends Parser:
       case other @ _ =>
         Left(ParseError.from("Token.Scalar", other))
 
-    def parseScalarOpt() = token match
-      case Token.Scalar(_, _) => parseScalar()
-      case _                  => getNextEvent(in, stack.tail)
-
-    def parseNode() = token match
-      case Token.MappingStart  => parseMappingStart()
-      case Token.SequenceStart => parseSequenceStart()
-      case Token.Scalar(_, _)  => parseScalar()
-      case other @ _ =>
-        Left(ParseError.from("Token: MappingStart | SequenceStart | Scalar", other))
-
-    def parseNodeOpt() = token match
-      case Token.MappingStart | Token.SequenceStart | Token.Scalar(_, _) => parseNode()
-      case _ => Right(Event.Scalar("", ScalarStyle.Plain), stack.tail)
+    def parseNode(): EventResult = token match
+      case Token.MappingStart     => parseMappingStart()
+      case Token.FlowMappingStart => parseFlowMappingStart()
+      case Token.SequenceStart    => parseSequenceStart()
+      case Token.Scalar(_, _)     => parseScalar()
+      case _                      => Right(Event.Scalar("", ScalarStyle.Plain), stack.tail)
 
     def parseSequenceEntryOpt() = token match
       case Token.MappingStart | Token.SequenceStart | Token.Scalar(_, _) =>
@@ -165,15 +194,17 @@ object ParserImpl extends Parser:
       case Some(ParseDocumentEnd)      => parseDocumentEnd()
       case Some(ParseDocumentStartOpt) => parseDocumentStartOpt()
       case Some(ParseNode)             => parseNode()
-      case Some(ParseNodeOpt)          => parseNodeOpt()
       case Some(ParseSequenceEntryOpt) => parseSequenceEntryOpt()
       case Some(ParseMappingStart)     => parseMappingStart()
       case Some(ParseMappingEnd)       => parseMappingEnd()
+      case Some(ParseFlowMappingEnd)   => parseFlowMappingEnd()
       case Some(ParseSequenceStart)    => parseSequenceStart()
       case Some(ParseSequenceEnd)      => parseSequenceEnd()
       case Some(ParseKey)              => parseKey()
+      case Some(ParseValue)            => parseValue()
       case Some(ParseOptKey)           => parseOptKey()
       case Some(ParseScalar)           => parseScalar()
+      case Some(ParseFlowMappingEntry) => parseFlowMappingEntry()
       case None                        => ???
 
   }

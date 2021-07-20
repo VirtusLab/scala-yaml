@@ -1,13 +1,12 @@
 package org.virtuslab.internal.load.parse
 
-import com.eed3si9n.expecty.Expecty.expect
 import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
 import org.virtuslab.internal.load.reader.token.ScalarStyle
 
 class ScalarSpec extends munit.FunSuite {
 
-  test("should parse host:port as scalar") {
+  test("should parse value with special charactar':' as scalar") {
     val yaml =
       s"""targetPortal: 10.0.2.15:3260:1221:1221
          |iqn: iqn.2001-04.com.example.storage:kube.sys1.xyz
@@ -30,7 +29,7 @@ class ScalarSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse sequence of host:port") {
@@ -46,18 +45,18 @@ class ScalarSpec extends munit.FunSuite {
         MappingStart,
         Scalar("portals"),
         SequenceStart,
-        Scalar("'10.0.2.16:3260'"),
-        Scalar("'10.0.2.17:3260'"),
+        Scalar("10.0.2.16:3260", ScalarStyle.SingleQuoted),
+        Scalar("10.0.2.17:3260", ScalarStyle.SingleQuoted),
         SequenceEnd,
         MappingEnd,
         DocumentEnd(),
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
-  test("should parse string with double quote") {
+  test("should parse value with double quote") {
     val yaml =
       s""" "/mnt/ iscsipd"
          |""".stripMargin
@@ -69,12 +68,12 @@ class ScalarSpec extends munit.FunSuite {
       List(
         StreamStart,
         DocumentStart(),
-        Scalar("\"/mnt/ iscsipd\""),
+        Scalar("/mnt/ iscsipd", ScalarStyle.DoubleQuoted),
         DocumentEnd(),
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse string with single quote") {
@@ -89,20 +88,24 @@ class ScalarSpec extends munit.FunSuite {
       List(
         StreamStart,
         DocumentStart(),
-        Scalar("'/mnt/ iscsipd 'skip''"),
+        Scalar("/mnt/ iscsipd 'skip'", ScalarStyle.SingleQuoted),
         DocumentEnd(),
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
-  test("should parse string with folded value") {
+  test("should parse string as folded scalar") {
     val yaml =
       s"""command:
          |  - bash
          |  - >-
          |    set -e
+         |
+         |
+         |    test
+         |
          |    yaml
          |""".stripMargin
 
@@ -117,17 +120,48 @@ class ScalarSpec extends munit.FunSuite {
         Scalar("command"),
         SequenceStart,
         Scalar("bash"),
-        Scalar("set -e yaml", ScalarStyle.Folded),
+        Scalar("set -e\\n\\ntest\\nyaml", ScalarStyle.Folded),
         SequenceEnd,
         MappingEnd,
         DocumentEnd(),
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
-  test("should parse string with double quote cotains special characters") {
+  test("should parse string as literal scalar") {
+    val yaml =
+      s"""command:
+         |  - bash
+         |  - |
+         |    # The 
+         |    CRARG
+         |    # We
+         |""".stripMargin
+
+    val reader = YamlReader(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        MappingStart,
+        Scalar("command"),
+        SequenceStart,
+        Scalar("bash"),
+        Scalar("# The \\nCRARG\\n# We\\n", ScalarStyle.Literal),
+        SequenceEnd,
+        MappingEnd,
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+  test("should parse string containing special charactar as scalar with double quote style") {
     val yaml =
       s""" "/mnt/ , {}, [] i"
          |""".stripMargin
@@ -139,12 +173,12 @@ class ScalarSpec extends munit.FunSuite {
       List(
         StreamStart,
         DocumentStart(),
-        Scalar("\"/mnt/ , {}, [] i\""),
+        Scalar("/mnt/ , {}, [] i", ScalarStyle.DoubleQuoted),
         DocumentEnd(),
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
 }

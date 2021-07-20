@@ -2,7 +2,7 @@ package org.virtuslab.internal.load.reader
 
 case class ReaderStack(var stack: List[ReaderState]):
 
-  def push(state: ReaderState) =
+  def push(state: ReaderState): Unit =
     stack = state :: stack
 
   def peek(): Option[ReaderState] = stack.headOption
