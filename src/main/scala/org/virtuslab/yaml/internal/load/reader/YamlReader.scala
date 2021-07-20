@@ -66,7 +66,7 @@ class YamlReader(in: CharSequence) extends Reader {
       ctx.appendState(ReaderState.Sequence(indent))
       List(SequenceStart)
 
-  private def parseDoubleQuoteValue(): List[Token] =
+  private def parseDoubleQuoteValue(): Token =
     val sb = new StringBuilder
 
     @tailrec
@@ -81,7 +81,7 @@ class YamlReader(in: CharSequence) extends Reader {
 
     skipCharacter() // skip double quote
     val scalar = readScalar()
-    List(Scalar(scalar, ScalarStyle.DoubleQuoted))
+    Scalar(scalar, ScalarStyle.DoubleQuoted)
 
   private def parseBlockHeader(): Unit =
     while (peek() == Some(' '))
@@ -89,7 +89,7 @@ class YamlReader(in: CharSequence) extends Reader {
 
     if peek() == Some('\n') then skipCharacter()
 
-  private def parseLiteral(): List[Token] =
+  private def parseLiteral(): Token =
     val sb = new StringBuilder
 
     skipCharacter() // skip |
@@ -112,7 +112,7 @@ class YamlReader(in: CharSequence) extends Reader {
           readLiteral()
 
     val scalar = readLiteral()
-    List(Scalar(scalar, ScalarStyle.Literal))
+    Scalar(scalar, ScalarStyle.Literal)
 
   private def escapeSpecialCharacter(char: Char): String =
     char match
@@ -120,7 +120,7 @@ class YamlReader(in: CharSequence) extends Reader {
       case '\n'  => "\\n"
       case other => other.toString
 
-  private def parseFoldedValue(): List[Token] =
+  private def parseFoldedValue(): Token =
     val sb = new StringBuilder
 
     skipCharacter() // skip >
@@ -163,9 +163,9 @@ class YamlReader(in: CharSequence) extends Reader {
           readFolded()
 
     val scalar = readFolded()
-    List(Scalar(scalar, ScalarStyle.Folded))
+    Scalar(scalar, ScalarStyle.Folded)
 
-  private def parseSingleQuoteValue(): List[Token] = {
+  private def parseSingleQuoteValue(): Token = {
     val sb = new StringBuilder
     @tailrec
     def readScalar(): String =
@@ -183,7 +183,7 @@ class YamlReader(in: CharSequence) extends Reader {
 
     skipCharacter() // skip single quote
     val scalar = readScalar()
-    List(Scalar(scalar, ScalarStyle.SingleQuoted))
+    Scalar(scalar, ScalarStyle.SingleQuoted)
   }
 
   private def isDocumentStart =
@@ -200,7 +200,7 @@ class YamlReader(in: CharSequence) extends Reader {
     skipN(4)
     ctx.parseDocumentEnd()
 
-  private def getScalar(): String = {
+  private def parseScalarValue(): Token = {
     val sb = new StringBuilder
     def readScalar(): String =
       peek() match
@@ -213,12 +213,19 @@ class YamlReader(in: CharSequence) extends Reader {
           sb.append(read())
           readScalar()
 
-    readScalar().trim
+    Scalar(readScalar().trim, ScalarStyle.Plain)
   }
 
-  private def parseScalarValue(): List[Token] =
+  private def fetchValue(): List[Token] =
     val index = offset
-    val value = getScalar()
+    skipUntilNextToken()
+
+    val scalar: Token = peek() match
+      case Some('"')  => parseDoubleQuoteValue()
+      case Some('\'') => parseSingleQuoteValue()
+      case Some('>')  => parseFoldedValue()
+      case Some('|')  => parseLiteral()
+      case _          => parseScalarValue()
 
     peek() match
       case Some(':') =>
@@ -226,26 +233,16 @@ class YamlReader(in: CharSequence) extends Reader {
 
         if (ctx.shouldParseMappingEntry(indent)) {
           skipCharacter()
-          List(Token.Key, Token.Scalar.from(value), Token.Value)
+          List(Token.Key, scalar, Token.Value)
         } else if (!ctx.isFlowMapping()) {
           ctx.appendState(ReaderState.Mapping(indent))
           offset = index
           List(MappingStart)
         } else {
           skipCharacter()
-          List(Token.Scalar.from(value))
+          List(scalar)
         }
-      case _ => List(Token.Scalar.from(value))
-
-  private def fetchValue(): List[Token] =
-    skipUntilNextToken()
-
-    peek() match
-      case Some('"')  => parseDoubleQuoteValue()
-      case Some('\'') => parseSingleQuoteValue()
-      case Some('>')  => parseFoldedValue()
-      case Some('|')  => parseLiteral()
-      case _          => parseScalarValue()
+      case _ => List(scalar)
 
   inline private def peek(n: Int = 0): Option[Char] = Try(in.charAt(offset + n)).toOption
   private def peekNext(): Option[Char]              = peek(1)
