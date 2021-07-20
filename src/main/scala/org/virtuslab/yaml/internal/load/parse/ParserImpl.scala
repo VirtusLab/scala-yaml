@@ -19,6 +19,7 @@ private enum Production:
   case ParseSequenceStart
   case ParseSequenceEnd
   case ParseNode
+  case ParseNodeOpt
   case ParseKey
   case ParseValue
   case ParseOptKey
@@ -137,7 +138,7 @@ object ParserImpl extends Parser:
         in.popToken()
         Right(
           Event.SequenceStart,
-          ParseNode :: ParseSequenceEntryOpt :: ParseSequenceEnd :: stack.tail
+          ParseNodeOpt :: ParseSequenceEntryOpt :: ParseSequenceEnd :: stack.tail
         )
       case other @ _ =>
         Left(ParseError.from(Token.SequenceStart, other))
@@ -179,11 +180,17 @@ object ParserImpl extends Parser:
       case Token.FlowMappingStart => parseFlowMappingStart()
       case Token.SequenceStart    => parseSequenceStart()
       case Token.Scalar(_, _)     => parseScalar()
-      case _                      => Right(Event.Scalar("", ScalarStyle.Plain), stack.tail)
+      case _ =>
+        Right(Event.Scalar("", ScalarStyle.Plain), stack.tail)
+
+    def parseNodeOpt(): EventResult = token match
+      case Token.MappingStart | Token.FlowMappingStart | Token.SequenceStart | Token.Scalar(_, _) =>
+        parseNode()
+      case _ => getNextEvent(in, stack.tail)
 
     def parseSequenceEntryOpt() = token match
       case Token.MappingStart | Token.SequenceStart | Token.Scalar(_, _) =>
-        getNextEvent(in, ParseNode :: ParseSequenceEntryOpt :: stack.tail)
+        getNextEvent(in, ParseNodeOpt :: ParseSequenceEntryOpt :: stack.tail)
       case _ => getNextEvent(in, stack.tail)
 
     stack.headOption match
@@ -193,6 +200,7 @@ object ParserImpl extends Parser:
       case Some(ParseDocumentEnd)      => parseDocumentEnd()
       case Some(ParseDocumentStartOpt) => parseDocumentStartOpt()
       case Some(ParseNode)             => parseNode()
+      case Some(ParseNodeOpt)          => parseNodeOpt()
       case Some(ParseSequenceEntryOpt) => parseSequenceEntryOpt()
       case Some(ParseMappingStart)     => parseMappingStart()
       case Some(ParseMappingEnd)       => parseMappingEnd()

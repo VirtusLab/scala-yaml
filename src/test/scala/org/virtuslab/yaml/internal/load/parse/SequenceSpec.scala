@@ -34,6 +34,28 @@ class SequenceSpec extends munit.FunSuite:
     assertEquals(events, expectedEvents)
   }
 
+  test("should parse empty flow sequence") {
+    val yaml = "seq: []"
+
+    val reader = YamlReader(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        MappingStart,
+        Scalar("seq"),
+        SequenceStart,
+        SequenceEnd,
+        MappingEnd,
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
   test("should parse sequence of sequences") {
     val yaml =
       s"""-
