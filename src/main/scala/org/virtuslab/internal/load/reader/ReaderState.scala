@@ -7,3 +7,4 @@ case object ReaderState:
   case class Mapping(indent: Int)  extends ReaderState
   case class Sequence(indent: Int) extends ReaderState
   case object FlowMapping          extends ReaderState
+  case object FlowSequence         extends ReaderState

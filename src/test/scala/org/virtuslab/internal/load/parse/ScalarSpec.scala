@@ -4,7 +4,7 @@ import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
 import org.virtuslab.internal.load.reader.token.ScalarStyle
 
-class ScalarSpec extends munit.FunSuite {
+class ScalarSpec extends munit.FunSuite:
 
   test("should parse value with special charactar':' as scalar") {
     val yaml =
@@ -24,30 +24,6 @@ class ScalarSpec extends munit.FunSuite {
         Scalar("10.0.2.15:3260:1221:1221"),
         Scalar("iqn"),
         Scalar("iqn.2001-04.com.example.storage:kube.sys1.xyz"),
-        MappingEnd,
-        DocumentEnd(),
-        StreamEnd
-      )
-    )
-    assertEquals(events, expectedEvents)
-  }
-
-  test("should parse sequence of host:port") {
-    val yaml = s"portals: ['10.0.2.16:3260', '10.0.2.17:3260']"
-
-    val reader = YamlReader(yaml)
-    val events = ParserImpl.getEvents(reader)
-
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart,
-        Scalar("portals"),
-        SequenceStart,
-        Scalar("10.0.2.16:3260", ScalarStyle.SingleQuoted),
-        Scalar("10.0.2.17:3260", ScalarStyle.SingleQuoted),
-        SequenceEnd,
         MappingEnd,
         DocumentEnd(),
         StreamEnd
@@ -180,5 +156,3 @@ class ScalarSpec extends munit.FunSuite {
     )
     assertEquals(events, expectedEvents)
   }
-
-}

@@ -45,8 +45,8 @@ case class ReaderCtx(
 
   def closeOpenedSequence(): List[Token] =
     stateStack.pop() match
-      case Some(ReaderState.Sequence(_)) => List(Token.SequenceEnd)
-      case _                             => Nil
+      case Some(ReaderState.Sequence(_) | ReaderState.FlowSequence) => List(Token.SequenceEnd)
+      case _                                                        => Nil
 
   def shouldParseSequenceEntry(indent: Int): Boolean =
     stateStack.peek() match
@@ -60,8 +60,10 @@ case class ReaderCtx(
 
   def isAllowedSpecialCharacter(char: Char): Boolean =
     stateStack.peek() match
-      case Some(ReaderState.FlowMapping) if char == '}' => false
-      case _                                            => true
+      case Some(ReaderState.FlowMapping) if char == '}'                                  => false
+      case Some(ReaderState.FlowMapping) | Some(ReaderState.FlowSequence) if char == ',' => false
+      case Some(ReaderState.FlowSequence) if char == ']'                                 => false
+      case _                                                                             => true
 
   def isFlowMapping(): Boolean =
     stateStack.peek() match
