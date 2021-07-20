@@ -208,7 +208,7 @@ class YamlReader(in: CharSequence) extends Reader {
             if peekNext() == Some(' ') || peekNext() == Some('\n') || peekNext() == Some('\r') =>
           sb.result()
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
-        case Some('\n') | Some('\r') | Some('#') | None       => sb.result()
+        case Some('\n') | Some('\r') | Some('#') | None         => sb.result()
         case Some(char) =>
           sb.append(read())
           readScalar()

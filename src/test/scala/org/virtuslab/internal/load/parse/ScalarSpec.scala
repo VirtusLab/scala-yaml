@@ -4,7 +4,7 @@ import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
 import org.virtuslab.internal.load.reader.token.ScalarStyle
 
-class ScalarSpec extends munit.FunSuite {
+class ScalarSpec extends munit.FunSuite:
 
   test("should parse value with special charactar':' as scalar") {
     val yaml =
@@ -31,7 +31,7 @@ class ScalarSpec extends munit.FunSuite {
     )
     assertEquals(events, expectedEvents)
   }
-  
+
   test("should parse value with double quote") {
     val yaml =
       s""" "/mnt/ iscsipd"
@@ -156,5 +156,3 @@ class ScalarSpec extends munit.FunSuite {
     )
     assertEquals(events, expectedEvents)
   }
-
-}
