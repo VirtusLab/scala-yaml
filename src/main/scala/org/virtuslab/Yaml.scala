@@ -1,6 +1,8 @@
 package org.virtuslab
 
 import org.virtuslab.internal.load.compose.ComposerImpl
+import org.virtuslab.internal.dump.serialize.SerializerImpl
+import org.virtuslab.internal.dump.present.PresenterImpl
 
 import scala.deriving._
 
@@ -26,5 +28,8 @@ object Yaml {
         t    <- c.construct(node)
       yield t
 
-  extension [T](t: T) def asYaml(using encoder: YamlEncoder[T]): String = encoder.toYaml(t)
+  extension [T](t: T)
+    def asYaml(using encoder: YamlEncoder[T]): String =
+      val events = SerializerImpl.toEvents(encoder.asNode(t))
+      PresenterImpl.asString(events)
 }

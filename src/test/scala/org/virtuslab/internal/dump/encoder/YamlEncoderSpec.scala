@@ -1,65 +1,150 @@
-package org.virtuslab.internal.dump.writer
+package org.virtuslab.internal.dump.encoder
 
 import org.virtuslab.Yaml.*
-import com.eed3si9n.expecty.Expecty.expect
 
-class YamlWriterSpec extends munit.FunSuite:
+class YamlEncoderSpec extends munit.FunSuite:
 
-  case class Stats(hr: Int, avg: Double, rbi: Int) derives YamlEncoder
-
-  enum SomeEnum derives YamlEncoder:
-    case Foo(value: Int)
-    case Bar(price: Double)
-
-  test("should derive encoder & deserialize case class") {
-    val stats = Stats(1, 1.0, 1)
+  test("should deserialzie plain value") {
+    val data: String = "aezakmi"
     val expected =
-      s"""|hr: 1
-         |avg: 1.0
-         |rbi: 1""".stripMargin
+      s"""aezakmi
+         |""".stripMargin
 
-    expect(stats.asYaml == expected)
+    assertEquals(data.asYaml, expected)
   }
 
-  test("should deserialize seq of string") {
-    val stats = Seq("Mark McGwire", "Sammy Sosa", "Ken Griffey")
+  test("should derive encoder & deserialize case class (mapping)") {
+    case class Stats(hr: Int, avg: Double, rbi: Int) derives YamlEncoder
+    val data = Stats(1, 1.0, 1)
+    val expected =
+      s"""hr: 1
+         |avg: 1.0
+         |rbi: 1
+         |""".stripMargin
+
+    assertEquals(data.asYaml, expected)
+  }
+
+  test("should deserialize sequence") {
+    val data = Seq("Mark McGwire", "Sammy Sosa", "Ken Griffey")
     val expected =
       s"""- Mark McGwire
          |- Sammy Sosa
          |- Ken Griffey
          |""".stripMargin
 
-    expect(stats.asYaml == expected)
+    assertEquals(data.asYaml, expected)
   }
 
-  test("should deserialize seq of int") {
-    val stats = Seq(1, 2, 3)
+  test("should deserialize sequence of mappings") {
+    case class Data(int: Int, double: Double) derives YamlEncoder
+    val data = Seq(
+      Data(1, 1.997),
+    )
+
     val expected =
-      s"""- 1
-         |- 2
-         |- 3
+      s"""- 
+         |  int: 1
+         |  double: 1.997
          |""".stripMargin
 
-    expect(stats.asYaml == expected)
+    assertEquals(data.asYaml, expected)
   }
 
-  test("should deserialize seq of double") {
-    val stats = Seq(1.53, 2.27, 3.33)
+  test("should deserialize sequence of sequences") {
+    val data = Seq(
+      Seq(1, 2),
+      Seq(3, 4),
+    )
+
     val expected =
-      s"""- 1.53
-         |- 2.27
-         |- 3.33
+      s"""- 
+         |  - 1
+         |  - 2
+         |- 
+         |  - 3
+         |  - 4
          |""".stripMargin
 
-    expect(stats.asYaml == expected)
+    assertEquals(data.asYaml, expected)
+  }
+
+  test("should deserialize mapping of sequences") {
+    case class Data(ints: Seq[Int], doubles: Seq[Double]) derives YamlEncoder
+    val data = Data(Seq(1, 2), Seq(3.0, 4.0))
+
+    val expected =
+      s"""ints: 
+         |  - 1
+         |  - 2
+         |doubles: 
+         |  - 3.0
+         |  - 4.0
+         |""".stripMargin
+
+    assertEquals(data.asYaml, expected)
+  }
+
+  test("should deserialize mapping of mappings") {
+    case class Nested(a: Int, b: String) derives YamlEncoder
+    case class Data(first: Nested, second: Nested) derives YamlEncoder
+    val data = Data(Nested(1, "one"), Nested(2, "two"))
+
+    val expected =
+      s"""first: 
+         |  a: 1
+         |  b: one
+         |second: 
+         |  a: 2
+         |  b: two
+         |""".stripMargin
+
+    assertEquals(data.asYaml, expected)
+  }
+
+  test("should deserialize map of [String, Char]") {
+    val data = Map("1" -> 'a', "2" -> 'b', "3" -> 'c')
+    val expected =
+      s"""1: a
+         |2: b
+         |3: c
+         |""".stripMargin
+
+    assertEquals(data.asYaml, expected)
+  }
+
+  test("should deserialize set of Boolean") {
+    val data = Set(true, false)
+    val expected =
+      s"""- true
+         |- false
+         |""".stripMargin
+
+    assertEquals(data.asYaml, expected)
   }
 
   test("should derive encoder & deserialize enum cases") {
-    val stats = SomeEnum.Foo(1)
+    enum SomeEnum derives YamlEncoder:
+      case Foo(value: Int)
+      case Bar(price: Double)
+    val data     = SomeEnum.Foo(1)
+    val expected = "value: 1"
+
+    assertEquals(data.asYaml.trim, expected)
+  }
+
+  test("should deserialize nested case classses") {
+    case class Address(city: String) derives YamlEncoder
+    case class Person(address: Address, ints: Seq[Int]) derives YamlEncoder
+
+    val data = Person(Address("Anytown"), Seq(1, 2))
     val expected =
-      s"value: 1"
+      s"""address: 
+         |  city: Anytown
+         |ints: 
+         |  - 1
+         |  - 2
+         |""".stripMargin
 
-    val yaml = stats.asYaml
-
-    expect(yaml == expected)
+    assertEquals(data.asYaml, expected)
   }
