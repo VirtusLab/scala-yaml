@@ -45,8 +45,9 @@ case class ReaderCtx(
 
   def closeOpenedSequence(): List[Token] =
     stateStack.pop() match
-      case Some(ReaderState.Sequence(_) | ReaderState.FlowSequence) => List(Token.SequenceEnd)
-      case _                                                        => Nil
+      case Some(ReaderState.Sequence(_))  => List(Token.SequenceEnd)
+      case Some(ReaderState.FlowSequence) => List(Token.FlowSequenceEnd)
+      case _                              => Nil
 
   def shouldParseSequenceEntry(indent: Int): Boolean =
     stateStack.peek() match

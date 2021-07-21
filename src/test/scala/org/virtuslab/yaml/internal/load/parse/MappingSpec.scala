@@ -2,6 +2,7 @@ package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.YamlReader
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class MappingSpec extends munit.FunSuite:
 
@@ -18,6 +19,32 @@ class MappingSpec extends munit.FunSuite:
         Scalar("emptyDir"),
         FlowMappingStart,
         FlowMappingEnd,
+        MappingEnd,
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+  test("should parse mapping with double quote key") {
+    val yaml =
+      s"""|data:
+         |  "19": xw==
+         |""".stripMargin
+    val reader = YamlReader(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        MappingStart,
+        Scalar("data"),
+        MappingStart,
+        Scalar("19", ScalarStyle.DoubleQuoted),
+        Scalar("xw=="),
+        MappingEnd,
         MappingEnd,
         DocumentEnd(),
         StreamEnd
