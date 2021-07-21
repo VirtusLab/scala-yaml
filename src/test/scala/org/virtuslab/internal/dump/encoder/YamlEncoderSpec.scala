@@ -133,7 +133,7 @@ class YamlEncoderSpec extends munit.FunSuite:
     assertEquals(data.asYaml.trim, expected)
   }
 
-  test("should deserialize nested case classses") {
+  test("should deserialize nested case classes") {
     case class Address(city: String) derives YamlEncoder
     case class Person(address: Address, ints: Seq[Int]) derives YamlEncoder
 
@@ -145,6 +145,41 @@ class YamlEncoderSpec extends munit.FunSuite:
          |  - 1
          |  - 2
          |""".stripMargin
+
+    assertEquals(data.asYaml, expected)
+  }
+
+  test("should deserialize complex kubernetes mapping") {
+    case class Web(build: String, ports: List[String], volumes: List[String]) derives YamlEncoder
+    case class Redis(image: String) derives YamlEncoder
+    case class Services(web: Web, redis: Redis) derives YamlEncoder
+    case class Compose(version: String, services: Services) derives YamlEncoder
+
+    val data = Compose(
+      version = "3.9",
+      services = Services(
+        web = Web(
+          build = ".",
+          ports = List("5000:5000"),
+          volumes = List(".:/code", "logvolume01:/var/log")
+        ),
+        redis = Redis(
+          image = "redis:alpine"
+        )
+      )
+    )
+    val expected = """version: 3.9
+                     |services: 
+                     |  web: 
+                     |    build: .
+                     |    ports: 
+                     |      - 5000:5000
+                     |    volumes: 
+                     |      - .:/code
+                     |      - logvolume01:/var/log
+                     |  redis: 
+                     |    image: redis:alpine
+                     |""".stripMargin
 
     assertEquals(data.asYaml, expected)
   }
