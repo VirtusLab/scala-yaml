@@ -37,7 +37,7 @@ class YamlReader(in: CharSequence) extends Reader {
       case Some('[') =>
         skipCharacter()
         ctx.appendState(ReaderState.FlowSequence)
-        List(SequenceStart)
+        List(FlowSequenceStart)
       case Some(']') =>
         skipCharacter()
         ctx.closeOpenedSequence()
