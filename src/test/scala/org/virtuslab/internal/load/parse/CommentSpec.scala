@@ -1,10 +1,9 @@
 package org.virtuslab.internal.load.parse
 
-import com.eed3si9n.expecty.Expecty.expect
 import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
 
-class CommentSpec extends munit.FunSuite {
+class CommentSpec extends munit.FunSuite:
 
   test("should parse key value with ignoring comments") {
     val yaml =
@@ -28,7 +27,7 @@ class CommentSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse empty document".ignore) {
@@ -46,7 +45,7 @@ class CommentSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse mapping with comments") {
@@ -77,6 +76,5 @@ class CommentSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
-}

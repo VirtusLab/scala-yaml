@@ -1,11 +1,10 @@
 package org.virtuslab.internal.load.parse
 
-import com.eed3si9n.expecty.Expecty.expect
 import org.virtuslab.internal.load.reader.YamlReader
 import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.token.ScalarStyle
 
-class SequenceSpec extends munit.FunSuite {
+class SequenceSpec extends munit.FunSuite:
 
   test("should parse mapping with sequence value") {
     val yaml =
@@ -32,7 +31,7 @@ class SequenceSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse sequence of sequences") {
@@ -66,7 +65,7 @@ class SequenceSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse sequence of host:port") {
@@ -106,5 +105,3 @@ class SequenceSpec extends munit.FunSuite {
     )
     assertEquals(events, expectedEvents)
   }
-
-}

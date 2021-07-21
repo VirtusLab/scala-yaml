@@ -2,7 +2,9 @@ package org.virtuslab.internal
 
 import org.virtuslab.internal.load.reader.token.Token
 
-sealed trait YamlError
+sealed trait YamlError:
+  def msg: String
+
 case class ParseError(msg: String) extends YamlError
 object ParseError:
   def from(expected: String, got: Token): ParseError = ParseError(

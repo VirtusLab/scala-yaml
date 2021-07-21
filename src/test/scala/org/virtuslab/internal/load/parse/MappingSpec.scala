@@ -1,10 +1,9 @@
 package org.virtuslab.internal.load.parse
 
-import com.eed3si9n.expecty.Expecty.expect
 import org.virtuslab.internal.load.parse.Event._
 import org.virtuslab.internal.load.reader.YamlReader
 
-class MappingSpec extends munit.FunSuite {
+class MappingSpec extends munit.FunSuite:
 
   test("should parse empty mapping") {
     val yaml   = "emptyDir: {}"
@@ -24,7 +23,7 @@ class MappingSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse nested empty mapping") {
@@ -51,7 +50,7 @@ class MappingSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse mapping with empty value") {
@@ -76,7 +75,7 @@ class MappingSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse mapping with empty value and comnent") {
@@ -101,7 +100,7 @@ class MappingSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse yaml with template value") {
@@ -128,7 +127,7 @@ class MappingSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
 
   test("should parse maping of mappings with {...}") {
@@ -153,7 +152,7 @@ class MappingSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
   test("should parse maping key value with } brackets") {
     val yaml   = "name: etcd-{{cell}}"
@@ -172,6 +171,5 @@ class MappingSpec extends munit.FunSuite {
         StreamEnd
       )
     )
-    expect(events == expectedEvents)
+    assertEquals(events, expectedEvents)
   }
-}
