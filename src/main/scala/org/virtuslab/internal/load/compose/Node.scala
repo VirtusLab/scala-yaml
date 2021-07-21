@@ -1,7 +1,5 @@
 package org.virtuslab.internal.load.compose
 
-import org.virtuslab.internal.load.compose.Node.ScalarNode
-
 sealed trait Node
 
 object Node:

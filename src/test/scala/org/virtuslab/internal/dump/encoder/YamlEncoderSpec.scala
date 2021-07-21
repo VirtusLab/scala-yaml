@@ -39,13 +39,17 @@ class YamlEncoderSpec extends munit.FunSuite:
   test("should deserialize sequence of mappings") {
     case class Data(int: Int, double: Double) derives YamlEncoder
     val data = Seq(
-      Data(1, 1.997)
+      Data(1, 1.997),
+      Data(2, 2.997)
     )
 
     val expected =
       s"""- 
          |  int: 1
          |  double: 1.997
+         |- 
+         |  int: 2
+         |  double: 2.997
          |""".stripMargin
 
     assertEquals(data.asYaml, expected)
