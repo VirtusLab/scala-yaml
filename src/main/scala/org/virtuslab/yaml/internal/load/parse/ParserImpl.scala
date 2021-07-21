@@ -34,14 +34,15 @@ private enum Production:
  * ParseDocumentStart    ::= <ParseNode> ParseDocumentEnd
  * ParseDocumentStartOpt ::= epsilon | <ParseDocumentStart> <ParseDocumentStartOpt>
  * ParseNode             ::= <ParseMappingStart> | <ParseFlowMappingStart> | <ParseSequenceStart> | ParseScalar
+ * ParseNodeOpt          ::= epsilon | <ParseMappingStart> | <ParseFlowMappingStart> | <ParseSequenceStart> | ParseScalar
  * ParseMappingStart     ::= <ParseKey> ParseMappingEnd
  * ParseFlowMappingStart ::= <ParseFlowMappingEntry> ParseFlowMappingEnd
  * ParseFlowMappingEntry ::= <ParseScalar> | <ParseFlowMappingEntry> <ParseFlowMappingEnd> <ParseNode>
- * ParseSequenceStart    ::= <ParseNode> <ParseSequenceEntryOpt> ParseSequenceEnd
+ * ParseSequenceStart    ::= <ParseNodeOpt> <ParseSequenceEntryOpt> ParseSequenceEnd
  * ParseKey              ::= <ParseScalar> <ParseValue>
  * ParseOptKey           ::= epsilon | <ParseKey>
  * ParseValue            ::= <ParseNode> <ParseOptKey>
- * ParseSequenceEntryOpt ::= epsilon | <ParseNode> ParseSequenceEntryOpt
+ * ParseSequenceEntryOpt ::= epsilon | <ParseNodeOpt> ParseSequenceEntryOpt
 */
 object ParserImpl extends Parser:
   import Production.*

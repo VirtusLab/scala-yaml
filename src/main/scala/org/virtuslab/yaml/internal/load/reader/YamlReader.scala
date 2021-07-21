@@ -102,18 +102,26 @@ class YamlReader(in: CharSequence) extends Reader {
     val foldedIndent = indent
     skipUntilNextIndent(foldedIndent)
 
+    def chompedEmptyLines() =
+      while (peek() == Some('\n')) {
+        skipCharacter()
+        sb.append("\\n")
+      }
+
+      skipUntilNextIndent(foldedIndent)
+
     @tailrec
     def readLiteral(): String =
       peek() match
-        case Some('\n') | None =>
+        case Some('\n') =>
           sb.append(escapeSpecialCharacter(read()))
-
-          skipUntilNextIndent(foldedIndent)
+          chompedEmptyLines()
           if (indent != foldedIndent) then sb.result()
           else readLiteral()
         case Some(char) =>
           sb.append(escapeSpecialCharacter(read()))
           readLiteral()
+        case None => sb.result()
 
     val scalar = readLiteral()
     Scalar(scalar, ScalarStyle.Literal)
@@ -227,7 +235,7 @@ class YamlReader(in: CharSequence) extends Reader {
   }
 
   private def fetchValue(): List[Token] =
-    val index = offset
+
     skipUntilNextToken()
 
     val scalar: Token = peek() match
@@ -240,16 +248,14 @@ class YamlReader(in: CharSequence) extends Reader {
     peek() match
       case Some(':') =>
         ctx.closeOpenedCollectionMapping(indent)
+        skipCharacter()
 
         if (ctx.shouldParseMappingEntry(indent)) {
-          skipCharacter()
           List(Token.Key, scalar, Token.Value)
         } else if (!ctx.isFlowMapping()) {
           ctx.appendState(ReaderState.Mapping(indent))
-          offset = index
-          List(MappingStart)
+          List(MappingStart, Token.Key, scalar, Token.Value)
         } else {
-          skipCharacter()
           List(scalar)
         }
       case _ => List(scalar)
@@ -260,6 +266,7 @@ class YamlReader(in: CharSequence) extends Reader {
   private def isNextWhitespace                      = peekNext().exists(_.isWhitespace)
 
   private def skipCharacter(): Unit = offset += 1
+  private def revert(n: Int): Unit  = offset -= n
   private def skipN(n: Int): Unit   = (1 to n).foreach(_ => skipCharacter())
 
   private def skipComment(): Unit =
