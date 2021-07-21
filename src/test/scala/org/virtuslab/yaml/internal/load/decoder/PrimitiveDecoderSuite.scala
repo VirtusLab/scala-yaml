@@ -1,6 +1,6 @@
 package org.virtuslab.yaml.internal.load.decoder
 
-import org.virtuslab.yaml.{Yaml, YamlDecoder}
+import org.virtuslab.yaml.*
 
 class PrimitiveDecoderSuite extends munit.FunSuite:
 

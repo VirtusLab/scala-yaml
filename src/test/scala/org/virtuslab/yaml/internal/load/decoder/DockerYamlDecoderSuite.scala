@@ -1,7 +1,6 @@
 package org.virtuslab.yaml.internal.load.decoder
 
-import org.virtuslab.yaml.internal.load.construct
-import org.virtuslab.yaml.{Yaml, YamlDecoder}
+import org.virtuslab.yaml.*
 
 class DockerYamlDecoderSuite extends munit.FunSuite:
 

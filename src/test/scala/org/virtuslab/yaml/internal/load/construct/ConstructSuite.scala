@@ -1,9 +1,9 @@
 package org.virtuslab.yaml.internal.load.construct
 
-import org.virtuslab.yaml.{Node, Yaml, YamlDecoder}
+import org.virtuslab.yaml.*
 
 class ConstructSuite extends munit.FunSuite:
-
+  import Node.*
   case class Stats(hr: Int, avg: Double, rbi: Int) derives YamlDecoder
 
   enum SomeEnum derives YamlDecoder:

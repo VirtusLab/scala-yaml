@@ -7,20 +7,8 @@ import org.virtuslab.yaml.internal.load.compose.ComposerImpl
 
 import scala.deriving.Mirror
 
-object Yaml {
-  type YamlDecoder[T] = yaml.YamlDecoder[T]
-  final val YamlDecoder = org.virtuslab.internal.load.construct.YamlDecoder
-
-  type YamlEncoder[T] = yaml.YamlEncoder[T]
-  final val YamlEncoder = org.virtuslab.internal.dump.YamlEncoder
-
-  type Node = Node
-  final val Node = org.virtuslab.internal.load.compose.Node
-
-  type YamlError = yaml.YamlError
-
+object Yaml:
   inline def deriveEncoder[T](using m: Mirror.Of[T]): YamlEncoder[T] = YamlEncoder.derived[T]
-
   inline def deriveDecoder[T](using m: Mirror.Of[T]): YamlDecoder[T] = YamlDecoder.derived[T]
 
   extension (str: String)
@@ -34,4 +22,3 @@ object Yaml {
     def asYaml(using encoder: YamlEncoder[T]): String =
       val events = SerializerImpl.toEvents(encoder.asNode(t))
       PresenterImpl.asString(events)
-}

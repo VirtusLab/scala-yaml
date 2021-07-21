@@ -1,9 +1,9 @@
 package org.virtuslab.yaml
 
 import org.virtuslab.yaml.Node
-import org.virtuslab.yaml.internal.load.compose.Node
+import org.virtuslab.yaml.Node.*
 
-import scala.compiletime.summonFrom
+import scala.compiletime._
 import scala.deriving._
 import scala.util.Try
 

@@ -1,8 +1,9 @@
 package org.virtuslab.yaml.internal.load.compose
 
 import org.virtuslab.yaml.Node
+import org.virtuslab.yaml.Node.*
 import org.virtuslab.yaml.internal.load.compose.ComposerImpl
-import org.virtuslab.yaml.internal.load.parse.Event
+import org.virtuslab.yaml.internal.load.parse.Event.*
 
 /** Examples taken from https://yaml.org/spec/1.2/spec.html#id2759963
   */

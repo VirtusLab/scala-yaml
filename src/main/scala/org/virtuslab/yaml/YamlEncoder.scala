@@ -1,7 +1,5 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.internal.dump.YamlEncoder
-
 import scala.compiletime._
 import scala.deriving.Mirror
 

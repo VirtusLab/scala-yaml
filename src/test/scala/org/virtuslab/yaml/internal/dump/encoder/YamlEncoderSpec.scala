@@ -1,6 +1,6 @@
 package org.virtuslab.yaml.internal.dump.encoder
 
-import org.virtuslab.yaml.Yaml
+import org.virtuslab.yaml.*
 
 class YamlEncoderSpec extends munit.FunSuite:
 

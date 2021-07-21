@@ -1,7 +1,5 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.internal.load.compose.Node
-
 sealed trait Node
 
 object Node:

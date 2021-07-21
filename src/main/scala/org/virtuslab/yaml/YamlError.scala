@@ -1,8 +1,6 @@
 package org.virtuslab.yaml
 
 import org.virtuslab.yaml.internal.load.reader.token.Token
-import org.virtuslab.yaml.internal.{ParseError, YamlError}
-
 sealed trait YamlError:
   def msg: String
 

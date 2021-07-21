@@ -1,6 +1,8 @@
 package org.virtuslab.yaml.internal.load.compose
 
-import org.virtuslab.yaml.{ComposerError, Node, YamlError}
+import org.virtuslab.yaml.ComposerError
+import org.virtuslab.yaml.Node
+import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.YamlReader
