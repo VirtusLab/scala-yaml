@@ -14,7 +14,7 @@ class YamlEncoderSpec extends munit.FunSuite:
   }
 
   test("should derive encoder & deserialize case class (mapping)") {
-    case class Stats(hr: Int, avg: Double, rbi: Int) derives YamlEncoder
+    case class Stats(hr: Int, avg: Double, rbi: Int) derives YamlCodec
     val data = Stats(1, 1.0, 1)
     val expected =
       s"""hr: 1
@@ -37,7 +37,7 @@ class YamlEncoderSpec extends munit.FunSuite:
   }
 
   test("should deserialize sequence of mappings") {
-    case class Data(int: Int, double: Double) derives YamlEncoder
+    case class Data(int: Int, double: Double) derives YamlCodec
     val data = Seq(
       Data(1, 1.997),
       Data(2, 2.997)
@@ -74,7 +74,7 @@ class YamlEncoderSpec extends munit.FunSuite:
   }
 
   test("should deserialize mapping of sequences") {
-    case class Data(ints: Seq[Int], doubles: Seq[Double]) derives YamlEncoder
+    case class Data(ints: Seq[Int], doubles: Seq[Double]) derives YamlCodec
     val data = Data(Seq(1, 2), Seq(3.0, 4.0))
 
     val expected =
@@ -90,8 +90,8 @@ class YamlEncoderSpec extends munit.FunSuite:
   }
 
   test("should deserialize mapping of mappings") {
-    case class Nested(a: Int, b: String) derives YamlEncoder
-    case class Data(first: Nested, second: Nested) derives YamlEncoder
+    case class Nested(a: Int, b: String) derives YamlCodec
+    case class Data(first: Nested, second: Nested) derives YamlCodec
     val data = Data(Nested(1, "one"), Nested(2, "two"))
 
     val expected =
@@ -128,7 +128,7 @@ class YamlEncoderSpec extends munit.FunSuite:
   }
 
   test("should derive encoder & deserialize enum cases") {
-    enum SomeEnum derives YamlEncoder:
+    enum SomeEnum derives YamlCodec:
       case Foo(value: Int)
       case Bar(price: Double)
     val data     = SomeEnum.Foo(1)
@@ -138,8 +138,8 @@ class YamlEncoderSpec extends munit.FunSuite:
   }
 
   test("should deserialize nested case classes") {
-    case class Address(city: String) derives YamlEncoder
-    case class Person(address: Address, ints: Seq[Int]) derives YamlEncoder
+    case class Address(city: String) derives YamlCodec
+    case class Person(address: Address, ints: Seq[Int]) derives YamlCodec
 
     val data = Person(Address("Anytown"), Seq(1, 2))
     val expected =
@@ -154,10 +154,10 @@ class YamlEncoderSpec extends munit.FunSuite:
   }
 
   test("should deserialize complex kubernetes mapping") {
-    case class Web(build: String, ports: List[String], volumes: List[String]) derives YamlEncoder
-    case class Redis(image: String) derives YamlEncoder
-    case class Services(web: Web, redis: Redis) derives YamlEncoder
-    case class Compose(version: String, services: Services) derives YamlEncoder
+    case class Web(build: String, ports: List[String], volumes: List[String]) derives YamlCodec
+    case class Redis(image: String) derives YamlCodec
+    case class Services(web: Web, redis: Redis) derives YamlCodec
+    case class Compose(version: String, services: Services) derives YamlCodec
 
     val data = Compose(
       version = "3.9",
