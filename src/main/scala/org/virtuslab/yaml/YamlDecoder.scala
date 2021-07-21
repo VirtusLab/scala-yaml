@@ -7,7 +7,7 @@ import scala.compiletime._
 import scala.deriving._
 import scala.util.Try
 
-sealed trait YamlDecoder[T]:
+trait YamlDecoder[T]:
   def construct(node: Node): Either[ConstructError, T]
 
 object YamlDecoder:
@@ -109,11 +109,11 @@ object YamlDecoder:
     Right(value)
   }
 
-  inline given derived[T](using m: Mirror.Of[T]): YamlDecoder[T] = inline m match
-    case p: Mirror.ProductOf[T] => product(p)
+  inline def derived[T](using m: Mirror.Of[T]): YamlDecoder[T] = inline m match
+    case p: Mirror.ProductOf[T] => deriveProduct(p)
     case s: Mirror.SumOf[T]     => sumOf(s)
 
-  private inline def product[T](p: Mirror.ProductOf[T]) =
+  private inline def deriveProduct[T](p: Mirror.ProductOf[T]) =
     val instances  = summonAll[p.MirroredElemTypes]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
     new YamlDecoder[T] {
@@ -134,13 +134,20 @@ object YamlDecoder:
     }
 
   private inline def sumOf[T](s: Mirror.SumOf[T]) =
-    val instances = summonAll[s.MirroredElemTypes].asInstanceOf[List[YamlDecoder[T]]]
+    val instances = summonSumOf[s.MirroredElemTypes].asInstanceOf[List[YamlDecoder[T]]]
     new YamlDecoder[T]:
       override def construct(node: Node): Either[ConstructError, T] = LazyList
         .from(instances)
         .map(c => c.construct(node))
         .collectFirst { case r @ Right(_) => r }
         .getOrElse(Left(ConstructError(s"Cannot parse $node")))
+
+  private inline def summonSumOf[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
+    case _: (t *: ts) =>
+      summonFrom { case p: Mirror.ProductOf[`t`] =>
+        deriveProduct(p) :: summonSumOf[ts]
+      }
+    case _: EmptyTuple => Nil
 
   private inline def summonAll[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
     case _: EmptyTuple => Nil

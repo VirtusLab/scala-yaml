@@ -6,10 +6,10 @@ class DockerYamlDecoderSuite extends munit.FunSuite:
 
   test("derive construct for docker compose file") {
 
-    case class Web(build: String, ports: List[String], volumes: List[String]) derives YamlDecoder
-    case class Redis(image: String) derives YamlDecoder
-    case class Services(web: Web, redis: Redis) derives YamlDecoder
-    case class Compose(version: String, services: Services) derives YamlDecoder
+    case class Web(build: String, ports: List[String], volumes: List[String]) derives YamlCodec
+    case class Redis(image: String) derives YamlCodec
+    case class Services(web: Web, redis: Redis) derives YamlCodec
+    case class Compose(version: String, services: Services) derives YamlCodec
 
     val yaml =
       s"""version: "3.9"

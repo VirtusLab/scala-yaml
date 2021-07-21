@@ -34,20 +34,16 @@ object YamlEncoder:
       )
       Node.MappingNode(pairs)
 
-  inline given derived[T](using m: Mirror.Of[T]): YamlEncoder[T] =
-    val yamlEncoders = summonAll[m.MirroredElemTypes]
-    inline m match
-      case p: Mirror.ProductOf[T] => productOf(p, yamlEncoders)
-      case s: Mirror.SumOf[T]     => sumOf(s, yamlEncoders)
+  inline def derived[T](using m: Mirror.Of[T]): YamlEncoder[T] = inline m match
+    case p: Mirror.ProductOf[T] => deriveProduct(p)
+    case s: Mirror.SumOf[T]     => deriveSum(s)
 
-  inline def productOf[T](
-      p: Mirror.ProductOf[T],
-      yamlEncoders: List[YamlEncoder[_]]
-  ): YamlEncoder[T] =
+  private inline def deriveProduct[T](p: Mirror.ProductOf[T]): YamlEncoder[T] =
     new YamlEncoder[T] {
+      val yamlEncoders = summonAll[p.MirroredElemTypes]
+      val elemLabels   = getElemLabels[p.MirroredElemLabels]
       override def asNode(obj: T): Node =
-        val products   = obj.asInstanceOf[Product].productIterator
-        val elemLabels = getElemLabels[p.MirroredElemLabels]
+        val products = obj.asInstanceOf[Product].productIterator
         val nodes =
           elemLabels.zip(products).zip(yamlEncoders).map { case ((label, element), encoder) =>
             val key   = Node.ScalarNode(label)
@@ -57,18 +53,26 @@ object YamlEncoder:
         Node.MappingNode(nodes)
     }
 
-  inline def sumOf[T](s: Mirror.SumOf[T], yamlEncoders: List[YamlEncoder[_]]) =
+  private inline def deriveSum[T](s: Mirror.SumOf[T]) =
     new YamlEncoder[T]:
+      val yamlEncoders = summonSumOf[s.MirroredElemTypes].asInstanceOf[List[YamlEncoder[T]]]
       override def asNode(t: T): Node =
         val index = s.ordinal(t)
         yamlEncoders(index).asInstanceOf[YamlEncoder[Any]].asNode(t)
 
-  inline def summonAll[T <: Tuple]: List[YamlEncoder[_]] = inline erasedValue[T] match {
+  private inline def summonSumOf[T <: Tuple]: List[YamlEncoder[_]] = inline erasedValue[T] match
+    case _: (t *: ts) =>
+      summonFrom { case p: Mirror.ProductOf[`t`] =>
+        deriveProduct(p) :: summonSumOf[ts]
+      }
+    case _: EmptyTuple => Nil
+
+  private inline def summonAll[T <: Tuple]: List[YamlEncoder[_]] = inline erasedValue[T] match {
     case _: EmptyTuple => Nil
     case _: (t *: ts)  => summonInline[YamlEncoder[t]] :: summonAll[ts]
   }
 
-  inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match {
+  private inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match {
     case _: EmptyTuple     => Nil
     case _: (head *: tail) => constValue[head].toString :: getElemLabels[tail]
   }

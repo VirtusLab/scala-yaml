@@ -4,9 +4,9 @@ import org.virtuslab.yaml.*
 
 class ConstructSuite extends munit.FunSuite:
   import Node.*
-  case class Stats(hr: Int, avg: Double, rbi: Int) derives YamlDecoder
+  case class Stats(hr: Int, avg: Double, rbi: Int) derives YamlCodec
 
-  enum SomeEnum derives YamlDecoder:
+  enum SomeEnum derives YamlCodec:
     case Foo(value: Int)
     case Bar(price: Double)
 
