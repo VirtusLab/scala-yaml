@@ -72,6 +72,10 @@ class YamlReader(in: CharSequence) extends Reader {
     @tailrec
     def readScalar(): String =
       peek() match
+        case Some('\\') if peekNext() == Some('"') =>
+          skipN(2)
+          sb.append("\"")
+          readScalar()
         case Some('"') | None =>
           skipCharacter()
           sb.result()
@@ -166,7 +170,8 @@ class YamlReader(in: CharSequence) extends Reader {
     Scalar(scalar, ScalarStyle.Folded)
 
   private def parseSingleQuoteValue(): Token = {
-    val sb = new StringBuilder
+    val sb                = new StringBuilder
+    val singleQuoteIndent = indent
     @tailrec
     def readScalar(): String =
       peek() match
@@ -174,11 +179,15 @@ class YamlReader(in: CharSequence) extends Reader {
           skipN(2)
           sb.append('\'')
           readScalar()
+        case Some('\n') =>
+          skipCharacter()
+          skipUntilNextIndent(singleQuoteIndent)
+          readScalar()
         case Some('\'') | None =>
           skipCharacter()
           sb.result()
         case Some(char) =>
-          sb.append(read())
+          sb.append(escapeSpecialCharacter(read()))
           readScalar()
 
     skipCharacter() // skip single quote
@@ -208,9 +217,10 @@ class YamlReader(in: CharSequence) extends Reader {
             if peekNext() == Some(' ') || peekNext() == Some('\n') || peekNext() == Some('\r') =>
           sb.result()
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
-        case Some('\n') | Some('\r') | Some('#') | None         => sb.result()
+        case Some(' ') if peekNext() == Some('#')               => sb.result()
+        case Some('\n') | Some('\r') | None                     => sb.result()
         case Some(char) =>
-          sb.append(read())
+          sb.append(escapeSpecialCharacter(read()))
           readScalar()
 
     Scalar(readScalar().trim, ScalarStyle.Plain)

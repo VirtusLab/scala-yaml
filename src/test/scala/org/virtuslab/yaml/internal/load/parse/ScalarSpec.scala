@@ -32,6 +32,26 @@ class ScalarSpec extends munit.FunSuite:
     assertEquals(events, expectedEvents)
   }
 
+  test("should parse plain scalar value") {
+    val yaml =
+      s""" mnt\\#dd
+         |""".stripMargin
+
+    val reader = YamlReader(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        Scalar("mnt\\\\#dd", ScalarStyle.Plain),
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
   test("should parse value with double quote") {
     val yaml =
       s""" "/mnt/ iscsipd"
@@ -54,7 +74,7 @@ class ScalarSpec extends munit.FunSuite:
 
   test("should parse string with single quote") {
     val yaml =
-      s""" '/mnt/ iscsipd ''skip'''
+      s""" '/mnt/ \\iscsipd ''skip'''
          |""".stripMargin
 
     val reader = YamlReader(yaml)
@@ -64,7 +84,31 @@ class ScalarSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        Scalar("/mnt/ iscsipd 'skip'", ScalarStyle.SingleQuoted),
+        Scalar("/mnt/ \\\\iscsipd 'skip'", ScalarStyle.SingleQuoted),
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+  test("should parse single quote with multiline") {
+    val yaml =
+      s"""description: 'Quote 
+         | multiline.'
+         |""".stripMargin
+
+    val reader = YamlReader(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        MappingStart,
+        Scalar("description"),
+        Scalar("Quote multiline.", ScalarStyle.SingleQuoted),
+        MappingEnd,
         DocumentEnd(),
         StreamEnd
       )
@@ -139,7 +183,7 @@ class ScalarSpec extends munit.FunSuite:
 
   test("should parse string containing special charactar as scalar with double quote style") {
     val yaml =
-      s""" "/mnt/ , {}, [] i"
+      s""" "{/mnt/ , {}, [] i"
          |""".stripMargin
 
     val reader = YamlReader(yaml)
@@ -149,7 +193,43 @@ class ScalarSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        Scalar("/mnt/ , {}, [] i", ScalarStyle.DoubleQuoted),
+        Scalar("{/mnt/ , {}, [] i", ScalarStyle.DoubleQuoted),
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+  test("should parse double quote scalar esceping \" character") {
+    val yaml = s""" "{\\" mnt" """
+
+    val reader = YamlReader(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        Scalar("{\" mnt", ScalarStyle.DoubleQuoted),
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+  test("should parse double quote scalar esceping \" character2") {
+    val yaml = s""" "{\\" mnt" """
+
+    val reader = YamlReader(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        Scalar("{\" mnt", ScalarStyle.DoubleQuoted),
         DocumentEnd(),
         StreamEnd
       )
