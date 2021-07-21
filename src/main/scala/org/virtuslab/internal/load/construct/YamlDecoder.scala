@@ -8,24 +8,22 @@ import scala.compiletime._
 import scala.compiletime.summonFrom
 import scala.deriving._
 import scala.util.Try
-import scala.language.implicitConversions
 
 sealed trait YamlDecoder[T]:
   def construct(node: Node): Either[ConstructError, T]
 
 object YamlDecoder:
-  def apply[T](pf: PartialFunction[Node, Either[ConstructError, T]]): YamlDecoder[T] =
+  def apply[T](pf: PartialFunction[Node, Either[ConstructError | Throwable, T]]): YamlDecoder[T] =
     new YamlDecoder[T] {
       override def construct(node: Node): Either[ConstructError, T] =
-        if pf.isDefinedAt(node) then pf(node)
+        if pf.isDefinedAt(node) then
+          pf(node) match {
+            case Left(e: Throwable)      => Left(ConstructError(e.getMessage))
+            case Left(e: ConstructError) => Left(e)
+            case Right(v)                => Right(v)
+          }
         else Left(ConstructError(s"Could't create Construct instance for $node"))
     }
-
-  given throwableToConstructError[T]: Conversion[Either[Throwable, T], Either[ConstructError, T]] =
-    _ match
-      case Left(e) =>
-        Left(ConstructError(e.getMessage))
-      case Right(v) => Right(v)
 
   given YamlDecoder[Int] = YamlDecoder { case ScalarNode(value) =>
     Try(value.toInt).toEither
