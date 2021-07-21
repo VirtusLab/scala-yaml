@@ -1,7 +1,6 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.Node
-import org.virtuslab.yaml.Node.*
+import org.virtuslab.yaml.*
 
 import scala.compiletime._
 import scala.deriving._
