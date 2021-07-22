@@ -1,4 +1,4 @@
-lazy val scala3Version = "3.0.1"
+lazy val scala3Version = "3.0.2-RC1"
 lazy val projectName   = "scala-yaml"
 
 inThisBuild(
@@ -28,6 +28,15 @@ inThisBuild(
 lazy val munit: Seq[Setting[_]] = Seq(
   libraryDependencies ++= Seq(Deps.munit % Test),
   testFrameworks += new TestFramework("munit.Framework")
+)
+
+Compile / doc / scalacOptions ++= Seq(
+  "-d",
+  "generated-docs",
+  "-project",
+  "Scala-yaml",
+  "-siteroot",
+  "docs"
 )
 
 lazy val root = project
