@@ -7,7 +7,7 @@ import token.Token
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayDeque
 
-case class ReaderCtx(
+private final case class ReaderCtx(
     stateStack: ReaderStack,
     tokens: ArrayDeque[Token] = ArrayDeque.empty
 ) {

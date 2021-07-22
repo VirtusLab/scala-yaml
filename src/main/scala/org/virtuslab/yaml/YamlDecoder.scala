@@ -7,6 +7,9 @@ import scala.compiletime._
 import scala.deriving._
 import scala.util.Try
 
+/**
+ * A type class that provides a conversion from a [[Node]] into given type [[T]]
+ */
 trait YamlDecoder[T]:
   def construct(node: Node): Either[ConstructError, T]
 

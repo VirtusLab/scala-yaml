@@ -29,6 +29,8 @@ private enum Production:
   case ParseSequenceEntryOpt
 
 /**
+ * Parser takes a stream of [[Token]]s and produces a series of serialization [[Event]]s. Parsing can fail due to ill-formed input.
+ * 
  * ParserImpl is using following productions:
  * 
  * ParseStreamStart      ::= <ParseDocumentStart> <ParseDocumentStartOpt> ParseStreamEnd
