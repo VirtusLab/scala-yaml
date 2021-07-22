@@ -43,6 +43,8 @@ jobs:
       - name: coursier-setup
         uses: laughedelic/coursier-setup@v1
       - uses: olafurpg/setup-gpg@v3
+      - name: Create docs directory
+        run: mkdir generated-docs
       - name: Release
         run: sbt ci-release
         env:
@@ -61,13 +63,10 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 8
-
       - name: Create docs directory
         run: mkdir generated-docs
-
       - name: Generate Website
         run: sbt doc
-
       - name: Deploy Website
         uses: peaceiris/actions-gh-pages@v3
         with:
