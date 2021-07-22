@@ -11,7 +11,7 @@ trait Reader:
   def peekToken(): Token
   def popToken(): Token
 
-class YamlReader(in: CharSequence) extends Reader {
+private[yaml] class YamlReader(in: CharSequence) extends Reader {
 
   private val ctx    = ReaderCtx.init
   private var indent = 0

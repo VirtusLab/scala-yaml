@@ -9,21 +9,16 @@ import org.virtuslab.yaml.internal.load.reader.YamlReader
 
 import scala.annotation.tailrec
 
+/**
+ * Composing takes a series of serialization events and produces a representation graph. 
+ * It can fail due to any of several reasons e.g. unexpected event.
+ * Returns either [[YamlError]] or [[Node]]
+ */
 trait Composer:
-  def compose(yaml: String): Either[YamlError, Node]
-  def compose(reader: YamlReader): Either[YamlError, Node]
+  def fromEvents(events: List[Event]): Either[YamlError, Node]
 
-object ComposerImpl extends Composer with NodeTransform:
-
+object ComposerImpl extends Composer:
   type ComposeResult[T] = Either[YamlError, (T, List[Event])]
-
-  override def compose(yaml: String): Either[YamlError, Node] = compose(YamlReader(yaml))
-
-  override def compose(reader: YamlReader): Either[YamlError, Node] =
-    for
-      events <- ParserImpl.getEvents(reader)
-      node   <- fromEvents(events)
-    yield node
 
   override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match
     case Nil => Left(ComposerError("No events available"))

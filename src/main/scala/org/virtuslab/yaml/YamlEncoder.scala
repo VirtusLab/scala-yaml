@@ -3,6 +3,9 @@ package org.virtuslab.yaml
 import scala.compiletime._
 import scala.deriving.Mirror
 
+/**
+ * A type class that provides a conversion from a given type [[T]] into [[Node]]
+ */
 trait YamlEncoder[T]:
   def asNode(obj: T): Node
 

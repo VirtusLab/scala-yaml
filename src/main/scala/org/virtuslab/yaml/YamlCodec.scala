@@ -5,6 +5,9 @@ import org.virtuslab.yaml.*
 import scala.compiletime._
 import scala.deriving._
 
+/**
+ * A type class that provides both-way conversion between [[Node]] and [[T]]
+ */
 trait YamlCodec[T] extends YamlDecoder[T] with YamlEncoder[T]
 
 object YamlCodec:
