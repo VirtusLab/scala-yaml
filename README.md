@@ -2,8 +2,6 @@
 
 Scala yaml is written in Scala, dependency-free library that allows to work with the [YAML](https://yaml.org/spec/1.2/spec.html).  
 
-![YAML logo](yaml.png)
-
 The goal of this project is to create simple and convenient library which provides:
 * compile time type safety
 * semiautomatic derivation of codecs instances
