@@ -9,7 +9,7 @@ The goal of this project is to create simple and convenient library which provid
 
 # Usage
 
-```scala
+```scala sc:compile
 import org.virtuslab.yaml.*
 
 case class Address(city: String, zipcode: String) derives YamlCodec
@@ -34,6 +34,16 @@ val encoded  = activity.asYaml
 //  - 5.37
 //  - 4.98
 //  - 5.73
+```
+
+It is important not to omit `derives YamlCodec` in case class definition otherwise compiler will not be able to create codecs and will fail as shown below:
+
+```scala sc:fail
+import org.virtuslab.yaml.*
+
+case class Address(city: String, zipcode: String)
+val address = Address("EŁk", "19-300")
+address.asYaml
 ```
 
 # Supported types 
