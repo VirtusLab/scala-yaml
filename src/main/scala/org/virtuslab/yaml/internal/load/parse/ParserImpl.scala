@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.{ParseError, YamlError}
-import org.virtuslab.yaml.internal.load.reader.Reader
+import org.virtuslab.yaml.internal.load.reader.Tokenizer
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 
@@ -51,7 +51,7 @@ private enum Production:
 object ParserImpl extends Parser:
   import Production.*
 
-  override def getEvents(in: Reader): Either[YamlError, List[Event]] =
+  override def getEvents(in: Tokenizer): Either[YamlError, List[Event]] =
     @tailrec
     def loop(
         acc: List[Event],
@@ -67,7 +67,7 @@ object ParserImpl extends Parser:
 
   type EventResult = Either[YamlError, (Event, List[Production])]
 
-  def getNextEvent(in: Reader, stack: List[Production]): EventResult = {
+  def getNextEvent(in: Tokenizer, stack: List[Production]): EventResult = {
     val token = in.peekToken()
 
     def parseStreamStart() = Right(

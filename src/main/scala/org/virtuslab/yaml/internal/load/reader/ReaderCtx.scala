@@ -1,19 +1,18 @@
 package org.virtuslab.yaml.internal.load.reader
 
 import org.virtuslab.yaml.internal.load.reader
-import org.virtuslab.yaml.internal.load.reader.ReaderStack
-import token.Token
 
 import scala.annotation.tailrec
-import scala.collection.mutable.ArrayDeque
+import scala.collection.mutable
 
-private final case class ReaderCtx(
-    stateStack: ReaderStack,
-    tokens: ArrayDeque[Token] = ArrayDeque.empty
+import token.Token
+case class ReaderCtx(
+    stateStack: mutable.Stack[ReaderState],
+    tokens: mutable.ArrayDeque[Token] = mutable.ArrayDeque.empty
 ) {
 
   def closeOpenedCollectionSequences(indent: Int): Unit =
-    stateStack.peek() match
+    stateStack.headOption match
       case Some(ReaderState.Sequence(i)) if i > indent =>
         stateStack.pop()
         tokens.append(Token.SequenceEnd)
@@ -25,7 +24,7 @@ private final case class ReaderCtx(
       case _ => ()
 
   def closeOpenedCollectionMapping(indent: Int): Unit =
-    stateStack.peek() match
+    stateStack.headOption match
       case Some(ReaderState.Sequence(i)) if i >= indent =>
         stateStack.pop()
         tokens.append(Token.SequenceEnd)
@@ -38,43 +37,50 @@ private final case class ReaderCtx(
 
   def appendState(state: ReaderState): Unit = stateStack.push(state)
 
-  def closeOpenedFlowMapping(): List[Token] =
-    stateStack.pop() match
-      case Some(ReaderState.FlowMapping) => List(Token.FlowMappingEnd)
-      case _                             => Nil
+  def closeOpenedFlowMapping(): List[Token] = stateStack.headOption match
+    case Some(ReaderState.FlowMapping) =>
+      stateStack.pop()
+      List(Token.FlowMappingEnd)
+    case _ =>
+      Nil
 
   def closeOpenedSequence(): List[Token] =
-    stateStack.pop() match
-      case Some(ReaderState.Sequence(_))  => List(Token.SequenceEnd)
-      case Some(ReaderState.FlowSequence) => List(Token.FlowSequenceEnd)
-      case _                              => Nil
+    stateStack.headOption match
+      case Some(ReaderState.Sequence(_)) =>
+        stateStack.pop()
+        List(Token.SequenceEnd)
+      case Some(ReaderState.FlowSequence) =>
+        stateStack.pop()
+        List(Token.FlowSequenceEnd)
+      case _ =>
+        Nil
 
   def shouldParseSequenceEntry(indent: Int): Boolean =
-    stateStack.peek() match
+    stateStack.headOption match
       case Some(ReaderState.Sequence(i)) if i == indent => true
       case _                                            => false
 
   def shouldParseMappingEntry(indent: Int): Boolean =
-    stateStack.peek() match
+    stateStack.headOption match
       case Some(ReaderState.Mapping(i)) if i == indent => true
       case _                                           => false
 
   def isAllowedSpecialCharacter(char: Char): Boolean =
-    stateStack.peek() match
+    stateStack.headOption match
       case Some(ReaderState.FlowMapping) if char == '}'                                  => false
       case Some(ReaderState.FlowMapping) | Some(ReaderState.FlowSequence) if char == ',' => false
       case Some(ReaderState.FlowSequence) if char == ']'                                 => false
       case _                                                                             => true
 
   def isFlowMapping(): Boolean =
-    stateStack.peek() match
+    stateStack.headOption match
       case Some(ReaderState.FlowMapping) => true
       case _                             => false
 
   def closeOpenedScopes(): List[Token] =
     @tailrec
     def loop(acc: List[Token]): List[Token] =
-      stateStack.peek() match
+      stateStack.headOption match
         case Some(ReaderState.Sequence(_)) =>
           stateStack.pop()
           loop(acc :+ Token.SequenceEnd)
@@ -95,4 +101,4 @@ private final case class ReaderCtx(
 }
 
 case object ReaderCtx:
-  def init: ReaderCtx = ReaderCtx(ReaderStack(Nil))
+  def init: ReaderCtx = ReaderCtx(mutable.Stack.empty)

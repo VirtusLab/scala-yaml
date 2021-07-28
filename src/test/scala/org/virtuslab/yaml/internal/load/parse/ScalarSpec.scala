@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.internal.load.parse.Event._
-import org.virtuslab.yaml.internal.load.reader.YamlReader
+import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class ScalarSpec extends munit.FunSuite:
@@ -12,7 +12,7 @@ class ScalarSpec extends munit.FunSuite:
          |iqn: iqn.2001-04.com.example.storage:kube.sys1.xyz
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -37,7 +37,7 @@ class ScalarSpec extends munit.FunSuite:
       s""" mnt\\#dd
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -57,7 +57,7 @@ class ScalarSpec extends munit.FunSuite:
       s""" "/mnt/ iscsipd"
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -77,7 +77,7 @@ class ScalarSpec extends munit.FunSuite:
       s""" '/mnt/ \\iscsipd ''skip'''
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -98,7 +98,7 @@ class ScalarSpec extends munit.FunSuite:
          | multiline.'
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -129,7 +129,7 @@ class ScalarSpec extends munit.FunSuite:
          |    yaml
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -160,7 +160,7 @@ class ScalarSpec extends munit.FunSuite:
          |    # We
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -186,7 +186,7 @@ class ScalarSpec extends munit.FunSuite:
       s""" "{/mnt/ , {}, [] i"
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -204,7 +204,7 @@ class ScalarSpec extends munit.FunSuite:
   test("should parse double quote scalar esceping \" character") {
     val yaml = s""" "{\\" mnt" """
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -228,7 +228,7 @@ class ScalarSpec extends munit.FunSuite:
                   | 
                   |     """.stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
