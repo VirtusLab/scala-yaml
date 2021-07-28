@@ -1,11 +1,14 @@
-# Scala yaml
+# Scala Yaml
 
-Scala yaml is written in Scala, dependency-free library that allows to work with the [YAML](https://yaml.org/spec/1.2/spec.html).  
+Scala Yaml is written in Scala, dependency-free library that allows to work with the [YAML](https://yaml.org/spec/1.2/spec.html).  
 
 The goal of this project is to create simple and convenient library which provides:
 * compile time type safety
 * semiautomatic derivation of codecs instances
 * explicit error handling and helpful error messages
+
+# Help us create our roadmap!
+Take part in our [discussions](https://github.com/VirtusLab/scala-yaml/discussions), post your ideas, vote for feature requests and have a real impact on how our next milestone will look like!
 
 # Usage
 
