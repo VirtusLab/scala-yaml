@@ -1,14 +1,14 @@
 package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.internal.load.parse.Event._
-import org.virtuslab.yaml.internal.load.reader.YamlReader
+import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class MappingSpec extends munit.FunSuite:
 
   test("should parse empty mapping") {
     val yaml   = "emptyDir: {}"
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -32,7 +32,7 @@ class MappingSpec extends munit.FunSuite:
       s"""|data:
          |  "19": xw==
          |""".stripMargin
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -55,7 +55,7 @@ class MappingSpec extends munit.FunSuite:
 
   test("should parse nested empty mapping") {
     val yaml   = "emptyDir: {{{}}}"
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -85,7 +85,7 @@ class MappingSpec extends munit.FunSuite:
       s"""key: 
          |key2: value
          |""".stripMargin
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -110,7 +110,7 @@ class MappingSpec extends munit.FunSuite:
                   |
                   |# Commnet.
                   |period: 10""".stripMargin
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -133,7 +133,7 @@ class MappingSpec extends munit.FunSuite:
   test("should parse yaml with template value") {
 
     val yaml   = "replicas: {{replicas}}"
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -159,7 +159,7 @@ class MappingSpec extends munit.FunSuite:
 
   test("should parse maping of mappings with {...}") {
     val yaml   = "hostPath: {key: value, path: /dev/log}"
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -183,7 +183,7 @@ class MappingSpec extends munit.FunSuite:
   }
   test("should parse maping key value with } brackets") {
     val yaml   = "name: etcd-{{cell}}"
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(

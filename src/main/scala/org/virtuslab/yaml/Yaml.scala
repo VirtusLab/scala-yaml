@@ -4,7 +4,7 @@ import org.virtuslab.yaml.internal.dump.present.PresenterImpl
 import org.virtuslab.yaml.internal.dump.serialize.SerializerImpl
 import org.virtuslab.yaml.internal.load.compose.ComposerImpl
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
-import org.virtuslab.yaml.internal.load.reader.YamlReader
+import org.virtuslab.yaml.internal.load.reader.Scanner
 
 import scala.deriving.Mirror
 
@@ -23,7 +23,7 @@ extension (str: String)
    */
   def as[T](using c: YamlDecoder[T]): Either[YamlError, T] =
     for
-      events <- ParserImpl.getEvents(YamlReader(str))
+      events <- ParserImpl.getEvents(Scanner(str))
       node   <- ComposerImpl.fromEvents(events)
       t      <- c.construct(node)
     yield t

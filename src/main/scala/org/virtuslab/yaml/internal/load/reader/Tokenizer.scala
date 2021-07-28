@@ -7,13 +7,14 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import scala.util.Try
 import scala.annotation.tailrec
 
-trait Reader:
+trait Tokenizer:
   def peekToken(): Token
   def popToken(): Token
 
-private[yaml] class YamlReader(in: CharSequence) extends Reader {
+private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
 
   private val ctx    = ReaderCtx.init
+  private val in     = StringReader(str)
   private var indent = 0
   private var offset = 0
 
@@ -30,26 +31,26 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
   @tailrec
   private def getNextTokens(): List[Token] =
     skipUntilNextToken()
-    peek() match
-      case Some('-') if isDocumentStart  => parseDocumentStart()
-      case Some('-') if isNextWhitespace => parseBlockSequence()
-      case Some('.') if isDocumentEnd    => parseDocumentEnd()
+    in.peek() match
+      case Some('-') if isDocumentStart     => parseDocumentStart()
+      case Some('-') if in.isNextWhitespace => parseBlockSequence()
+      case Some('.') if isDocumentEnd       => parseDocumentEnd()
       case Some('[') =>
-        skipCharacter()
+        in.skipCharacter()
         ctx.appendState(ReaderState.FlowSequence)
         List(FlowSequenceStart)
       case Some(']') =>
-        skipCharacter()
+        in.skipCharacter()
         ctx.closeOpenedSequence()
       case Some('{') =>
-        skipCharacter()
+        in.skipCharacter()
         ctx.appendState(ReaderState.FlowMapping)
         List(FlowMappingStart)
       case Some('}') =>
-        skipCharacter()
+        in.skipCharacter()
         ctx.closeOpenedFlowMapping()
       case Some(',') =>
-        skipCharacter()
+        in.skipCharacter()
         getNextTokens()
       case Some(_) =>
         fetchValue()
@@ -59,7 +60,7 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
   private def parseBlockSequence() =
     ctx.closeOpenedCollectionSequences(indent)
     if (ctx.shouldParseSequenceEntry(indent)) then
-      skipCharacter()
+      in.skipCharacter()
       indent += 1
       getNextTokens()
     else
@@ -71,40 +72,40 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
 
     @tailrec
     def readScalar(): String =
-      peek() match
-        case Some('\\') if peekNext() == Some('"') =>
-          skipN(2)
+      in.peek() match
+        case Some('\\') if in.peekNext() == Some('"') =>
+          in.skipN(2)
           sb.append("\"")
           readScalar()
         case Some('"') | None =>
-          skipCharacter()
+          in.skipCharacter()
           sb.result()
         case Some(char) =>
-          sb.append(read())
+          sb.append(in.read())
           readScalar()
 
-    skipCharacter() // skip double quote
+    in.skipCharacter() // skip double quote
     val scalar = readScalar()
     Scalar(scalar, ScalarStyle.DoubleQuoted)
 
   private def parseBlockHeader(): Unit =
-    while (peek() == Some(' '))
-      skipCharacter()
+    while (in.peek() == Some(' '))
+      in.skipCharacter()
 
-    if peek() == Some('\n') then skipCharacter()
+    if in.peek() == Some('\n') then in.skipCharacter()
 
   private def parseLiteral(): Token =
     val sb = new StringBuilder
 
-    skipCharacter() // skip |
+    in.skipCharacter() // skip |
     parseBlockHeader()
 
     val foldedIndent = indent
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
-      while (peek() == Some('\n')) {
-        skipCharacter()
+      while (in.peek() == Some('\n')) {
+        in.skipCharacter()
         sb.append("\\n")
       }
 
@@ -112,14 +113,14 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
 
     @tailrec
     def readLiteral(): String =
-      peek() match
+      in.peek() match
         case Some('\n') =>
-          sb.append(escapeSpecialCharacter(read()))
+          sb.append(escapeSpecialCharacter(in.read()))
           chompedEmptyLines()
           if (indent != foldedIndent) then sb.result()
           else readLiteral()
         case Some(char) =>
-          sb.append(escapeSpecialCharacter(read()))
+          sb.append(escapeSpecialCharacter(in.read()))
           readLiteral()
         case None => sb.result()
 
@@ -135,10 +136,10 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
 
-    skipCharacter() // skip >
-    peek() match
+    in.skipCharacter() // skip >
+    in.peek() match
       case Some('-') =>
-        skipCharacter()
+        in.skipCharacter()
       case _ => ()
 
     val foldedIndent = indent
@@ -146,24 +147,24 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
-      while (peekNext() == Some('\n')) {
-        skipCharacter()
+      while (in.peekNext() == Some('\n')) {
+        in.skipCharacter()
         sb.append("\\n")
       }
 
-      skipCharacter()
+      in.skipCharacter()
       skipUntilNextIndent(foldedIndent)
 
     @tailrec
     def readFolded(): String =
-      peek() match
+      in.peek() match
         case Some('\n') | None =>
-          if (peekNext() == Some('\n') && peek(2) != None) {
+          if (in.peekNext() == Some('\n') && in.peek(2) != None) {
 
             chompedEmptyLines()
             readFolded()
           } else {
-            skipCharacter()
+            in.skipCharacter()
             skipUntilNextIndent(foldedIndent)
             if (indent != foldedIndent) then sb.result()
             else
@@ -171,7 +172,7 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
               readFolded()
           }
         case Some(char) =>
-          sb.append(escapeSpecialCharacter(read()))
+          sb.append(escapeSpecialCharacter(in.read()))
           readFolded()
 
     val scalar = readFolded()
@@ -182,53 +183,54 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
     val singleQuoteIndent = indent
     @tailrec
     def readScalar(): String =
-      peek() match
-        case Some('\'') if peekNext() == Some('\'') =>
-          skipN(2)
+      in.peek() match
+        case Some('\'') if in.peekNext() == Some('\'') =>
+          in.skipN(2)
           sb.append('\'')
           readScalar()
         case Some('\n') =>
-          skipCharacter()
+          in.skipCharacter()
           skipUntilNextIndent(singleQuoteIndent)
           readScalar()
         case Some('\'') | None =>
-          skipCharacter()
+          in.skipCharacter()
           sb.result()
         case Some(char) =>
-          sb.append(escapeSpecialCharacter(read()))
+          sb.append(escapeSpecialCharacter(in.read()))
           readScalar()
 
-    skipCharacter() // skip single quote
+    in.skipCharacter() // skip single quote
     val scalar = readScalar()
     Scalar(scalar, ScalarStyle.SingleQuoted)
   }
 
   private def isDocumentStart =
-    peekN(3) == "---" && peek(3).exists(_.isWhitespace)
+    in.peekN(3) == "---" && in.peek(3).exists(_.isWhitespace)
 
   private def parseDocumentStart(): List[Token] =
-    skipN(4)
+    in.skipN(4)
     ctx.parseDocumentStart()
 
   private def isDocumentEnd =
-    peekN(3) == "..." && peek(3).exists(_.isWhitespace)
+    in.peekN(3) == "..." && in.peek(3).exists(_.isWhitespace)
 
   private def parseDocumentEnd(): List[Token] =
-    skipN(4)
+    in.skipN(4)
     ctx.parseDocumentEnd()
 
   private def parseScalarValue(): Token = {
     val sb = new StringBuilder
     def readScalar(): String =
-      peek() match
+      in.peek() match
         case Some(':')
-            if peekNext() == Some(' ') || peekNext() == Some('\n') || peekNext() == Some('\r') =>
+            if in.peekNext() == Some(' ') || in.peekNext() == Some('\n') || in
+              .peekNext() == Some('\r') =>
           sb.result()
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
-        case Some(' ') if peekNext() == Some('#')               => sb.result()
+        case Some(' ') if in.peekNext() == Some('#')            => sb.result()
         case Some('\n') | Some('\r') | None                     => sb.result()
         case Some(char) =>
-          sb.append(escapeSpecialCharacter(read()))
+          sb.append(escapeSpecialCharacter(in.read()))
           readScalar()
 
     Scalar(readScalar().trim, ScalarStyle.Plain)
@@ -238,17 +240,17 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
 
     skipUntilNextToken()
 
-    val scalar: Token = peek() match
+    val scalar: Token = in.peek() match
       case Some('"')  => parseDoubleQuoteValue()
       case Some('\'') => parseSingleQuoteValue()
       case Some('>')  => parseFoldedValue()
       case Some('|')  => parseLiteral()
       case _          => parseScalarValue()
 
-    peek() match
+    in.peek() match
       case Some(':') =>
         ctx.closeOpenedCollectionMapping(indent)
-        skipCharacter()
+        in.skipCharacter()
 
         if (ctx.shouldParseMappingEntry(indent)) {
           List(Token.Key, scalar, Token.Value)
@@ -260,41 +262,27 @@ private[yaml] class YamlReader(in: CharSequence) extends Reader {
         }
       case _ => List(scalar)
 
-  inline private def peek(n: Int = 0): Option[Char] = Try(in.charAt(offset + n)).toOption
-  private def peekNext(): Option[Char]              = peek(1)
-  private def peekN(n: Int): String                 = (0 until n).map(peek(_)).flatten.mkString("")
-  private def isNextWhitespace                      = peekNext().exists(_.isWhitespace)
-
-  private def skipCharacter(): Unit = offset += 1
-  private def revert(n: Int): Unit  = offset -= n
-  private def skipN(n: Int): Unit   = (1 to n).foreach(_ => skipCharacter())
-
-  private def skipComment(): Unit =
-    while !(peek() == Some('\n') || peek() == Some('\r')) do skipCharacter()
-
-  private def read(): Char =
-    offset += 1
-    in.charAt(offset - 1)
-
   def skipUntilNextToken(): Unit =
-    while (peek() == Some(' ')) {
+    while (in.peek() == Some(' ')) {
       indent += 1
-      skipCharacter()
+      in.skipCharacter()
     }
 
-    if peek() == Some('#') then skipComment()
+    if in.peek() == Some('#') then skipComment()
 
-    if (peek() == Some('\n') || peek() == Some('\r')) then {
-      skipCharacter()
+    if (in.peek() == Some('\n') || in.peek() == Some('\r')) then {
+      in.skipCharacter()
       indent = 0
       skipUntilNextToken()
     }
 
   def skipUntilNextIndent(indentBlock: Int): Unit =
     indent = 0
-    while (peek() == Some(' ') && indent < indentBlock) {
+    while (in.peek() == Some(' ') && indent < indentBlock) {
       indent += 1
-      skipCharacter()
+      in.skipCharacter()
     }
 
+  private def skipComment(): Unit =
+    while !(in.peek() == Some('\n') || in.peek() == Some('\r')) do in.skipCharacter()
 }

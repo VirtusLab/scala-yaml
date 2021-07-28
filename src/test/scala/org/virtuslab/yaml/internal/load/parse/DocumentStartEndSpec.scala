@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.internal.load.parse.Event._
-import org.virtuslab.yaml.internal.load.reader.YamlReader
+import org.virtuslab.yaml.internal.load.reader.Scanner
 
 class DocumentStartEndSpec extends munit.FunSuite:
 
@@ -11,7 +11,7 @@ class DocumentStartEndSpec extends munit.FunSuite:
           |k1: v1
           |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -35,7 +35,7 @@ class DocumentStartEndSpec extends munit.FunSuite:
           |...
           |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -58,7 +58,7 @@ class DocumentStartEndSpec extends munit.FunSuite:
       s"""|k1: v1
           |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -88,7 +88,7 @@ class DocumentStartEndSpec extends munit.FunSuite:
           |...
           |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -126,7 +126,7 @@ class DocumentStartEndSpec extends munit.FunSuite:
           |k2: v2
           |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(

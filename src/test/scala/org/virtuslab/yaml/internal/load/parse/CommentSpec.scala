@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.internal.load.parse.Event._
-import org.virtuslab.yaml.internal.load.reader.YamlReader
+import org.virtuslab.yaml.internal.load.reader.Scanner
 
 class CommentSpec extends munit.FunSuite:
 
@@ -12,7 +12,7 @@ class CommentSpec extends munit.FunSuite:
           |apiVersion: apps/v1  app # comment
           |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -35,7 +35,7 @@ class CommentSpec extends munit.FunSuite:
       s"""|#Comment.
           |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -58,7 +58,7 @@ class CommentSpec extends munit.FunSuite:
           |  # type: LoadBalancer
           |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(

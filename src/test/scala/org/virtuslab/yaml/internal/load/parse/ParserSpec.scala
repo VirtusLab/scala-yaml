@@ -2,7 +2,7 @@ package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.internal.load.parse._
 import org.virtuslab.yaml.internal.load.parse.Event._
-import org.virtuslab.yaml.internal.load.reader.YamlReader
+import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class ParserSpec extends munit.FunSuite:
@@ -12,7 +12,7 @@ class ParserSpec extends munit.FunSuite:
                   |- Sammy Sosa
                   |- Ken Griffey""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -38,7 +38,7 @@ class ParserSpec extends munit.FunSuite:
          |avg: 0.278
          |rbi: 147""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -72,7 +72,7 @@ class ParserSpec extends munit.FunSuite:
                   |  avg:  0.288
                   |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -116,7 +116,7 @@ class ParserSpec extends munit.FunSuite:
                   |  - Atlanta Braves
                   |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -154,7 +154,7 @@ class ParserSpec extends munit.FunSuite:
                   |  - name: iscsipd-rw
                   |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -210,7 +210,7 @@ class ParserSpec extends munit.FunSuite:
                   |      readOnly: true
                   |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(

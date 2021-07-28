@@ -2,6 +2,8 @@ package org.virtuslab.yaml.internal.load.reader.token
 
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
+private final case class Position(index: Int, line: Int, column: Int)
+
 sealed trait Token
 
 case object Token:

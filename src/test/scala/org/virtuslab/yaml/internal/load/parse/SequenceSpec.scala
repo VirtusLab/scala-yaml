@@ -1,6 +1,6 @@
 package org.virtuslab.yaml.internal.load.parse
 
-import org.virtuslab.yaml.internal.load.reader.YamlReader
+import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
@@ -13,7 +13,7 @@ class SequenceSpec extends munit.FunSuite:
          |    - -c
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -37,7 +37,7 @@ class SequenceSpec extends munit.FunSuite:
   test("should parse empty flow sequence") {
     val yaml = "seq: []"
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -66,7 +66,7 @@ class SequenceSpec extends munit.FunSuite:
          |  - v4
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
@@ -97,7 +97,7 @@ class SequenceSpec extends munit.FunSuite:
          |portalsDoubleQouta: ["10.0.2.16:3260", "10.0.2.17:3260"]
          |""".stripMargin
 
-    val reader = YamlReader(yaml)
+    val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
