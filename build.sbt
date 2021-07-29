@@ -49,12 +49,12 @@ Compile / doc := {
   out
 }
 
-lazy val root = project
-  .in(file("."))
+lazy val scalaYaml = crossProject(JSPlatform, JVMPlatform)
+  .in(file("yaml"))
   .settings(
-    name              := projectName,
-    scalaVersion      := scala3Version,
-    semanticdbVersion := scalafixSemanticdb.revision,
-    semanticdbEnabled := true
+    name               := projectName,
+    scalaVersion       := scala3Version,
+    semanticdbVersion  := scalafixSemanticdb.revision,
+    semanticdbEnabled  := true,
   )
   .settings(munit)
