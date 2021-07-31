@@ -11,7 +11,7 @@ trait Reader:
   def peekNext(): Option[Char]
   def peekN(n: Int): String
   def isNextWhitespace: Boolean
-  def isNextNewline: Boolean
+  def isNewline: Boolean
   def skipCharacter(): Unit
   def skipN(n: Int): Unit
 
@@ -34,16 +34,18 @@ private[yaml] class StringReader(in: CharSequence) extends Reader:
   override def peekNext(): Option[Char] = peek(1)
   override def peekN(n: Int): String    = (0 until n).map(peek(_)).flatten.mkString("")
   override def isNextWhitespace         = peekNext().exists(_.isWhitespace)
-  override def isNextNewline            = peekNext().exists(c => c == '\n' || c == '\r')
+  override def isNewline                = peek().exists(c => c == '\n' || isWindowsNewline(c))
+
+  private def isWindowsNewline(c: Char) = c == '\r' && peekNext().exists(_ == '\n')
 
   private inline def nextLine() = { column = 1; line += 1 }
   private def skipAndMantainPosition() =
-    val next = in.charAt(offset)
-    if next == '\r' then
+    val char = in.charAt(offset)
+    if isWindowsNewline(char) then
       offset += 2
       nextLine()
       2
-    else if next == '\n' then
+    else if char == '\n' then
       offset += 1
       nextLine()
       1
