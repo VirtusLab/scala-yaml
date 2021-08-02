@@ -30,31 +30,39 @@ lazy val munit: Seq[Setting[_]] = Seq(
   testFrameworks += new TestFramework("munit.Framework")
 )
 
-Compile / doc / scalacOptions ++= Seq(
-  "-project", "Scala-yaml",
-  "-siteroot", "docs",
-  "-project-version", version.value,
-  "-project-logo", "docs/logo.svg",
-  "-social-links:" +
-    "github::https://github.com/VirtusLab/scala-yaml," +
-    "twitter::https://twitter.com/VirtusLab",
-  "-project-footer", s"Copyright (c) 2021, VirtusLab",
-  "-source-links:github://VirtusLab/scala-yaml",
-  "-revision", "master"
-  )
-
-Compile / doc := {
-  val out = (Compile / doc).value
-  IO.copyDirectory((Compile / doc / target).value, file("generated-docs"))
-  out
-}
+lazy val docsSettings = Seq(
+  Compile / doc / scalacOptions ++= Seq(
+    "-project",
+    "Scala-yaml",
+    "-siteroot",
+    "docs",
+    "-project-version",
+    version.value,
+    "-project-logo",
+    "docs/logo.svg",
+    "-social-links:" +
+      "github::https://github.com/VirtusLab/scala-yaml," +
+      "twitter::https://twitter.com/VirtusLab",
+    "-project-footer",
+    s"Copyright (c) 2021, VirtusLab",
+    "-source-links:github://VirtusLab/scala-yaml",
+    "-revision",
+    "master"
+  ),
+  Compile / doc := {
+    val out = (Compile / doc).value
+    IO.copyDirectory((Compile / doc / target).value, file("generated-docs"))
+    out
+  }
+)
 
 lazy val scalaYaml = crossProject(JSPlatform, JVMPlatform)
   .in(file("yaml"))
   .settings(
-    name               := projectName,
-    scalaVersion       := scala3Version,
-    semanticdbVersion  := scalafixSemanticdb.revision,
-    semanticdbEnabled  := true,
+    name              := projectName,
+    scalaVersion      := scala3Version,
+    semanticdbVersion := scalafixSemanticdb.revision,
+    semanticdbEnabled := true
   )
+  .settings(docsSettings)
   .settings(munit)
