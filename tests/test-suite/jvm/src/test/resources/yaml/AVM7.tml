@@ -1,0 +1,11 @@
+=== Empty Stream
+--- from: https://github.com/ingydotnet/yaml-pegex-pm/blob/master/test/misc.tml
+--- tags: edge
+
+--- in-yaml
+
+--- in-json
+
+--- test-event
++STR
+-STR
