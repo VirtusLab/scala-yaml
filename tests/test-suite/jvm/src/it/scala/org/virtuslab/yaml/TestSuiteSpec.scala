@@ -20,8 +20,8 @@ class TestSuiteSpec extends munit.FunSuite {
 
   test("should parse only one yaml from test suite path".ignore) {
 
-    val path: os.Path = os.Path(???)
-    val testMl = TestMlEntry.from(os.read(path))
+    val path: os.Path = ???
+    val testMl        = TestMlEntry.from(os.read(path))
 
     val reader = Scanner(testMl.inYaml)
     val events = ParserImpl.getEvents(reader) match {
@@ -47,7 +47,6 @@ class TestSuiteSpec extends munit.FunSuite {
           val testMl = TestMlEntry.from(os.read(path))
 
           val reader = Scanner(testMl.inYaml)
-          println(path)
           val events =
             Try(ParserImpl.getEvents(reader).getOrElse(sys.error("Parsing yaml to event"))) match {
               case Success(v) => v
