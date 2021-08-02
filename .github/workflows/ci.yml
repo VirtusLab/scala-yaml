@@ -39,7 +39,7 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-      - uses: coursier/cache-action@v6.2
+      - uses: coursier/cache-action@v6.3
       - name: coursier-setup
         uses: laughedelic/coursier-setup@v1
       - uses: olafurpg/setup-gpg@v3
