@@ -1,27 +1,19 @@
 name-template: 'v$RESOLVED_VERSION 🌈'
 tag-template: 'v$RESOLVED_VERSION'
+include-labels:
+  - 'feature'
+  - 'bug'
+  - 'documentation'
 categories:
   - title: '🚀 Features'
     labels:
-      - 'enhancement'
+      - 'feature'
   - title: '🐛 Bug Fixes'
     labels:
       - 'bug'
-autolabeler:
-  - label: 'documentation'
-    files:
-      - '*.md'
-      - '*.svg'
-  - label: 'bug'
-    branch:
-      - '/bugfix\/.+/'
-    title:
-      - '/feature\/.+/'
-  - label: 'feature'
-    branch:
-      - '/feature\/.+/'
-    title:
-      - 'feature|add(ed)?.+'
+  - title: '📖 Docs'
+    labels:
+      - 'documentation'
 change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
 change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
 version-resolver:
@@ -44,6 +36,6 @@ template: |
        ____) | (_| (_| | | (_| |    | | (_| | | | | | | |
       |_____/ \___\__,_|_|\__,_|    |_|\__,_|_| |_| |_|_|
 
-                        WHAT'S NEW
   ```
+  # What's Changed
   $CHANGES
