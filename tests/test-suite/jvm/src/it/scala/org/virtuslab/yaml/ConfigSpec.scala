@@ -1,26 +1,23 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.*
+import org.virtuslab.yaml
 import org.virtuslab.yaml.internal.load.parse.Event._
-import org.virtuslab.yaml.internal.load.parse.Event
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle._
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
-import org.virtuslab.yaml.internal.load.reader.token.Token._
-import org.virtuslab.yaml.internal.load.parse.ParserImpl
+import org.virtuslab.yaml.internal.load.parse.{Event, ParserImpl}
 import org.virtuslab.yaml.internal.load.reader.Scanner
-import os._
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle._
+import org.virtuslab.yaml.internal.load.reader.token.Token._
+import org.virtuslab.yaml.utils.ConfigUtils
 
 import java.io.File
-import scala.util.Success
-import scala.util.Failure
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 class ConfigSpec extends munit.FunSuite {
 
   val libYamlPath              = System.getenv("LIB_YAML_PATH")
-  val yamlDirPath              = getClass.getResource("/yaml")
+  val yamlDirPath              = getClass.getResource("/yaml/configs")
   val yamlDir                  = new File(yamlDirPath.getPath)
-  val yamlPaths: List[os.Path] = yamlDir.listFiles().map(Path(_)).toList
+  val yamlPaths: List[os.Path] = yamlDir.listFiles().map(os.Path(_)).toList
 
   test("should parse only one yaml from path".ignore) {
 

@@ -1,4 +1,4 @@
-package org.virtuslab.yaml
+package org.virtuslab.yaml.utils
 
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle

@@ -10,6 +10,18 @@ The goal of this project is to create simple and convenient library which provid
 # Help us create our roadmap!
 Take part in our [discussions](https://github.com/VirtusLab/scala-yaml/discussions), post your ideas, vote for feature requests and have a real impact on how our next milestone will look like!
 
+# Run unit tests
+
+```
+$ sbt test
+```
+
+# Run integration tests
+
+```
+$ sbt IntegrationTest/test
+```
+
 # Usage
 
 ```scala sc:compile
