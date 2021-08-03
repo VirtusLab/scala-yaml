@@ -1,4 +1,4 @@
-package org.virtuslab.yaml.utils
+package org.virtuslab.yaml
 
 case class TestMlEntry(
     description: String,

@@ -1,9 +1,9 @@
-package org.virtuslab.yaml.utils
+package org.virtuslab.yaml
 
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-object ConfigUtils {
+object TestRunnerUtils {
 
   def convertEventToYamlTestSuiteFormat(event: List[Event]): String = {
     event
