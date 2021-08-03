@@ -1,39 +1,42 @@
 #!/bin/bash
 
-declare -a repositories=("https://github.com/kubernetes/examples" "https://github.com/kubernetes/minikube" "https://github.com/kubernetes/kubernetes")
+declare -a repositories=(
+  "https://github.com/kubernetes/examples"
+  "https://github.com/kubernetes/minikube"
+  "https://github.com/kubernetes/kubernetes"
+  "https://github.com/openshift/source-to-image"
+  "https://github.com/openshift/origin"
+  )
 
-mkdir repositories
-cd repositories
+gitDirectory="repositories"
+mkdir "$gitDirectory"
 
-## now loop through the above array
+
+# Download git repositories
 for i in "${repositories[@]}"
 do
-   git clone "$i"
    exit_code=$?
    repo_name="${i##*/}"
-   echo $repo_name
+   git clone "$i" "$gitDirectory/$repo_name"
 
    if [ $exit_code -eq 128 ]; then
-     cd $repo_name
-     git pull
-     cd ..
-   else
-     git clone "$i"
+     # If repository is already downloaded, then only run git pull to update
+     git pull "$gitDirectory/$repo_name"
    fi
 
-   # or do whatever with individual element of the array
 done
 
-cd ..
 find ./repositories -name '*.yaml' -exec cp -prv '{}' './test-suite/jvm/src/it/resources/yaml/configs/' ';'
 
-LIB_YAML_PATH=""
+LIB_YAML_PATH="" # Set the path to libyaml
 
+# In downloaded repositories contains some invalid yaml, below instructions can remove this yaml
 for f in ./test-suite/jvm/src/it/resources/yaml/configs/*.yaml; do
     cat $f | $LIB_YAML_PATH >/dev/null
 
-    ret=$?
-    if [ $ret -ne 0 ]; then
+    # if libyaml return error exit code, these means, that yaml is invalid
+    exitCode=$?
+    if [ $exitCode -ne 0 ]; then
       rm $f
     fi
 
