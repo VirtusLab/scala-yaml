@@ -242,7 +242,6 @@ class ScalarSpec extends munit.FunSuite:
     assertEquals(events, expectedEvents)
   }
 
-
   test("should parse literal scalar with multiline") {
     val yaml = s"""key:
                   |  - content: |

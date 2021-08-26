@@ -108,7 +108,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
   private def parseBlockHeader(): Unit =
     while (in.peek() == Some(' '))
       indent += 1
-      in.skipCharacter()
+    in.skipCharacter()
 
     if in.peek() == Some('\n') then
       in.skipCharacter()
@@ -196,14 +196,14 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
           sb.append(escapeSpecialCharacter(in.read()))
           readFolded()
 
-    val scalar = readFolded()
+    val scalar        = readFolded()
     val trimmedScalar = removeBlankLinesAtEnd(scalar)
     Scalar(trimmedScalar, ScalarStyle.Folded)
 
-  private def removeBlankLinesAtEnd(scalar: String): String = 
+  private def removeBlankLinesAtEnd(scalar: String): String =
     scalar.takeRight(4) match
       case s"""\n\n""" => removeBlankLinesAtEnd(scalar.dropRight(2))
-      case _ => scalar
+      case _           => scalar
 
   private def parseSingleQuoteValue(): Token = {
     val sb                = new StringBuilder
