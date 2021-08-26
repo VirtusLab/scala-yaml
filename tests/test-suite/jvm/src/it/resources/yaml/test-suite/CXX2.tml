@@ -1,0 +1,12 @@
+=== Mapping with anchor on document start line
+--- from: @perlpunk
+--- tags: anchor error header mapping
+
+--- in-yaml(<)
+    --- &anchor a: b
+
+--- error
+
+--- test-event
++STR
++DOC ---

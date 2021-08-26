@@ -1,4 +1,4 @@
-lazy val scala3Version = "3.0.2-RC1"
+lazy val scala3Version = "3.0.0"
 lazy val projectName   = "scala-yaml"
 
 inThisBuild(
@@ -56,7 +56,7 @@ lazy val docsSettings = Seq(
   }
 )
 
-lazy val scalaYaml = crossProject(JSPlatform, JVMPlatform)
+lazy val scalaYamlCore = crossProject(JSPlatform, JVMPlatform)
   .in(file("yaml"))
   .settings(
     name              := projectName,
@@ -66,3 +66,25 @@ lazy val scalaYaml = crossProject(JSPlatform, JVMPlatform)
   )
   .settings(docsSettings)
   .settings(munit)
+
+lazy val scalaYamlTestCore = crossProject(JSPlatform, JVMPlatform)
+  .in(file("tests/test-core"))
+  .settings(
+    name         := "scala-yaml-test-core",
+    scalaVersion := scala3Version,
+    libraryDependencies ++= Seq(Deps.osLib, Deps.munit)
+  )
+  .settings(munit)
+  .dependsOn(scalaYamlCore)
+
+lazy val scalaYamlTestSuite = crossProject(JSPlatform, JVMPlatform)
+  .in(file("tests/test-suite"))
+  .configs(IntegrationTest)
+  .settings(
+    Defaults.itSettings,
+    name         := "scala-yaml-test-suite",
+    scalaVersion := scala3Version,
+    libraryDependencies ++= Seq(Deps.osLib, Deps.munit)
+  )
+  .settings(munit)
+  .dependsOn(scalaYamlTestCore)
