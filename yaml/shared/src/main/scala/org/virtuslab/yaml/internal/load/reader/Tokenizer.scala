@@ -105,11 +105,19 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     val scalar = readScalar()
     Scalar(scalar, ScalarStyle.DoubleQuoted)
 
+  /**
+   * This header is followed by a non-content line break with an optional comment.
+   */
   private def parseBlockHeader(): Unit =
-    while (in.peek() == Some(' '))
+    while (in.peek() == Some(' ')) {
+      indent += 1
       in.skipCharacter()
+    }
 
-    if in.peek() == Some('\n') then in.skipCharacter()
+    if in.isNewline then
+      in.skipCharacter()
+      indent = 0
+      parseBlockHeader()
 
   private def parseLiteral(): Token =
     val sb = new StringBuilder
@@ -123,7 +131,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     def chompedEmptyLines() =
       while (in.peek() == Some('\n')) {
         in.skipCharacter()
-        sb.append("\\n")
+        sb.append("\n")
       }
 
       skipUntilNextIndent(foldedIndent)
@@ -132,23 +140,17 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     def readLiteral(): String =
       in.peek() match
         case Some('\n') =>
-          sb.append(escapeSpecialCharacter(in.read()))
+          sb.append(in.read())
           chompedEmptyLines()
           if (indent != foldedIndent) then sb.result()
           else readLiteral()
         case Some(char) =>
-          sb.append(escapeSpecialCharacter(in.read()))
+          sb.append(in.read())
           readLiteral()
         case None => sb.result()
 
     val scalar = readLiteral()
     Scalar(scalar, ScalarStyle.Literal)
-
-  private def escapeSpecialCharacter(char: Char): String =
-    char match
-      case '\\'  => "\\\\"
-      case '\n'  => "\\n"
-      case other => other.toString
 
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
@@ -159,14 +161,14 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
         in.skipCharacter()
       case _ => ()
 
-    val foldedIndent = indent
     parseBlockHeader()
+    val foldedIndent = indent
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
       while (in.peekNext() == Some('\n')) {
         in.skipCharacter()
-        sb.append("\\n")
+        sb.append("\n")
       }
 
       in.skipCharacter()
@@ -175,9 +177,8 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     @tailrec
     def readFolded(): String =
       in.peek() match
-        case Some('\n') | None =>
+        case _ if in.isNewline =>
           if (in.peekNext() == Some('\n') && in.peek(2) != None) {
-
             chompedEmptyLines()
             readFolded()
           } else {
@@ -189,11 +190,19 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
               readFolded()
           }
         case Some(char) =>
-          sb.append(escapeSpecialCharacter(in.read()))
+          sb.append(in.read())
           readFolded()
+        case None => sb.result()
 
-    val scalar = readFolded()
-    Scalar(scalar, ScalarStyle.Folded)
+    val scalar        = readFolded()
+    val trimmedScalar = removeBlankLinesAtEnd(scalar)
+    Scalar(trimmedScalar, ScalarStyle.Folded)
+
+  private def removeBlankLinesAtEnd(scalar: String): String =
+    scalar.takeRight(2) match
+      case "\n\n" =>
+        removeBlankLinesAtEnd(scalar.dropRight(1))
+      case _ => scalar
 
   private def parseSingleQuoteValue(): Token = {
     val sb                = new StringBuilder
@@ -213,7 +222,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
           in.skipCharacter()
           sb.result()
         case Some(char) =>
-          sb.append(escapeSpecialCharacter(in.read()))
+          sb.append(in.read())
           readScalar()
 
     in.skipCharacter() // skip single quote
@@ -233,7 +242,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
         case Some(' ') if in.peekNext() == Some('#')            => sb.result()
         case Some('\n') | Some('\r') | None                     => sb.result()
         case Some(char) =>
-          sb.append(escapeSpecialCharacter(in.read()))
+          sb.append(in.read())
           readScalar()
 
     Scalar(readScalar().trim, ScalarStyle.Plain)
