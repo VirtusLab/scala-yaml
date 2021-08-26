@@ -107,9 +107,13 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
 
   private def parseBlockHeader(): Unit =
     while (in.peek() == Some(' '))
+      indent += 1
       in.skipCharacter()
 
-    if in.peek() == Some('\n') then in.skipCharacter()
+    if in.peek() == Some('\n') then
+      in.skipCharacter()
+      indent = 0
+      parseBlockHeader()
 
   private def parseLiteral(): Token =
     val sb = new StringBuilder
@@ -159,8 +163,8 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
         in.skipCharacter()
       case _ => ()
 
-    val foldedIndent = indent
     parseBlockHeader()
+    val foldedIndent = indent
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
@@ -175,9 +179,8 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     @tailrec
     def readFolded(): String =
       in.peek() match
-        case Some('\n') | None =>
+        case Some('\n') =>
           if (in.peekNext() == Some('\n') && in.peek(2) != None) {
-
             chompedEmptyLines()
             readFolded()
           } else {
@@ -188,12 +191,19 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
               sb.append(" ")
               readFolded()
           }
+        case None => sb.result()
         case Some(char) =>
           sb.append(escapeSpecialCharacter(in.read()))
           readFolded()
 
     val scalar = readFolded()
-    Scalar(scalar, ScalarStyle.Folded)
+    val trimmedScalar = removeBlankLinesAtEnd(scalar)
+    Scalar(trimmedScalar, ScalarStyle.Folded)
+
+  private def removeBlankLinesAtEnd(scalar: String): String = 
+    scalar.takeRight(4) match
+      case s"""\n\n""" => removeBlankLinesAtEnd(scalar.dropRight(2))
+      case _ => scalar
 
   private def parseSingleQuoteValue(): Token = {
     val sb                = new StringBuilder

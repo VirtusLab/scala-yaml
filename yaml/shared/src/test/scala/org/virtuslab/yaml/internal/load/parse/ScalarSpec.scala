@@ -219,6 +219,30 @@ class ScalarSpec extends munit.FunSuite:
     assertEquals(events, expectedEvents)
   }
 
+  test("should should skip blank lines at the end in folded value") {
+    val yaml = s""">
+                  | folded
+                  | text
+                  |
+                  |
+                  |""".stripMargin
+
+    val reader = Scanner(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        Scalar("folded text\\n", ScalarStyle.Folded),
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+
   test("should parse literal scalar with multiline") {
     val yaml = s"""key:
                   |  - content: |
