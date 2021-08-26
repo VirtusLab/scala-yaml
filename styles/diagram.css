@@ -1,27 +1,22 @@
 .node {
-  stroke: var(--inactive-bg);
+  stroke: #333;
   stroke-width: 2.5px;
-  fill: var(--inactive-bg);
+  fill: white;
 }
 
 .edgeLabel {
-  fill: var(--inactive-fg);
+  fill: white;
 }
 
 .edgePath {
-  stroke: var(--inactive-fg);
+  stroke: #333;
   stroke-width: 1.5px;
-  fill: var(--inactive-fg);
+  fill: #333;
 }
 
 #graph {
   width: 100%;
   height: 400px;
-}
-
-.diagram-class {
-  background-color: var(--code-bg);
-  margin-bottom: 16px;
 }
 
 .diagram-class a {
@@ -44,9 +39,9 @@
   margin: 4px 2px;
   transition-duration: 0.4s;
   cursor: pointer;
-  background-color: var(--body-bg);
-  color: var(--body-fg);
-  border: 2px solid var(--body-fg);
+  background-color: white;
+  color: black;
+  border: 2px solid #003048;
   position: absolute;
   top: 0;
   left: 0;
@@ -54,6 +49,6 @@
 }
 
 .btn:hover {
-  background-color: var(--active-bg);
-  color: var(--active-fg);
+  background-color: #003048;
+  color: white;
 }
