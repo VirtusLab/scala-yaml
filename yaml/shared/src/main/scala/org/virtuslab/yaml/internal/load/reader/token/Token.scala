@@ -24,7 +24,20 @@ case object Token:
 
   final case class Scalar(value: String, scalarStyle: ScalarStyle) extends Token
   case object Scalar:
+
+    def apply(value: String, scalarStyle: ScalarStyle): Scalar =
+      new Scalar(escapeSpecialCharacter(value), scalarStyle)
+
     def from(value: String): Scalar = value match
       case s""""$v"""" => Scalar(v, ScalarStyle.DoubleQuoted)
       case s"'$v'"     => Scalar(v, ScalarStyle.SingleQuoted)
       case v           => Scalar(v, ScalarStyle.Plain)
+
+    private def escapeSpecialCharacter(scalar: String): String =
+      scalar.flatMap { char =>
+        char match {
+          case '\\'  => "\\\\"
+          case '\n'  => "\\n"
+          case other => other.toString
+        }
+      }
