@@ -105,13 +105,16 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     val scalar = readScalar()
     Scalar(scalar, ScalarStyle.DoubleQuoted)
 
+  /**
+   * This header is followed by a non-content line break with an optional comment.
+   */
   private def parseBlockHeader(): Unit =
     while (in.peek() == Some(' ')) {
       indent += 1
       in.skipCharacter()
     }
 
-    if in.peek() == Some('\n') then
+    if in.isNewline then
       in.skipCharacter()
       indent = 0
       parseBlockHeader()
@@ -174,7 +177,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     @tailrec
     def readFolded(): String =
       in.peek() match
-        case Some('\n') =>
+        case _ if in.isNewline =>
           if (in.peekNext() == Some('\n') && in.peek(2) != None) {
             chompedEmptyLines()
             readFolded()
@@ -186,10 +189,10 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
               sb.append(" ")
               readFolded()
           }
-        case None => sb.result()
         case Some(char) =>
           sb.append(in.read())
           readFolded()
+        case None => sb.result()
 
     val scalar        = readFolded()
     val trimmedScalar = removeBlankLinesAtEnd(scalar)
