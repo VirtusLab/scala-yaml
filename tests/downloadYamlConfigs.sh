@@ -26,6 +26,7 @@ do
 
 done
 
+mkdir ./test-suite/jvm/src/it/resources/yaml/configs/
 find ./repositories -name '*.yaml' -exec cp -prv '{}' './test-suite/jvm/src/it/resources/yaml/configs/' ';'
 
 LIB_YAML_PATH="" # Set the path to libyaml
