@@ -77,7 +77,7 @@ object ParserImpl extends Parser:
     )
 
     def parseDocumentStart() = token match
-      case Token.DocumentStart(pos) =>
+      case Token.DocumentStart(pos: Position) =>
         in.popToken()
         Right(
           Event.DocumentStart(Some(pos), explicit = true),

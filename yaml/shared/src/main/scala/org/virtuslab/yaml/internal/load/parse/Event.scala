@@ -2,6 +2,8 @@ package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.Position
+import org.virtuslab.yaml.internal.load.parse.Event.StreamStart
+import org.virtuslab.yaml.internal.load.reader.token.Token.SequenceStart
 
 /** 
  * 
@@ -15,9 +17,11 @@ import org.virtuslab.yaml.internal.load.reader.Position
 sealed trait Event:
   def pos: Option[Position]
 object Event:
-  sealed trait Stream                                  extends Event
-  case class StreamStart(pos: Option[Position] = None) extends Stream
-  case class StreamEnd(pos: Option[Position] = None)   extends Stream
+  sealed trait Stream                           extends Event
+  case class StreamStart(pos: Option[Position]) extends Stream
+  object StreamStart                            extends StreamStart(None)
+  case class StreamEnd(pos: Option[Position])   extends Stream
+  object StreamEnd                              extends StreamEnd(None)
 
   sealed trait Document extends Event
   final case class DocumentStart(pos: Option[Position] = None, explicit: Boolean = false)

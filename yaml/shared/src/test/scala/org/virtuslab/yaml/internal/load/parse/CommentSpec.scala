@@ -16,13 +16,13 @@ class CommentSpec extends munit.FunSuite:
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
-      List(
+      List[Event](
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("apiVersion"),
         Scalar("apps/v1  app"),
-        MappingEnd,
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -62,16 +62,16 @@ class CommentSpec extends munit.FunSuite:
     val events = ParserImpl.getEvents(reader)
 
     val expectedEvents = Right(
-      List(
+      List[Event](
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("spec"),
-        MappingStart,
+        MappingStart(),
         Scalar("type"),
         Scalar("NodePort"),
-        MappingEnd,
-        MappingEnd,
+        MappingEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )

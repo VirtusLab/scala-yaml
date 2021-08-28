@@ -19,12 +19,12 @@ class ScalarSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("targetPortal"),
         Scalar("10.0.2.15:3260:1221:1221"),
         Scalar("iqn"),
         Scalar("iqn.2001-04.com.example.storage:kube.sys1.xyz"),
-        MappingEnd,
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -123,10 +123,10 @@ class ScalarSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("description"),
         Scalar("Quote multiline.", ScalarStyle.SingleQuoted),
-        MappingEnd,
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -154,13 +154,13 @@ class ScalarSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("command"),
-        SequenceStart,
+        SequenceStart(),
         Scalar("bash"),
         Scalar("set -e\\n\\ntest\\nyaml", ScalarStyle.Folded),
-        SequenceEnd,
-        MappingEnd,
+        SequenceEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -185,13 +185,13 @@ class ScalarSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("command"),
-        SequenceStart,
+        SequenceStart(),
         Scalar("bash"),
         Scalar("# The \\nCRARG\\n# We\\n", ScalarStyle.Literal),
-        SequenceEnd,
-        MappingEnd,
+        SequenceEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -344,19 +344,19 @@ class ScalarSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("key"),
-        SequenceStart,
-        MappingStart,
+        SequenceStart(),
+        MappingStart(),
         Scalar("content"),
         Scalar("[Unit]\\n", ScalarStyle.Literal),
-        MappingEnd,
-        MappingStart,
+        MappingEnd(),
+        MappingStart(),
         Scalar("content"),
         Scalar("set -x\\n", ScalarStyle.Literal),
-        MappingEnd,
-        SequenceEnd,
-        MappingEnd,
+        MappingEnd(),
+        SequenceEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )

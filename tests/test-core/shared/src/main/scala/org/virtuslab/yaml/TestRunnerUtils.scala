@@ -9,21 +9,22 @@ object TestRunnerUtils {
     event
       .map(event =>
         event match {
-          case Event.StreamStart                           => "+STR"
-          case Event.StreamEnd                             => "-STR"
-          case Event.DocumentStart(explicit)               => if (explicit) "+DOC ---" else "+DOC"
-          case Event.DocumentEnd(explicit)                 => if (explicit) "-DOC ---" else "-DOC"
-          case Event.SequenceStart                         => "+SEQ"
-          case Event.SequenceEnd                           => "-SEQ"
-          case Event.MappingStart | Event.FlowMappingStart => "+MAP"
-          case Event.MappingEnd | Event.FlowMappingEnd     => "-MAP"
-          case Event.Scalar(value, style) =>
-            style match
+          case Event.StreamStart(_)             => "+STR"
+          case Event.StreamEnd(_)               => "-STR"
+          case Event.DocumentStart(_, explicit) => if (explicit) "+DOC ---" else "+DOC"
+          case Event.DocumentEnd(_, explicit)   => if (explicit) "-DOC ---" else "-DOC"
+          case Event.SequenceStart(_)           => "+SEQ"
+          case Event.SequenceEnd(_)             => "-SEQ"
+          case Event.MappingStart(_) | Event.FlowMappingStart(_) => "+MAP"
+          case Event.MappingEnd(_) | Event.FlowMappingEnd(_)     => "-MAP"
+          case Event.Scalar(value, style, _) =>
+            style match {
               case ScalarStyle.Plain        => s"=VAL :$value"
               case ScalarStyle.DoubleQuoted => s"""=VAL "$value"""
               case ScalarStyle.SingleQuoted => s"=VAL '$value"
               case ScalarStyle.Folded       => s"=VAL >$value"
               case ScalarStyle.Literal      => s"=VAL |$value"
+            }
         }
       )
       .mkString("\n")

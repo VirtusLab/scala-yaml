@@ -15,11 +15,11 @@ class MappingSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("emptyDir"),
-        FlowMappingStart,
-        FlowMappingEnd,
-        MappingEnd,
+        FlowMappingStart(),
+        FlowMappingEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -39,13 +39,13 @@ class MappingSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("data"),
-        MappingStart,
+        MappingStart(),
         Scalar("19", ScalarStyle.DoubleQuoted),
         Scalar("xw=="),
-        MappingEnd,
-        MappingEnd,
+        MappingEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -62,17 +62,17 @@ class MappingSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("emptyDir"),
-        FlowMappingStart,
-        FlowMappingStart,
-        FlowMappingStart,
-        FlowMappingEnd,
+        FlowMappingStart(),
+        FlowMappingStart(),
+        FlowMappingStart(),
+        FlowMappingEnd(),
         Scalar(""),
-        FlowMappingEnd,
+        FlowMappingEnd(),
         Scalar(""),
-        FlowMappingEnd,
-        MappingEnd,
+        FlowMappingEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -92,12 +92,12 @@ class MappingSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("key"),
         Scalar(""),
         Scalar("key2"),
         Scalar("value"),
-        MappingEnd,
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -117,12 +117,12 @@ class MappingSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("key"),
         Scalar(""),
         Scalar("period"),
         Scalar("10"),
-        MappingEnd,
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -140,16 +140,16 @@ class MappingSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("replicas"),
-        FlowMappingStart,
-        FlowMappingStart,
+        FlowMappingStart(),
+        FlowMappingStart(),
         Scalar("replicas"),
         Scalar(""),
-        FlowMappingEnd,
+        FlowMappingEnd(),
         Scalar(""),
-        FlowMappingEnd,
-        MappingEnd,
+        FlowMappingEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -166,15 +166,15 @@ class MappingSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("hostPath"),
-        FlowMappingStart,
+        FlowMappingStart(),
         Scalar("key"),
         Scalar("value"),
         Scalar("path"),
         Scalar("/dev/log"),
-        FlowMappingEnd,
-        MappingEnd,
+        FlowMappingEnd(),
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )
@@ -190,10 +190,10 @@ class MappingSpec extends munit.FunSuite:
       List(
         StreamStart,
         DocumentStart(),
-        MappingStart,
+        MappingStart(),
         Scalar("name"),
         Scalar("etcd-{{cell}}"),
-        MappingEnd,
+        MappingEnd(),
         DocumentEnd(),
         StreamEnd
       )

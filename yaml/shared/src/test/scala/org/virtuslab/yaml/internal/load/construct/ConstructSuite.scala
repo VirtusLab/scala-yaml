@@ -15,6 +15,7 @@ class ConstructSuite extends munit.FunSuite:
 
   test("derive construct for case class") {
     val node = MappingNode(
+      None,
       KeyValueNode(ScalarNode("hr"), ScalarNode("65")),
       KeyValueNode(ScalarNode("avg"), ScalarNode("0.278")),
       KeyValueNode(ScalarNode("rbi"), ScalarNode("147"))
@@ -24,13 +25,9 @@ class ConstructSuite extends munit.FunSuite:
   }
 
   test("derive construct for sealed trait") {
-    val foo = MappingNode(
-      KeyValueNode(ScalarNode("value"), ScalarNode("65"))
-    )
+    val foo = MappingNode(None, KeyValueNode(ScalarNode("value"), ScalarNode("65")))
     assertEquals(foo.as[SomeEnum], Right(SomeEnum.Foo(65)))
 
-    val bar = MappingNode(
-      KeyValueNode(ScalarNode("price"), ScalarNode("65.997"))
-    )
+    val bar = MappingNode(None, KeyValueNode(ScalarNode("price"), ScalarNode("65.997")))
     assertEquals(bar.as[SomeEnum], Right(SomeEnum.Bar(65.997)))
   }
