@@ -123,34 +123,34 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     val sb = new StringBuilder
 
     in.skipCharacter() // skip |
+    in.peek() match
+      case Some('-') =>
+        in.skipCharacter()
+      case _ => ()
+
     parseBlockHeader()
 
     val foldedIndent = indent
     skipUntilNextIndent(foldedIndent)
 
-    def chompedEmptyLines() =
-      while (in.peek() == Some('\n')) {
-        in.skipCharacter()
-        sb.append("\n")
-      }
-
-      skipUntilNextIndent(foldedIndent)
-
     @tailrec
     def readLiteral(): String =
       in.peek() match
         case Some('\n') =>
-          sb.append(in.read())
-          chompedEmptyLines()
+          in.read()
+          skipUntilNextIndent(foldedIndent)
           if (indent != foldedIndent) then sb.result()
-          else readLiteral()
+          else
+            sb.append("\n")
+            readLiteral()
         case Some(char) =>
           sb.append(in.read())
           readLiteral()
         case None => sb.result()
 
     val scalar = readLiteral()
-    Scalar(scalar, ScalarStyle.Literal)
+    val trimmedScalar = removeBlankLinesAtEnd(scalar)
+    Scalar(trimmedScalar, ScalarStyle.Literal)
 
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
