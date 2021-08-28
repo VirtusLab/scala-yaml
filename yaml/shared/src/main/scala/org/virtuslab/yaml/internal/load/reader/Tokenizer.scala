@@ -1,8 +1,8 @@
 package org.virtuslab.yaml.internal.load.reader
 
-import org.virtuslab.yaml.internal.load.reader.token.Token
-import org.virtuslab.yaml.internal.load.reader.token.Token._
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
+import org.virtuslab.yaml.internal.load.reader.token.{FinalBreak, ScalarStyle, Token}
+import org.virtuslab.yaml.internal.load.reader.token.Token.*
+import org.virtuslab.yaml.internal.load.reader.token.FinalBreak.*
 
 import scala.util.Try
 import scala.annotation.tailrec
@@ -119,14 +119,24 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
       indent = 0
       parseBlockHeader()
 
+  /**
+   * final break interpretation - https://yaml.org/spec/1.2/#b-chomped-last(t)
+   */
+  private def parseFinalBreak(): FinalBreak =
+    in.peek() match
+      case Some('-') =>
+        in.skipCharacter()
+        FinalBreak.Strip
+      case Some('+') =>
+        in.skipCharacter()
+        FinalBreak.Keep
+      case _ => FinalBreak.Clip
+
   private def parseLiteral(): Token =
     val sb = new StringBuilder
 
     in.skipCharacter() // skip |
-    in.peek() match
-      case Some('-') =>
-        in.skipCharacter()
-      case _ => ()
+    val finalBreakType = parseFinalBreak()
 
     parseBlockHeader()
 
@@ -137,29 +147,24 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
     def readLiteral(): String =
       in.peek() match
         case Some('\n') =>
-          in.read()
+          sb.append(in.read())
           skipUntilNextIndent(foldedIndent)
-          if (indent != foldedIndent) then sb.result()
-          else
-            sb.append("\n")
-            readLiteral()
+          if (!in.isWhitespace && indent != foldedIndent) then sb.result()
+          else readLiteral()
         case Some(char) =>
           sb.append(in.read())
           readLiteral()
         case None => sb.result()
 
-    val scalar = readLiteral()
-    val trimmedScalar = removeBlankLinesAtEnd(scalar)
-    Scalar(trimmedScalar, ScalarStyle.Literal)
+    val scalar         = readLiteral()
+    val choompedScalar = removeBlankLinesAtEnd(scalar, finalBreakType)
+    Scalar(choompedScalar, ScalarStyle.Literal)
 
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
 
     in.skipCharacter() // skip >
-    in.peek() match
-      case Some('-') =>
-        in.skipCharacter()
-      case _ => ()
+    val finalBreakType = parseFinalBreak()
 
     parseBlockHeader()
     val foldedIndent = indent
@@ -184,7 +189,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
           } else {
             in.skipCharacter()
             skipUntilNextIndent(foldedIndent)
-            if (indent != foldedIndent) then sb.result()
+            if (!in.isWhitespace && indent != foldedIndent) then sb.result()
             else
               sb.append(" ")
               readFolded()
@@ -194,15 +199,15 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
           readFolded()
         case None => sb.result()
 
-    val scalar        = readFolded()
-    val trimmedScalar = removeBlankLinesAtEnd(scalar)
-    Scalar(trimmedScalar, ScalarStyle.Folded)
+    val scalar         = readFolded()
+    val choompedScalar = removeBlankLinesAtEnd(scalar, finalBreakType)
+    Scalar(choompedScalar, ScalarStyle.Folded)
 
-  private def removeBlankLinesAtEnd(scalar: String): String =
-    scalar.takeRight(2) match
-      case "\n\n" =>
-        removeBlankLinesAtEnd(scalar.dropRight(1))
-      case _ => scalar
+  private def removeBlankLinesAtEnd(scalar: String, finalBreakType: FinalBreak): String =
+    finalBreakType match
+      case FinalBreak.Keep  => FinalBreak.choompedKeepType(scalar)
+      case FinalBreak.Clip  => FinalBreak.choompedClipType(scalar)
+      case FinalBreak.Strip => FinalBreak.choompedStripType(scalar)
 
   private def parseSingleQuoteValue(): Token = {
     val sb                = new StringBuilder

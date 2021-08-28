@@ -10,6 +10,7 @@ trait Reader:
   def peek(n: Int = 0): Option[Char]
   def peekNext(): Option[Char]
   def peekN(n: Int): String
+  def isWhitespace: Boolean
   def isNextWhitespace: Boolean
   def isNewline: Boolean
   def skipCharacter(): Unit
@@ -33,6 +34,7 @@ private[yaml] class StringReader(in: CharSequence) extends Reader:
 
   override def peekNext(): Option[Char] = peek(1)
   override def peekN(n: Int): String    = (0 until n).map(peek(_)).flatten.mkString("")
+  override def isWhitespace             = peek().exists(_.isWhitespace)
   override def isNextWhitespace         = peekNext().exists(_.isWhitespace)
   override def isNewline                = peek().exists(c => c == '\n' || isWindowsNewline(c))
 

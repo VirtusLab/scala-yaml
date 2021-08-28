@@ -261,7 +261,45 @@ class ScalarSpec extends munit.FunSuite:
         DocumentStart(),
         MappingStart,
         Scalar("certificate", ScalarStyle.Plain),
-        Scalar("-----BEGIN CERTIFICATE-----\\n0MTk0MVoXDenkKThvP7IS9q\\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\\n-----END CERTIFICATE----", ScalarStyle.Literal),
+        Scalar(
+          "-----BEGIN CERTIFICATE-----\\n0MTk0MVoXDenkKThvP7IS9q\\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\\n-----END CERTIFICATE----",
+          ScalarStyle.Literal
+        ),
+        Scalar("kind", ScalarStyle.Plain),
+        Scalar("v1", ScalarStyle.Plain),
+        MappingEnd,
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+  test("should parse new lines for literal style with keep final break") {
+
+    val yaml = s"""certificate: |+
+                  |        -----BEGIN CERTIFICATE-----
+                  |        0MTk0MVoXDenkKThvP7IS9q
+                  |        +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=
+                  |        -----END CERTIFICATE----
+                  |
+                  |
+                  |kind: v1
+                  |        """.stripMargin
+
+    val reader = Scanner(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        MappingStart,
+        Scalar("certificate", ScalarStyle.Plain),
+        Scalar(
+          "-----BEGIN CERTIFICATE-----\\n0MTk0MVoXDenkKThvP7IS9q\\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\\n-----END CERTIFICATE----\\n\\n\\n",
+          ScalarStyle.Literal
+        ),
         Scalar("kind", ScalarStyle.Plain),
         Scalar("v1", ScalarStyle.Plain),
         MappingEnd,
