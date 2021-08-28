@@ -6,6 +6,7 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 
 import scala.annotation.tailrec
+import org.virtuslab.yaml.internal.load.reader.Position
 
 private enum Production:
   case ParseStreamStart
@@ -71,60 +72,72 @@ object ParserImpl extends Parser:
     val token = in.peekToken()
 
     def parseStreamStart() = Right(
-      Event.StreamStart,
+      Event.StreamStart(None),
       ParseDocumentStart :: ParseDocumentStartOpt :: ParseStreamEnd :: stack.tail
     )
 
     def parseDocumentStart() = token match
-      case Token.DocumentStart =>
+      case Token.DocumentStart(pos) =>
         in.popToken()
-        Right(Event.DocumentStart(explicit = true), ParseNode :: ParseDocumentEnd :: stack.tail)
+        Right(
+          Event.DocumentStart(Some(pos), explicit = true),
+          ParseNode :: ParseDocumentEnd :: stack.tail
+        )
       case _ =>
-        Right(Event.DocumentStart(explicit = false), ParseNode :: ParseDocumentEnd :: stack.tail)
+        Right(
+          Event.DocumentStart(Some(token.pos), explicit = false),
+          ParseNode :: ParseDocumentEnd :: stack.tail
+        )
 
     def parseDocumentStartOpt() = token match
-      case Token.DocumentStart =>
+      case _: Token.DocumentStart =>
         getNextEvent(in, ParseDocumentStart :: ParseDocumentStartOpt :: stack.tail)
       case _ =>
         getNextEvent(in, stack.tail)
 
     def parseDocumentEnd() = token match
-      case Token.DocumentEnd =>
+      case Token.DocumentEnd(pos) =>
         in.popToken()
-        Right(Event.DocumentEnd(true), stack.tail)
+        Right(Event.DocumentEnd(Some(pos), true), stack.tail)
       case _ =>
-        Right(Event.DocumentEnd(false), stack.tail)
+        Right(Event.DocumentEnd(Some(token.pos), false), stack.tail)
 
     def parseMappingStart() = token match
-      case Token.MappingStart =>
+      case Token.MappingStart(pos) =>
         in.popToken()
-        Right(Event.MappingStart, ParseKey :: ParseMappingEnd :: stack.tail)
+        Right(Event.MappingStart(Some(pos)), ParseKey :: ParseMappingEnd :: stack.tail)
       case other @ _ =>
-        Left(ParseError.from(Token.MappingStart, other))
+        Left(ParseError.from(Token.MappingStart(token.pos), other))
 
     def parseFlowMappingStart(): EventResult = token match
-      case Token.FlowMappingStart =>
+      case Token.FlowMappingStart(pos) =>
         in.popToken()
-        Right(Event.FlowMappingStart, ParseFlowMappingEntry :: ParseFlowMappingEnd :: stack.tail)
+        Right(
+          Event.FlowMappingStart(Some(pos)),
+          ParseFlowMappingEntry :: ParseFlowMappingEnd :: stack.tail
+        )
       case other @ _ =>
-        Left(ParseError.from(Token.FlowMappingStart, other))
+        Left(ParseError.from(Token.FlowMappingStart(token.pos), other))
 
     def parseFlowMappingEnd(): EventResult = token match
-      case Token.FlowMappingEnd =>
+      case Token.FlowMappingEnd(pos) =>
         in.popToken()
-        Right(Event.FlowMappingEnd, stack.tail)
+        Right(Event.FlowMappingEnd(Some(pos)), stack.tail)
       case other @ _ =>
-        Left(ParseError.from(Token.FlowMappingEnd, other))
+        Left(ParseError.from(Token.FlowMappingEnd(token.pos), other))
 
     def parseFlowMappingEntry(): EventResult =
       token match
-        case Token.Scalar(value, style) =>
-          in.popToken()
-          Right(Event.Scalar(value, style), ParseNode :: ParseFlowMappingEntry :: stack.tail)
-        case Token.FlowMappingStart => {
+        case Token.Scalar(value, style, pos) =>
           in.popToken()
           Right(
-            Event.FlowMappingStart,
+            Event.Scalar(value, style, Some(pos)),
+            ParseNode :: ParseFlowMappingEntry :: stack.tail
+          )
+        case Token.FlowMappingStart(pos) => {
+          in.popToken()
+          Right(
+            Event.FlowMappingStart(Some(pos)),
             ParseFlowMappingEntry :: ParseFlowMappingEnd :: ParseNode :: stack.tail
           )
         }
@@ -132,86 +145,89 @@ object ParserImpl extends Parser:
           getNextEvent(in, stack.tail)
 
     def parseMappingEnd() = token match
-      case Token.MappingEnd =>
+      case Token.MappingEnd(pos) =>
         in.popToken()
-        Right(Event.MappingEnd, stack.tail)
+        Right(Event.MappingEnd(Some(pos)), stack.tail)
       case other @ _ =>
-        Left(ParseError.from(Token.MappingEnd, other))
+        Left(ParseError.from(Token.MappingEnd(token.pos), other))
 
     def parseSequenceStart() = token match
-      case Token.SequenceStart =>
+      case Token.SequenceStart(pos) =>
         in.popToken()
         Right(
-          Event.SequenceStart,
+          Event.SequenceStart(Some(pos)),
           ParseNode :: ParseSequenceEntryOpt :: ParseSequenceEnd :: stack.tail
         )
       case other @ _ =>
-        Left(ParseError.from(Token.SequenceStart, other))
+        Left(ParseError.from(Token.SequenceStart(token.pos), other))
 
     def parseSequenceEnd() = token match
-      case Token.SequenceEnd =>
+      case Token.SequenceEnd(pos) =>
         in.popToken()
-        Right(Event.SequenceEnd, stack.tail)
+        Right(Event.SequenceEnd(Some(pos)), stack.tail)
       case other @ _ =>
-        Left(ParseError.from(Token.SequenceEnd, other))
+        Left(ParseError.from(Token.SequenceEnd(token.pos), other))
 
     def parseFlowSequenceStart() = token match
-      case Token.FlowSequenceStart =>
+      case Token.FlowSequenceStart(pos) =>
         in.popToken()
-        Right(Event.SequenceStart, ParseSequenceEntryOpt :: ParseFlowSequenceEnd :: stack.tail)
+        Right(
+          Event.SequenceStart(Some(pos)),
+          ParseSequenceEntryOpt :: ParseFlowSequenceEnd :: stack.tail
+        )
       case other @ _ =>
-        Left(ParseError.from(Token.FlowSequenceStart, other))
+        Left(ParseError.from(Token.FlowSequenceStart(token.pos), other))
 
     def parseFlowSequenceEnd() = token match
-      case Token.FlowSequenceEnd =>
+      case Token.FlowSequenceEnd(pos) =>
         in.popToken()
-        Right(Event.SequenceEnd, stack.tail)
+        Right(Event.SequenceEnd(Some(pos)), stack.tail)
       case other @ _ =>
-        Left(ParseError.from(Token.FlowSequenceEnd, other))
+        Left(ParseError.from(Token.FlowSequenceEnd(token.pos), other))
 
     def parseKey() = token match
-      case Token.Key =>
+      case Token.Key(_) =>
         in.popToken()
         getNextEvent(in, ParseScalar :: ParseValue :: stack.tail)
       case other @ _ =>
-        Left(ParseError.from(Token.Key, other))
+        Left(ParseError.from(Token.Key(token.pos), other))
 
     def parseOptKey() = token match
-      case Token.Key => parseKey()
+      case Token.Key(_) => parseKey()
       case _ =>
         getNextEvent(in, stack.tail)
 
     def parseValue() = token match
-      case Token.Value =>
+      case Token.Value(_) =>
         in.popToken()
         getNextEvent(in, ParseNode :: ParseOptKey :: stack.tail)
-      case other @ _ => Left(ParseError.from(Token.Value, other))
+      case other @ _ => Left(ParseError.from(Token.Value(token.pos), other))
 
     def parseScalar() = token match
-      case Token.Scalar(value, style) =>
+      case Token.Scalar(value, style, pos) =>
         in.popToken()
-        Right(Event.Scalar(value, style), stack.tail)
+        Right(Event.Scalar(value, style, Some(pos)), stack.tail)
       case other @ _ =>
         Left(ParseError.from("Token.Scalar", other))
 
     def parseNode(): EventResult = token match
-      case Token.MappingStart      => parseMappingStart()
-      case Token.FlowMappingStart  => parseFlowMappingStart()
-      case Token.SequenceStart     => parseSequenceStart()
-      case Token.FlowSequenceStart => parseFlowSequenceStart()
-      case Token.Scalar(_, _)      => parseScalar()
+      case _: Token.MappingStart      => parseMappingStart()
+      case _: Token.FlowMappingStart  => parseFlowMappingStart()
+      case _: Token.SequenceStart     => parseSequenceStart()
+      case _: Token.FlowSequenceStart => parseFlowSequenceStart()
+      case _: Token.Scalar            => parseScalar()
       case _ =>
-        Right(Event.Scalar("", ScalarStyle.Plain), stack.tail)
+        Right(Event.Scalar("", ScalarStyle.Plain, Some(token.pos)), stack.tail)
 
     def parseSequenceEntryOpt() = token match
-      case Token.MappingStart | Token.SequenceStart | Token.FlowMappingStart |
-          Token.FlowSequenceStart | Token.Scalar(_, _) =>
+      case _: Token.MappingStart | _: Token.SequenceStart | _: Token.FlowMappingStart |
+          _: Token.FlowSequenceStart | _: Token.Scalar =>
         getNextEvent(in, ParseNode :: ParseSequenceEntryOpt :: stack.tail)
       case _ => getNextEvent(in, stack.tail)
 
     stack.headOption match
       case Some(ParseStreamStart)       => parseStreamStart()
-      case Some(ParseStreamEnd)         => Right(Event.StreamEnd, stack.tail)
+      case Some(ParseStreamEnd)         => Right(Event.StreamEnd(None), stack.tail)
       case Some(ParseDocumentStart)     => parseDocumentStart()
       case Some(ParseDocumentEnd)       => parseDocumentEnd()
       case Some(ParseDocumentStartOpt)  => parseDocumentStartOpt()

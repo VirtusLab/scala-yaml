@@ -27,10 +27,10 @@ object ComposerImpl extends Composer:
   private def composeNode(events: List[Event]): ComposeResult[Node] = events match
     case head :: tail =>
       head match
-        case Event.StreamStart | Event.DocumentStart(_)  => composeNode(tail)
-        case Event.SequenceStart                         => composeSequenceNode(tail)
-        case Event.MappingStart | Event.FlowMappingStart => composeMappingNode(tail)
-        case s: Event.Scalar                             => composeScalarNode(s, tail)
+        case Event.StreamStart(_) | Event.DocumentStart(_, _)  => composeNode(tail)
+        case Event.SequenceStart(_)                            => composeSequenceNode(tail)
+        case Event.MappingStart(_) | Event.FlowMappingStart(_) => composeMappingNode(tail)
+        case s: Event.Scalar                                   => composeScalarNode(s, tail)
         case event => Left(ComposerError(s"Unexpected event $event"))
     case Nil =>
       Left(ComposerError("No events available"))
@@ -42,7 +42,7 @@ object ComposerImpl extends Composer:
         children: List[Node]
     ): ComposeResult[List[Node]] = events match
       case Nil => Left(ComposerError("Not found SequenceEnd event for sequence"))
-      case Event.SequenceEnd :: tail => Right((children, tail))
+      case Event.SequenceEnd(_) :: tail => Right((children, tail))
       case _ =>
         composeNode(events) match
           case Right(node, rest) => parseChildren(rest, children :+ node)
@@ -59,7 +59,7 @@ object ComposerImpl extends Composer:
     ): ComposeResult[List[Node.KeyValueNode]] = {
       events match
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
-        case (Event.MappingEnd | Event.FlowMappingEnd) :: tail => Right((mappings, tail))
+        case (Event.MappingEnd(_) | Event.FlowMappingEnd(_)) :: tail => Right((mappings, tail))
         case (s: Event.Scalar) :: tail =>
           val mapping =
             for

@@ -11,10 +11,10 @@ trait Tokenizer:
   def peekToken(): Token
   def popToken(): Token
 
-private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
+private[yaml] class Scanner(str: String) extends Tokenizer {
 
-  private val ctx    = ReaderCtx.init
-  private val in     = StringReader(str)
+  private val ctx    = ReaderCtx.init(str)
+  private val in     = ctx.reader
   private var indent = 0
 
   override def peekToken(): Token = ctx.tokens.headOption match
@@ -40,7 +40,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
       case Some('}')                        => parseFlowMappingEnd()
       case Some(',')                        => { in.skipCharacter(); getNextTokens() }
       case Some(_)                          => fetchValue()
-      case None                             => ctx.closeOpenedScopes() :+ Token.StreamEnd
+      case None => ctx.closeOpenedScopes() :+ Token.StreamEnd((in.pos()))
 
   private def isDocumentStart =
     in.peekN(3) == "---" && in.peek(3).exists(_.isWhitespace)
@@ -59,7 +59,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
   private def parseFlowSequenceStart() =
     in.skipCharacter()
     ctx.appendState(ReaderState.FlowSequence)
-    List(FlowSequenceStart)
+    List(FlowSequenceStart(in.pos()))
 
   private def parseFlowSequenceEnd() =
     in.skipCharacter()
@@ -68,7 +68,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
   private def parseFlowMappingStart() =
     in.skipCharacter()
     ctx.appendState(ReaderState.FlowMapping)
-    List(FlowMappingStart)
+    List(FlowMappingStart(in.pos()))
 
   private def parseFlowMappingEnd() =
     in.skipCharacter()
@@ -82,7 +82,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
       getNextTokens()
     else
       ctx.appendState(ReaderState.Sequence(indent))
-      List(SequenceStart)
+      List(SequenceStart(in.pos()))
 
   private def parseDoubleQuoteValue(): Token =
     val sb = new StringBuilder
@@ -101,9 +101,10 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
           sb.append(in.read())
           readScalar()
 
+    val pos = in.pos()
     in.skipCharacter() // skip double quote
     val scalar = readScalar()
-    Scalar(scalar, ScalarStyle.DoubleQuoted)
+    Scalar(scalar, ScalarStyle.DoubleQuoted, pos)
 
   /**
    * This header is followed by a non-content line break with an optional comment.
@@ -135,6 +136,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
   private def parseLiteral(): Token =
     val sb = new StringBuilder
 
+    val pos = in.pos()
     in.skipCharacter() // skip |
     val chompingIndicator = parseChompingIndicator()
 
@@ -158,11 +160,12 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
 
     val scalar         = readLiteral()
     val choompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Scalar(choompedScalar, ScalarStyle.Literal)
+    Scalar(choompedScalar, ScalarStyle.Literal, pos)
 
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
 
+    val pos = in.pos()
     in.skipCharacter() // skip >
     val chompingIndicator = parseChompingIndicator()
 
@@ -201,7 +204,7 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
 
     val scalar         = readFolded()
     val choompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Scalar(choompedScalar, ScalarStyle.Folded)
+    Scalar(choompedScalar, ScalarStyle.Folded, pos)
 
   private def parseSingleQuoteValue(): Token = {
     val sb                = new StringBuilder
@@ -224,9 +227,10 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
           sb.append(in.read())
           readScalar()
 
+    val pos = in.pos()
     in.skipCharacter() // skip single quote
     val scalar = readScalar()
-    Scalar(scalar, ScalarStyle.SingleQuoted)
+    Scalar(scalar, ScalarStyle.SingleQuoted, pos)
   }
 
   private def parseScalarValue(): Token = {
@@ -244,7 +248,8 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
           sb.append(in.read())
           readScalar()
 
-    Scalar(readScalar().trim, ScalarStyle.Plain)
+    val pos = in.pos()
+    Scalar(readScalar().trim, ScalarStyle.Plain, pos)
   }
 
   private def fetchValue(): List[Token] =
@@ -261,10 +266,11 @@ private[yaml] class Scanner(str: CharSequence) extends Tokenizer {
         ctx.closeOpenedCollectionMapping(indent)
         in.skipCharacter()
 
-        if (ctx.shouldParseMappingEntry(indent)) then List(Token.Key, scalar, Token.Value)
+        if (ctx.shouldParseMappingEntry(indent)) then
+          List(Token.Key(scalar.pos), scalar, Token.Value(scalar.pos))
         else if (!ctx.isFlowMapping()) then
           ctx.appendState(ReaderState.Mapping(indent))
-          List(MappingStart, Token.Key, scalar, Token.Value)
+          List(MappingStart(scalar.pos), Token.Key(scalar.pos), scalar, Token.Value(scalar.pos))
         else List(scalar)
       case _ => List(scalar)
 

@@ -1,6 +1,7 @@
 package org.virtuslab.yaml.internal.dump.present
 
 import org.virtuslab.yaml.internal.load.parse.Event
+import org.virtuslab.yaml.internal.load.reader.Position
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -18,32 +19,32 @@ object PresenterImpl extends Presenter:
       events match
         case head :: tail =>
           head match
-            case Event.MappingStart =>
+            case Event.MappingStart(_) =>
               insertSequencePadding()
-              pushAndIncreaseIndent(Event.MappingStart)
+              pushAndIncreaseIndent(Event.MappingStart())
               parseMapping(tail)
-            case Event.SequenceStart =>
+            case Event.SequenceStart(_) =>
               insertSequencePadding()
-              pushAndIncreaseIndent(Event.SequenceStart)
+              pushAndIncreaseIndent(Event.SequenceStart())
               parseSequence(tail)
-            case Event.Scalar(value, _) =>
+            case Event.Scalar(value, _, _) =>
               insertSequencePadding()
               // todo escape string using doublequotes
               sb.append(value)
               sb.append(newline)
               tail
-            case Event.DocumentStart(_) => parseNode(tail)
-            case Event.DocumentEnd(_)   => parseNode(tail)
-            case _                      => events
+            case Event.DocumentStart(_, _) => parseNode(tail)
+            case Event.DocumentEnd(_, _)   => parseNode(tail)
+            case _                         => events
         case Nil => Nil
 
     @tailrec
     def parseMapping(events: List[Event]): List[Event] = {
       events match
-        case Event.MappingEnd :: tail =>
+        case Event.MappingEnd(_) :: tail =>
           popAndDecreaseIndent()
           tail
-        case Event.Scalar(value, _) :: tail =>
+        case Event.Scalar(value, _, _) :: tail =>
           appendKey(value)
           val rest = parseNode(tail)
           parseMapping(rest)
@@ -53,7 +54,7 @@ object PresenterImpl extends Presenter:
     @tailrec
     def parseSequence(events: List[Event]): List[Event] =
       events match
-        case Event.SequenceEnd :: tail =>
+        case Event.SequenceEnd(_) :: tail =>
           popAndDecreaseIndent()
           tail
         case _ =>
@@ -66,7 +67,7 @@ object PresenterImpl extends Presenter:
       sb.append(": ")
 
     def insertSequencePadding() = stack.headOption match
-      case Some(Event.SequenceStart) =>
+      case Some(Event.SequenceStart(_)) =>
         sb.append(" " * indent)
         sb.append("- ")
       case _ => ()

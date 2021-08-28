@@ -26,36 +26,36 @@ object YamlDecoder:
         else Left(ConstructError(s"Could't create Construct instance for $node"))
     }
 
-  given YamlDecoder[Int] = YamlDecoder { case ScalarNode(value) =>
+  given YamlDecoder[Int] = YamlDecoder { case ScalarNode(value, _) =>
     Try(value.toInt).toEither
   }
 
-  given YamlDecoder[Long] = YamlDecoder { case ScalarNode(value) =>
+  given YamlDecoder[Long] = YamlDecoder { case ScalarNode(value, _) =>
     Try(value.toLong).toEither
   }
 
-  given YamlDecoder[Double] = YamlDecoder { case ScalarNode(value) =>
+  given YamlDecoder[Double] = YamlDecoder { case ScalarNode(value, _) =>
     Try(value.toDouble).toEither
   }
 
-  given YamlDecoder[Float] = YamlDecoder { case ScalarNode(value) =>
+  given YamlDecoder[Float] = YamlDecoder { case ScalarNode(value, _) =>
     Try(value.toFloat).toEither
   }
 
-  given YamlDecoder[Short] = YamlDecoder { case ScalarNode(value) =>
+  given YamlDecoder[Short] = YamlDecoder { case ScalarNode(value, _) =>
     Try(value.toShort).toEither
   }
 
-  given YamlDecoder[Byte] = YamlDecoder { case ScalarNode(value) =>
+  given YamlDecoder[Byte] = YamlDecoder { case ScalarNode(value, _) =>
     Try(value.toByte).toEither
   }
 
-  given YamlDecoder[Boolean] = YamlDecoder { case ScalarNode(value) =>
+  given YamlDecoder[Boolean] = YamlDecoder { case ScalarNode(value, _) =>
     Try(value.toBoolean).toEither
   }
 
   given [T](using c: YamlDecoder[T]): YamlDecoder[Option[T]] = YamlDecoder {
-    case ScalarNode(value) =>
+    case ScalarNode(value, _) =>
       value match
         case "null" | "" => Right(None)
         case _ =>
@@ -72,28 +72,28 @@ object YamlDecoder:
       case (lefts, _)    => Left(lefts.head)
 
   given [T](using c: YamlDecoder[T]): YamlDecoder[List[T]] = YamlDecoder {
-    case SequenceNode(nodes) =>
+    case SequenceNode(nodes, _) =>
       constructFromNodes(nodes).map(_.toList)
   }
 
   given [T](using c: YamlDecoder[T]): YamlDecoder[Seq[T]] = YamlDecoder {
-    case SequenceNode(nodes) =>
+    case SequenceNode(nodes, _) =>
       constructFromNodes(nodes)
   }
 
   given [T](using c: YamlDecoder[T]): YamlDecoder[Set[T]] = YamlDecoder {
-    case SequenceNode(nodes) =>
+    case SequenceNode(nodes, _) =>
       constructFromNodes(nodes).map(_.toSet)
   }
 
   given [K, V](using
       keyDecoder: YamlDecoder[K],
       valueDecoder: YamlDecoder[V]
-  ): YamlDecoder[Map[K, V]] = YamlDecoder { case MappingNode(mappings) =>
+  ): YamlDecoder[Map[K, V]] = YamlDecoder { case MappingNode(mappings, _) =>
     val decoded: Seq[
       Either[ConstructError, (K, V)]
     ] = mappings
-      .map { case KeyValueNode(key, value) =>
+      .map { case KeyValueNode(key, value, _) =>
         (keyDecoder.construct(key) -> valueDecoder.construct(value))
       }
       .map { case (key, value) =>
@@ -108,7 +108,7 @@ object YamlDecoder:
       case (lefts, _)    => Left(lefts.head)
   }
 
-  given YamlDecoder[String] = YamlDecoder { case ScalarNode(value) =>
+  given YamlDecoder[String] = YamlDecoder { case ScalarNode(value, _) =>
     Right(value)
   }
 
@@ -122,7 +122,7 @@ object YamlDecoder:
     new YamlDecoder[T] {
       override def construct(node: Node): Either[ConstructError, T] =
         node match
-          case Node.MappingNode(mappings) =>
+          case Node.MappingNode(mappings, _) =>
             val valuesMap = mappings.map(e => e.key.value -> e.value).toMap
             val values = elemLabels.zip(instances).map { case (label, c) =>
               valuesMap.get(label) match
