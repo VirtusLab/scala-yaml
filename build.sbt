@@ -1,4 +1,4 @@
-lazy val scala3Version = "3.0.0"
+lazy val scala3Version = "3.0.2-RC2"
 lazy val projectName   = "scala-yaml"
 
 inThisBuild(
