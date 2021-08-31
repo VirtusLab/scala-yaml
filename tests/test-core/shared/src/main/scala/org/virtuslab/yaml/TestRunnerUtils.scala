@@ -9,14 +9,14 @@ object TestRunnerUtils {
     event
       .map(event =>
         event match {
-          case Event.StreamStart(_)             => "+STR"
-          case Event.StreamEnd(_)               => "-STR"
+          case _: Event.StreamStart             => "+STR"
+          case _: Event.StreamEnd               => "-STR"
           case Event.DocumentStart(_, explicit) => if (explicit) "+DOC ---" else "+DOC"
           case Event.DocumentEnd(_, explicit)   => if (explicit) "-DOC ---" else "-DOC"
-          case Event.SequenceStart(_)           => "+SEQ"
-          case Event.SequenceEnd(_)             => "-SEQ"
-          case Event.MappingStart(_) | Event.FlowMappingStart(_) => "+MAP"
-          case Event.MappingEnd(_) | Event.FlowMappingEnd(_)     => "-MAP"
+          case _: Event.SequenceStart           => "+SEQ"
+          case _: Event.SequenceEnd             => "-SEQ"
+          case _: Event.MappingStart | _: Event.FlowMappingStart => "+MAP"
+          case _: Event.MappingEnd | _: Event.FlowMappingEnd     => "-MAP"
           case Event.Scalar(value, style, _) =>
             style match {
               case ScalarStyle.Plain        => s"=VAL :$value"

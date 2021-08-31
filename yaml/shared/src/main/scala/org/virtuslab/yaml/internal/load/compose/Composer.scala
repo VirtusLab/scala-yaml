@@ -29,9 +29,9 @@ object ComposerImpl extends Composer:
   private def composeNode(events: List[Event]): ComposeResult[Node] = events match
     case head :: tail =>
       head match
-        case Event.StreamStart(_) | Event.DocumentStart(_, _)  => composeNode(tail)
-        case Event.SequenceStart(_)                            => composeSequenceNode(tail)
-        case Event.MappingStart(_) | Event.FlowMappingStart(_) => composeMappingNode(tail)
+        case _: Event.StreamStart | _: Event.DocumentStart     => composeNode(tail)
+        case _: Event.SequenceStart                            => composeSequenceNode(tail)
+        case _: Event.MappingStart | _: Event.FlowMappingStart => composeMappingNode(tail)
         case s: Event.Scalar                                   => composeScalarNode(s, tail)
         case event => Left(ComposerError(s"Unexpected event $event"))
     case Nil =>
@@ -45,10 +45,10 @@ object ComposerImpl extends Composer:
         startPos: Option[Position] = None
     ): ComposeResultWithPos[List[Node]] = events match
       case Nil => Left(ComposerError("Not found SequenceEnd event for sequence"))
-      case Event.SequenceEnd(_) :: tail => Right((children, startPos, tail))
+      case (_: Event.SequenceEnd) :: tail => Right((children, startPos, tail))
       case _ =>
         composeNode(events) match
-          case Right(node, rest) => parseChildren(rest, children :+ node, node.start)
+          case Right(node, rest) => parseChildren(rest, children :+ node, node.pos)
           case Left(err)         => Left(err)
 
     parseChildren(events, Nil).map((nodes, start, rest) => (Node.SequenceNode(nodes, start), rest))
@@ -63,7 +63,7 @@ object ComposerImpl extends Composer:
     ): ComposeResultWithPos[List[Node.KeyValueNode]] = {
       events match
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
-        case (Event.MappingEnd(_) | Event.FlowMappingEnd(_)) :: tail =>
+        case (_: Event.MappingEnd | _: Event.FlowMappingEnd) :: tail =>
           Right((mappings, startPos, tail))
         case (s: Event.Scalar) :: tail =>
           val mapping =
@@ -75,7 +75,7 @@ object ComposerImpl extends Composer:
               (Node.KeyValueNode(key, value), rest)
 
           mapping match
-            case Right(value, rest) => parseMappings(rest, mappings :+ value)
+            case Right(value, rest) => parseMappings(rest, mappings :+ value, value.pos)
             case Left(err)          => Left(err)
 
         case head :: tail =>

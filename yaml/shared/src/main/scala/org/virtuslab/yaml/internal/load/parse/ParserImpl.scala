@@ -72,7 +72,7 @@ object ParserImpl extends Parser:
     val token = in.peekToken()
 
     def parseStreamStart() = Right(
-      Event.StreamStart(None),
+      Event.StreamStart,
       ParseDocumentStart :: ParseDocumentStartOpt :: ParseStreamEnd :: stack.tail
     )
 
@@ -227,7 +227,7 @@ object ParserImpl extends Parser:
 
     stack.headOption match
       case Some(ParseStreamStart)       => parseStreamStart()
-      case Some(ParseStreamEnd)         => Right(Event.StreamEnd(None), stack.tail)
+      case Some(ParseStreamEnd)         => Right(Event.StreamEnd, stack.tail)
       case Some(ParseDocumentStart)     => parseDocumentStart()
       case Some(ParseDocumentEnd)       => parseDocumentEnd()
       case Some(ParseDocumentStartOpt)  => parseDocumentStartOpt()

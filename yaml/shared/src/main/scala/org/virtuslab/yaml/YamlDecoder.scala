@@ -23,7 +23,7 @@ object YamlDecoder:
         if pf.isDefinedAt(node) then
           pf(node) match {
             case Left(e: Throwable) =>
-              val msg = node.start match {
+              val msg = node.pos match {
                 case Some(pos) =>
                   s"""|${e.getMessage}
                       |${pos.errorMsg} at ${pos.line}:${pos.column}, expected $tag""".stripMargin

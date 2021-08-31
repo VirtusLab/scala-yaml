@@ -19,11 +19,11 @@ object PresenterImpl extends Presenter:
       events match
         case head :: tail =>
           head match
-            case Event.MappingStart(_) =>
+            case _: Event.MappingStart =>
               insertSequencePadding()
               pushAndIncreaseIndent(Event.MappingStart())
               parseMapping(tail)
-            case Event.SequenceStart(_) =>
+            case _: Event.SequenceStart =>
               insertSequencePadding()
               pushAndIncreaseIndent(Event.SequenceStart())
               parseSequence(tail)
@@ -67,7 +67,7 @@ object PresenterImpl extends Presenter:
       sb.append(": ")
 
     def insertSequencePadding() = stack.headOption match
-      case Some(Event.SequenceStart(_)) =>
+      case Some(_: Event.SequenceStart) =>
         sb.append(" " * indent)
         sb.append("- ")
       case _ => ()
