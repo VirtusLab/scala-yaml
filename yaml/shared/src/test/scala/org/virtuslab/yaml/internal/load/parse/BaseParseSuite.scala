@@ -12,10 +12,10 @@ class BaseParseSuite extends munit.FunSuite:
   def assertEventsEquals(
       obtained: Either[YamlError, List[Event]],
       expectedEvents: List[Event]
-  ): Unit = {
+  ): Unit =
     val withoutPosition = obtained.map(events =>
       events.map { e =>
-        e match {
+        e match
           case StreamStart(_)            => StreamStart
           case StreamEnd(_)              => StreamEnd
           case e: Event.DocumentStart    => e.copy(pos = None)
@@ -27,9 +27,7 @@ class BaseParseSuite extends munit.FunSuite:
           case e: Event.FlowMappingStart => e.copy(pos = None)
           case e: Event.FlowMappingEnd   => e.copy(pos = None)
           case e: Event.Scalar           => e.copy(pos = None)
-        }
       }
     )
     val expected = Right(expectedEvents)
     assertEquals(withoutPosition, expected)
-  }
