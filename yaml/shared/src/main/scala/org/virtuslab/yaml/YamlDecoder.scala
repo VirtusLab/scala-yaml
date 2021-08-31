@@ -6,6 +6,7 @@ import org.virtuslab.yaml.Node.*
 import scala.compiletime._
 import scala.deriving._
 import scala.util.Try
+import scala.reflect.ClassTag
 
 /**
  * A type class that provides a conversion from a [[Node]] into given type [[T]]
@@ -14,12 +15,22 @@ trait YamlDecoder[T]:
   def construct(node: Node): Either[ConstructError, T]
 
 object YamlDecoder:
-  def apply[T](pf: PartialFunction[Node, Either[ConstructError | Throwable, T]]): YamlDecoder[T] =
+  def apply[T](
+      pf: PartialFunction[Node, Either[ConstructError | Throwable, T]]
+  )(implicit tag: ClassTag[T]): YamlDecoder[T] =
     new YamlDecoder[T] {
       override def construct(node: Node): Either[ConstructError, T] =
         if pf.isDefinedAt(node) then
           pf(node) match {
-            case Left(e: Throwable)      => Left(ConstructError(e.getMessage))
+            case Left(e: Throwable) =>
+              val msg = node.start match {
+                case Some(pos) =>
+                  s"""|${e.getMessage}
+                      |${pos.errorMsg} at ${pos.line}:${pos.column}, expected $tag""".stripMargin
+                case None =>
+                  "Cannot decode: ${e.getMessage}"
+              }
+              Left(ConstructError(msg))
             case Left(e: ConstructError) => Left(e)
             case Right(v)                => Right(v)
           }

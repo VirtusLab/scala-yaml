@@ -3,7 +3,13 @@ package org.virtuslab.yaml.internal.load.reader
 import scala.util.Try
 import scala.annotation.tailrec
 
-final case class Position(offset: Int, line: Int, column: Int)
+final case class Position(offset: Int, line: Int, column: Int, input: Vector[String]):
+  def errorMsg: String =
+    val msg          = input(line - 1)
+    val spaces       = column - 1
+    val circumflexes = msg.length - spaces
+    s"""|$msg
+        |${" " * spaces}${"^" * circumflexes}""".stripMargin
 
 trait Reader:
   def read(): Char
@@ -21,12 +27,13 @@ trait Reader:
   def offset: Int
   def pos(): Position
 
-private[yaml] class StringReader(in: CharSequence) extends Reader:
+private[yaml] class StringReader(in: String) extends Reader:
   var line: Int   = 1
   var column: Int = 1
   var offset: Int = 0
+  val lines       = in.split("\n").toVector
 
-  override def pos() = Position(offset, line, column)
+  override def pos() = Position(offset, line, column, lines)
 
   override def peek(n: Int = 0): Option[Char] =
     if offset + n < in.length then Some(in.charAt(offset + n))

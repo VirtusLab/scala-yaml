@@ -10,14 +10,15 @@ class StringReaderSuite extends munit.FunSuite:
                     |c
                     |""".stripMargin
 
+    val lines  = input.split("\n").toVector
     val reader = StringReader(input)
-    assertEquals(reader.pos(), Position(0, 1, 1))
+    assertEquals(reader.pos(), Position(0, 1, 1, lines))
     assertEquals(reader.read(), 'a')
-    assertEquals(reader.pos(), Position(1, 1, 2))
+    assertEquals(reader.pos(), Position(1, 1, 2, lines))
     reader.skipCharacter()
-    assertEquals(reader.pos(), Position(2, 2, 1))
+    assertEquals(reader.pos(), Position(2, 2, 1, lines))
     assertEquals(reader.read(), 'b')
     reader.skipCharacter()
-    assertEquals(reader.pos(), Position(5, 3, 1))
+    assertEquals(reader.pos(), Position(5, 3, 1, lines))
     assertEquals(reader.read(), 'c')
   }
