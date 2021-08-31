@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.dump.present
 
 import org.virtuslab.yaml.internal.load.parse.Event
-import org.virtuslab.yaml.internal.load.reader.Position
+import org.virtuslab.yaml.Position
 
 import scala.annotation.tailrec
 import scala.collection.mutable

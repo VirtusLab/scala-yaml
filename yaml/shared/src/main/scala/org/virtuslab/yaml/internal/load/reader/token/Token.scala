@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.reader.token
 
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
-import org.virtuslab.yaml.internal.load.reader.Position
+import org.virtuslab.yaml.Position
 
 sealed trait Token:
   def pos: Position

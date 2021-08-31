@@ -6,7 +6,7 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 
 import scala.annotation.tailrec
-import org.virtuslab.yaml.internal.load.reader.Position
+import org.virtuslab.yaml.Position
 
 private enum Production:
   case ParseStreamStart

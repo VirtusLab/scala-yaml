@@ -1,6 +1,6 @@
 package org.virtuslab.yaml.internal.load.reader
 
-import org.virtuslab.yaml.internal.load.reader
+import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.internal.load.reader.Reader
 import org.virtuslab.yaml.internal.load.reader.StringReader
 

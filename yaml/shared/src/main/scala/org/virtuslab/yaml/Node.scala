@@ -1,6 +1,6 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.internal.load.reader.Position
+import org.virtuslab.yaml.Position
 
 /**
   * ADT that corresponds to the YAML representation graph nodes https://yaml.org/spec/1.2/spec.html#id2764044

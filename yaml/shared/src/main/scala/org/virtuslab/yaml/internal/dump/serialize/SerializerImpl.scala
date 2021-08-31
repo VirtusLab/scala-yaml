@@ -2,7 +2,7 @@ package org.virtuslab.yaml.internal.dump.serialize
 
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.internal.load.parse.Event
-import org.virtuslab.yaml.internal.load.reader.Position
+import org.virtuslab.yaml.Position
 
 object SerializerImpl extends Serializer:
   override def toEvents(node: Node): Seq[Event] =
