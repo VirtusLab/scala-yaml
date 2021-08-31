@@ -17,15 +17,6 @@ project/project/
 project/target/
 target/
 
-# eclipse
-build/
-.classpath
-.project
-.settings
-.worksheet
-bin/
-.cache
-
 # intellij idea
 *.log
 *.iml
@@ -43,6 +34,11 @@ bin/
 
 # scala worksheets
 *.sc
+
+# test files
+*.tml
+*.yaml
+tests/repositories/
 
 #general
 *.class
