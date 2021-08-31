@@ -7,3 +7,15 @@ enum ScalarStyle(indicator: Char):
   case Folded extends ScalarStyle('>')
   case Literal extends ScalarStyle('|')
 end ScalarStyle
+
+case object ScalarStyle:
+  def escapeSpecialCharacter(scalar: String, scalarStyle: ScalarStyle): String =
+    scalarStyle match
+      case ScalarStyle.DoubleQuoted => scalar
+      case _ =>
+        scalar.flatMap { char =>
+          char match
+            case '\\'  => "\\\\"
+            case '\n'  => "\\n"
+            case other => other.toString
+        }

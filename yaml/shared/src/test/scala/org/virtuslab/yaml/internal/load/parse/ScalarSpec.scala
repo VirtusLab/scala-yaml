@@ -72,6 +72,24 @@ class ScalarSpec extends munit.FunSuite:
     assertEquals(events, expectedEvents)
   }
 
+  test("should not espace escape special character in double quote scalar") {
+    val yaml = """ "double \n quote" """
+
+    val reader = Scanner(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        Scalar("""double \n quote""", ScalarStyle.DoubleQuoted),
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
   test("should parse string with single quote") {
     val yaml =
       s""" '/mnt/ \\iscsipd ''skip'''
