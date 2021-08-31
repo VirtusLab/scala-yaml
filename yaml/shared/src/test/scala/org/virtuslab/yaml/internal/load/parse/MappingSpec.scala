@@ -4,27 +4,25 @@ import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class MappingSpec extends munit.FunSuite:
+class MappingSpec extends BaseParseSuite:
 
   test("should parse empty mapping") {
     val yaml   = "emptyDir: {}"
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart(),
-        Scalar("emptyDir"),
-        FlowMappingStart(),
-        FlowMappingEnd(),
-        MappingEnd(),
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("emptyDir"),
+      FlowMappingStart(),
+      FlowMappingEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
 
   test("should parse mapping with double quote key") {
@@ -35,22 +33,20 @@ class MappingSpec extends munit.FunSuite:
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart(),
-        Scalar("data"),
-        MappingStart(),
-        Scalar("19", ScalarStyle.DoubleQuoted),
-        Scalar("xw=="),
-        MappingEnd(),
-        MappingEnd(),
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("data"),
+      MappingStart(),
+      Scalar("19", ScalarStyle.DoubleQuoted),
+      Scalar("xw=="),
+      MappingEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
 
   test("should parse nested empty mapping") {
@@ -58,26 +54,24 @@ class MappingSpec extends munit.FunSuite:
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart(),
-        Scalar("emptyDir"),
-        FlowMappingStart(),
-        FlowMappingStart(),
-        FlowMappingStart(),
-        FlowMappingEnd(),
-        Scalar(""),
-        FlowMappingEnd(),
-        Scalar(""),
-        FlowMappingEnd(),
-        MappingEnd(),
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("emptyDir"),
+      FlowMappingStart(),
+      FlowMappingStart(),
+      FlowMappingStart(),
+      FlowMappingEnd(),
+      Scalar(""),
+      FlowMappingEnd(),
+      Scalar(""),
+      FlowMappingEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
 
   test("should parse mapping with empty value") {
@@ -88,21 +82,19 @@ class MappingSpec extends munit.FunSuite:
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart(),
-        Scalar("key"),
-        Scalar(""),
-        Scalar("key2"),
-        Scalar("value"),
-        MappingEnd(),
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("key"),
+      Scalar(""),
+      Scalar("key2"),
+      Scalar("value"),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
 
   test("should parse mapping with empty value and comnent") {
@@ -113,21 +105,19 @@ class MappingSpec extends munit.FunSuite:
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart(),
-        Scalar("key"),
-        Scalar(""),
-        Scalar("period"),
-        Scalar("10"),
-        MappingEnd(),
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("key"),
+      Scalar(""),
+      Scalar("period"),
+      Scalar("10"),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
 
   test("should parse yaml with template value") {
@@ -136,25 +126,23 @@ class MappingSpec extends munit.FunSuite:
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart(),
-        Scalar("replicas"),
-        FlowMappingStart(),
-        FlowMappingStart(),
-        Scalar("replicas"),
-        Scalar(""),
-        FlowMappingEnd(),
-        Scalar(""),
-        FlowMappingEnd(),
-        MappingEnd(),
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("replicas"),
+      FlowMappingStart(),
+      FlowMappingStart(),
+      Scalar("replicas"),
+      Scalar(""),
+      FlowMappingEnd(),
+      Scalar(""),
+      FlowMappingEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
 
   test("should parse maping of mappings with {...}") {
@@ -162,41 +150,37 @@ class MappingSpec extends munit.FunSuite:
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart(),
-        Scalar("hostPath"),
-        FlowMappingStart(),
-        Scalar("key"),
-        Scalar("value"),
-        Scalar("path"),
-        Scalar("/dev/log"),
-        FlowMappingEnd(),
-        MappingEnd(),
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("hostPath"),
+      FlowMappingStart(),
+      Scalar("key"),
+      Scalar("value"),
+      Scalar("path"),
+      Scalar("/dev/log"),
+      FlowMappingEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
   test("should parse maping key value with } brackets") {
     val yaml   = "name: etcd-{{cell}}"
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart(),
-        Scalar("name"),
-        Scalar("etcd-{{cell}}"),
-        MappingEnd(),
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("name"),
+      Scalar("etcd-{{cell}}"),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
