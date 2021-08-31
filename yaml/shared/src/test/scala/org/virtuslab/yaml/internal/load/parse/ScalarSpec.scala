@@ -219,7 +219,7 @@ class ScalarSpec extends munit.FunSuite:
     assertEquals(events, expectedEvents)
   }
 
-  test("should should skip blank lines at the end in folded value") {
+  test("should skip blank lines at the end in folded value") {
     val yaml = s""">
                   | folded
                   | text
@@ -235,6 +235,74 @@ class ScalarSpec extends munit.FunSuite:
         StreamStart,
         DocumentStart(),
         Scalar("folded text\\n", ScalarStyle.Folded),
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+  test("should parse new lines for literal style") {
+
+    val yaml = s"""certificate: |-
+                  |        -----BEGIN CERTIFICATE-----
+                  |        0MTk0MVoXDenkKThvP7IS9q
+                  |        +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=
+                  |        -----END CERTIFICATE----
+                  |kind: v1
+                  |        """.stripMargin
+
+    val reader = Scanner(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        MappingStart,
+        Scalar("certificate", ScalarStyle.Plain),
+        Scalar(
+          "-----BEGIN CERTIFICATE-----\\n0MTk0MVoXDenkKThvP7IS9q\\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\\n-----END CERTIFICATE----",
+          ScalarStyle.Literal
+        ),
+        Scalar("kind", ScalarStyle.Plain),
+        Scalar("v1", ScalarStyle.Plain),
+        MappingEnd,
+        DocumentEnd(),
+        StreamEnd
+      )
+    )
+    assertEquals(events, expectedEvents)
+  }
+
+  test("should parse new lines for literal style with keep final break") {
+
+    val yaml = s"""certificate: |+
+                  |        -----BEGIN CERTIFICATE-----
+                  |        0MTk0MVoXDenkKThvP7IS9q
+                  |        +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=
+                  |        -----END CERTIFICATE----
+                  |
+                  |
+                  |kind: v1
+                  |        """.stripMargin
+
+    val reader = Scanner(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = Right(
+      List(
+        StreamStart,
+        DocumentStart(),
+        MappingStart,
+        Scalar("certificate", ScalarStyle.Plain),
+        Scalar(
+          "-----BEGIN CERTIFICATE-----\\n0MTk0MVoXDenkKThvP7IS9q\\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\\n-----END CERTIFICATE----\\n\\n\\n",
+          ScalarStyle.Literal
+        ),
+        Scalar("kind", ScalarStyle.Plain),
+        Scalar("v1", ScalarStyle.Plain),
+        MappingEnd,
         DocumentEnd(),
         StreamEnd
       )
