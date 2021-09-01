@@ -12,6 +12,8 @@ inline def deriveYamlEncoder[T](using m: Mirror.Of[T]): YamlEncoder[T] = YamlEnc
 inline def deriveYamlDecoder[T](using m: Mirror.Of[T]): YamlDecoder[T] = YamlDecoder.derived[T]
 inline def deriveYamlCodec[T](using m: Mirror.Of[T]): YamlCodec[T]     = YamlCodec.derived[T]
 
+extension (node: Node) def as[T](using c: YamlDecoder[T]): Either[YamlError, T] = c.construct(node)
+
 extension (str: String)
   /**
    * Parse YAML from the given [[String]], returning either [[YamlError]] or [[T]].
@@ -25,7 +27,7 @@ extension (str: String)
     for
       events <- ParserImpl.getEvents(Scanner(str))
       node   <- ComposerImpl.fromEvents(events)
-      t      <- c.construct(node)
+      t      <- node.as[T]
     yield t
 
 extension [T](t: T)

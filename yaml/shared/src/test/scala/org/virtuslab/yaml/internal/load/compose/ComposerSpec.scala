@@ -3,6 +3,7 @@ package org.virtuslab.yaml.internal.load.compose
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Node.*
 import org.virtuslab.yaml.internal.load.compose.ComposerImpl
+import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.Event.*
 
 /** Examples taken from https://yaml.org/spec/1.2/spec.html#id2759963
@@ -10,14 +11,14 @@ import org.virtuslab.yaml.internal.load.parse.Event.*
 class ComposerSuite extends munit.FunSuite:
 
   test("sequence of scalars") {
-    val events = List(
+    val events = List[Event](
       StreamStart,
       DocumentStart(),
-      SequenceStart,
+      SequenceStart(),
       Scalar("Mark McGwire"),
       Scalar("Sammy Sosa"),
       Scalar("Ken Griffey"),
-      SequenceEnd,
+      SequenceEnd(),
       DocumentEnd(),
       StreamEnd
     )
@@ -33,17 +34,17 @@ class ComposerSuite extends munit.FunSuite:
   }
 
   test("mapping of scalars") {
-    val events = List(
+    val events = List[Event](
       StreamStart,
       DocumentStart(),
-      MappingStart,
+      MappingStart(),
       Scalar("hr"),
       Scalar("65"),
       Scalar("avg"),
       Scalar("0.278"),
       Scalar("rbi"),
       Scalar("147"),
-      MappingEnd,
+      MappingEnd(),
       DocumentEnd(),
       StreamEnd
     )
@@ -59,23 +60,23 @@ class ComposerSuite extends munit.FunSuite:
   }
 
   test("mapping of sequences") {
-    val events = List(
+    val events = List[Event](
       StreamStart,
       DocumentStart(),
-      MappingStart,
+      MappingStart(),
       Scalar("american"),
-      SequenceStart,
+      SequenceStart(),
       Scalar("Boston Red Sox"),
       Scalar("Detroit Tigers"),
       Scalar("New York Yankees"),
-      SequenceEnd,
+      SequenceEnd(),
       Scalar("national"),
-      SequenceStart,
+      SequenceStart(),
       Scalar("New York Mets"),
       Scalar("Chicago Cubs"),
       Scalar("Atlanta Braves"),
-      SequenceEnd,
-      MappingEnd,
+      SequenceEnd(),
+      MappingEnd(),
       DocumentEnd(),
       StreamEnd
     )
@@ -106,27 +107,27 @@ class ComposerSuite extends munit.FunSuite:
   }
 
   test("sequence of mappings") {
-    val events = List(
+    val events = List[Event](
       StreamStart,
       DocumentStart(),
-      SequenceStart,
-      MappingStart,
+      SequenceStart(),
+      MappingStart(),
       Scalar("name"),
       Scalar("Mark McGwire"),
       Scalar("hr"),
       Scalar("65"),
       Scalar("avg"),
       Scalar("0.278"),
-      MappingEnd,
-      MappingStart,
+      MappingEnd(),
+      MappingStart(),
       Scalar("name"),
       Scalar("Sammy Sosa"),
       Scalar("hr"),
       Scalar("63"),
       Scalar("avg"),
       Scalar("0.288"),
-      MappingEnd,
-      SequenceEnd,
+      MappingEnd(),
+      SequenceEnd(),
       DocumentEnd(),
       StreamEnd
     )

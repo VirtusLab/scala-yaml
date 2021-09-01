@@ -10,9 +10,6 @@ class ConstructSuite extends munit.FunSuite:
     case Foo(value: Int)
     case Bar(price: Double)
 
-  extension (node: Node)
-    def as[T](using c: YamlDecoder[T]): Either[YamlError, T] = c.construct(node)
-
   test("derive construct for case class") {
     val node = MappingNode(
       KeyValueNode(ScalarNode("hr"), ScalarNode("65")),
@@ -24,13 +21,9 @@ class ConstructSuite extends munit.FunSuite:
   }
 
   test("derive construct for sealed trait") {
-    val foo = MappingNode(
-      KeyValueNode(ScalarNode("value"), ScalarNode("65"))
-    )
+    val foo = MappingNode(KeyValueNode(ScalarNode("value"), ScalarNode("65")))
     assertEquals(foo.as[SomeEnum], Right(SomeEnum.Foo(65)))
 
-    val bar = MappingNode(
-      KeyValueNode(ScalarNode("price"), ScalarNode("65.997"))
-    )
+    val bar = MappingNode(KeyValueNode(ScalarNode("price"), ScalarNode("65.997")))
     assertEquals(bar.as[SomeEnum], Right(SomeEnum.Bar(65.997)))
   }

@@ -3,7 +3,7 @@ package org.virtuslab.yaml.internal.load.parse
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.Scanner
 
-class CommentSpec extends munit.FunSuite:
+class CommentSpec extends BaseParseSuite:
 
   test("should parse key value with ignoring comments") {
     val yaml =
@@ -15,19 +15,17 @@ class CommentSpec extends munit.FunSuite:
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart,
-        Scalar("apiVersion"),
-        Scalar("apps/v1  app"),
-        MappingEnd,
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("apiVersion"),
+      Scalar("apps/v1  app"),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }
 
   test("should parse empty document".ignore) {
@@ -61,20 +59,18 @@ class CommentSpec extends munit.FunSuite:
     val reader = Scanner(yaml)
     val events = ParserImpl.getEvents(reader)
 
-    val expectedEvents = Right(
-      List(
-        StreamStart,
-        DocumentStart(),
-        MappingStart,
-        Scalar("spec"),
-        MappingStart,
-        Scalar("type"),
-        Scalar("NodePort"),
-        MappingEnd,
-        MappingEnd,
-        DocumentEnd(),
-        StreamEnd
-      )
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("spec"),
+      MappingStart(),
+      Scalar("type"),
+      Scalar("NodePort"),
+      MappingEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEquals(events, expectedEvents)
+    assertEventsEquals(events, expectedEvents)
   }

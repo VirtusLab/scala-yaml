@@ -6,6 +6,7 @@ import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
+import org.virtuslab.yaml.Position
 
 import scala.annotation.tailrec
 
@@ -18,19 +19,22 @@ trait Composer:
   def fromEvents(events: List[Event]): Either[YamlError, Node]
 
 object ComposerImpl extends Composer:
-  type ComposeResult[T] = Either[YamlError, (T, List[Event])]
+  private case class Result[+T](node: T, remaining: List[Event])
+  private type ComposeResult[+T] = Either[YamlError, Result[T]]
+  // WithPos is used in inner tailrec methods because they also return position of first child
+  private type ComposeResultWithPos[T] = Either[YamlError, (Result[T], Option[Position])]
 
   override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match
     case Nil => Left(ComposerError("No events available"))
-    case _   => composeNode(events).map((node, _) => node)
+    case _   => composeNode(events).map(_.node)
 
   private def composeNode(events: List[Event]): ComposeResult[Node] = events match
     case head :: tail =>
       head match
-        case Event.StreamStart | Event.DocumentStart(_)  => composeNode(tail)
-        case Event.SequenceStart                         => composeSequenceNode(tail)
-        case Event.MappingStart | Event.FlowMappingStart => composeMappingNode(tail)
-        case s: Event.Scalar                             => composeScalarNode(s, tail)
+        case _: Event.StreamStart | _: Event.DocumentStart     => composeNode(tail)
+        case _: Event.SequenceStart                            => composeSequenceNode(tail)
+        case _: Event.MappingStart | _: Event.FlowMappingStart => composeMappingNode(tail)
+        case s: Event.Scalar                                   => composeScalarNode(s, tail)
         case event => Left(ComposerError(s"Unexpected event $event"))
     case Nil =>
       Left(ComposerError("No events available"))
@@ -39,49 +43,55 @@ object ComposerImpl extends Composer:
     @tailrec
     def parseChildren(
         events: List[Event],
-        children: List[Node]
-    ): ComposeResult[List[Node]] = events match
+        children: List[Node],
+        firstChildPos: Option[Position] = None
+    ): ComposeResultWithPos[List[Node]] = events match
       case Nil => Left(ComposerError("Not found SequenceEnd event for sequence"))
-      case Event.SequenceEnd :: tail => Right((children, tail))
+      case (_: Event.SequenceEnd) :: tail => Right((Result(children, tail), firstChildPos))
       case _ =>
         composeNode(events) match
-          case Right(node, rest) => parseChildren(rest, children :+ node)
+          case Right(node, rest) => parseChildren(rest, children :+ node, node.pos)
           case Left(err)         => Left(err)
 
-    parseChildren(events, Nil).map((nodes, rest) => (Node.SequenceNode(nodes), rest))
+    parseChildren(events, Nil).map { case (Result(nodes, rest), pos) =>
+      Result(Node.SequenceNode(nodes, pos), rest)
+    }
   }
 
   private def composeMappingNode(events: List[Event]): ComposeResult[Node.MappingNode] = {
     @tailrec
     def parseMappings(
         events: List[Event],
-        mappings: List[Node.KeyValueNode]
-    ): ComposeResult[List[Node.KeyValueNode]] = {
+        mappings: List[Node.KeyValueNode],
+        firstChildPos: Option[Position] = None
+    ): ComposeResultWithPos[List[Node.KeyValueNode]] = {
       events match
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
-        case (Event.MappingEnd | Event.FlowMappingEnd) :: tail => Right((mappings, tail))
+        case (_: Event.MappingEnd | _: Event.FlowMappingEnd) :: tail =>
+          Right((Result(mappings, tail), firstChildPos))
         case (s: Event.Scalar) :: tail =>
           val mapping =
             for
-              key         <- composeScalarNode(s, tail).map((key, _) => key)
-              valueResult <- composeNode(tail)
-              (value, rest) = valueResult
-            yield (Node.KeyValueNode(key, value), rest)
+              key <- composeScalarNode(s, tail).map(_.node)
+              v   <- composeNode(tail)
+            yield Result(Node.KeyValueNode(key, v.node, key.pos), v.remaining)
 
           mapping match
-            case Right(value, rest) => parseMappings(rest, mappings :+ value)
-            case Left(err)          => Left(err)
+            case Right(node, rest) => parseMappings(rest, mappings :+ node, node.pos)
+            case Left(err)         => Left(err)
 
         case head :: tail =>
           Left(ComposerError(s"Invalid event, got: $head, expected Scalar"))
     }
 
-    parseMappings(events, Nil).map((nodes, rest) => (Node.MappingNode(nodes), rest))
+    parseMappings(events, Nil).map { case (Result(nodes, rest), pos) =>
+      Result(Node.MappingNode(nodes, pos), rest)
+    }
   }
 
   private def composeScalarNode(
       event: Event.Scalar,
       tail: List[Event]
   ): ComposeResult[Node.ScalarNode] = Right(
-    (Node.ScalarNode(event.value), tail)
+    Result(Node.ScalarNode(event.value, event.pos), tail)
   )

@@ -1,30 +1,29 @@
 package org.virtuslab.yaml.internal.load.reader.token
 
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
+import org.virtuslab.yaml.Position
 
-private final case class Position(index: Int, line: Int, column: Int)
-
-sealed trait Token
+sealed trait Token:
+  def pos: Position
 
 case object Token:
-  case object StreamStart       extends Token
-  case object StreamEnd         extends Token
-  case object DocumentStart     extends Token
-  case object DocumentEnd       extends Token
-  case object SequenceStart     extends Token
-  case object SequenceEnd       extends Token
-  case object FlowSequenceStart extends Token
-  case object FlowSequenceEnd   extends Token
-  case object MappingStart      extends Token
-  case object FlowMappingStart  extends Token
-  case object MappingEnd        extends Token
-  case object FlowMappingEnd    extends Token
-  case object Key               extends Token
-  case object Value             extends Token
+  case class StreamStart(pos: Position)       extends Token
+  case class StreamEnd(pos: Position)         extends Token
+  case class DocumentStart(pos: Position)     extends Token
+  case class DocumentEnd(pos: Position)       extends Token
+  case class SequenceStart(pos: Position)     extends Token
+  case class SequenceEnd(pos: Position)       extends Token
+  case class FlowSequenceStart(pos: Position) extends Token
+  case class FlowSequenceEnd(pos: Position)   extends Token
+  case class MappingStart(pos: Position)      extends Token
+  case class FlowMappingStart(pos: Position)  extends Token
+  case class MappingEnd(pos: Position)        extends Token
+  case class FlowMappingEnd(pos: Position)    extends Token
+  case class Key(pos: Position)               extends Token
+  case class Value(pos: Position)             extends Token
 
-  final case class Scalar(value: String, scalarStyle: ScalarStyle) extends Token
+  final case class Scalar(value: String, scalarStyle: ScalarStyle, pos: Position) extends Token
   case object Scalar:
-
-    def apply(scalar: String, scalarStyle: ScalarStyle): Scalar =
+    def apply(scalar: String, scalarStyle: ScalarStyle, pos: Position): Scalar =
       val escapedScalar = ScalarStyle.escapeSpecialCharacter(scalar, scalarStyle)
-      new Scalar(escapedScalar, scalarStyle)
+      new Scalar(escapedScalar, scalarStyle, pos)
