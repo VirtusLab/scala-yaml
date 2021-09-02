@@ -13,9 +13,8 @@ trait Tokenizer:
 
 private[yaml] class Scanner(str: String) extends Tokenizer {
 
-  private val ctx    = ReaderCtx.init(str)
-  private val in     = ctx.reader
-  private var indent = 0
+  private val ctx = ReaderCtx.init(str)
+  private val in  = ctx.reader
 
   override def peekToken(): Token = ctx.tokens.headOption match
     case Some(token) => token
@@ -58,7 +57,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def parseFlowSequenceStart() =
     in.skipCharacter()
-    ctx.appendState(ReaderState.FlowSequence)
+    ctx.appendState(ReaderState.FlowSequence(in.column))
     List(FlowSequenceStart(in.pos()))
 
   private def parseFlowSequenceEnd() =
@@ -67,7 +66,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def parseFlowMappingStart() =
     in.skipCharacter()
-    ctx.appendState(ReaderState.FlowMapping)
+    ctx.appendState(ReaderState.FlowMapping(in.column))
     List(FlowMappingStart(in.pos()))
 
   private def parseFlowMappingEnd() =
@@ -75,13 +74,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     ctx.closeOpenedFlowMapping()
 
   private def parseBlockSequence() =
-    ctx.closeOpenedCollectionSequences(indent)
-    if (ctx.shouldParseSequenceEntry(indent)) then
+    ctx.closeOpenedCollectionSequences(in.column)
+    if (ctx.shouldParseSequenceEntry(in.column)) then
       in.skipCharacter()
-      indent += 1
       getNextTokens()
     else
-      ctx.appendState(ReaderState.Sequence(indent))
+      ctx.appendState(ReaderState.Sequence(in.column))
       List(SequenceStart(in.pos()))
 
   private def parseDoubleQuoteValue(): Token =
@@ -111,13 +109,11 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
    */
   private def parseBlockHeader(): Unit =
     while (in.peek() == Some(' ')) {
-      indent += 1
       in.skipCharacter()
     }
 
     if in.isNewline then
       in.skipCharacter()
-      indent = 0
       parseBlockHeader()
 
   /**
@@ -142,7 +138,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
     parseBlockHeader()
 
-    val foldedIndent = indent
+    val foldedIndent = in.column
     skipUntilNextIndent(foldedIndent)
 
     @tailrec
@@ -151,7 +147,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case Some('\n') =>
           sb.append(in.read())
           skipUntilNextIndent(foldedIndent)
-          if (!in.isWhitespace && indent != foldedIndent) then sb.result()
+          if (!in.isWhitespace && in.column != foldedIndent) then sb.result()
           else readLiteral()
         case Some(char) =>
           sb.append(in.read())
@@ -170,7 +166,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val chompingIndicator = parseChompingIndicator()
 
     parseBlockHeader()
-    val foldedIndent = indent
+    val foldedIndent = in.column
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
@@ -192,7 +188,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           } else {
             in.skipCharacter()
             skipUntilNextIndent(foldedIndent)
-            if (!in.isWhitespace && indent != foldedIndent) then sb.result()
+            if (!in.isWhitespace && in.column != foldedIndent) then sb.result()
             else
               sb.append(" ")
               readFolded()
@@ -235,22 +231,27 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   }
 
   private def parseScalarValue(): Token = {
-    val sb = new StringBuilder
+    val sb           = new StringBuilder
+    val scalarIndent = in.column
+
     def readScalar(): String =
       in.peek() match
-        case Some(':')
-            if in.peekNext() == Some(' ') || in.peekNext() == Some('\n') || in
-              .peekNext() == Some('\r') =>
-          sb.result()
+        case Some(':') if in.isNextWhitespace                   => sb.result()
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
         case Some(' ') if in.peekNext() == Some('#')            => sb.result()
-        case Some('\n') | Some('\r') | None                     => sb.result()
+        case _ if in.isNewline =>
+          skipUntilNextChar()
+          sb.append(' ')
+          if (in.column > ctx.getIndentOfLatestCollection().getOrElse(Int.MaxValue)) readScalar()
+          else sb.result()
         case Some(char) =>
           sb.append(in.read())
           readScalar()
+        case None => sb.result()
 
-    val pos = in.pos()
-    Scalar(readScalar().trim, ScalarStyle.Plain, pos)
+    val pos    = in.pos()
+    val scalar = readScalar()
+    Scalar(scalar.trim, ScalarStyle.Plain, pos)
   }
 
   private def fetchValue(): List[Token] =
@@ -264,35 +265,29 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
     in.peek() match
       case Some(':') =>
-        ctx.closeOpenedCollectionMapping(indent)
+        ctx.closeOpenedCollectionMapping(scalar.pos.column)
         in.skipCharacter()
 
-        if (ctx.shouldParseMappingEntry(indent)) then
+        if (ctx.shouldParseMappingEntry(scalar.pos.column)) then
           List(Token.Key(scalar.pos), scalar, Token.Value(scalar.pos))
         else if (!ctx.isFlowMapping()) then
-          ctx.appendState(ReaderState.Mapping(indent))
+          ctx.appendState(ReaderState.Mapping(scalar.pos.column))
           List(MappingStart(scalar.pos), Token.Key(scalar.pos), scalar, Token.Value(scalar.pos))
         else List(scalar)
       case _ => List(scalar)
 
   def skipUntilNextToken(): Unit =
-    while (in.peek() == Some(' ')) do
-      indent += 1
-      in.skipCharacter()
+    while (in.peek() == Some(' ')) do in.skipCharacter()
 
     if in.peek() == Some('#') then skipComment()
 
     if (in.isNewline) then {
       in.skipCharacter()
-      indent = 0
       skipUntilNextToken()
     }
 
   def skipUntilNextIndent(indentBlock: Int): Unit =
-    indent = 0
-    while (in.peek() == Some(' ') && indent < indentBlock) do
-      indent += 1
-      in.skipCharacter()
+    while (in.peek() == Some(' ') && in.column < indentBlock) do in.skipCharacter()
 
   def skipUntilNextChar() =
     while (in.isWhitespace) do in.skipCharacter()

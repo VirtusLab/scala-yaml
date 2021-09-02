@@ -2,11 +2,11 @@ package org.virtuslab.yaml.internal.load.reader
 
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.internal.load.reader.Reader
+import org.virtuslab.yaml.internal.load.reader.ReaderState.ReaderStateWithIndent
 import org.virtuslab.yaml.internal.load.reader.StringReader
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-
 import token.Token
 case class ReaderCtx(
     stateStack: mutable.Stack[ReaderState],
@@ -38,10 +38,16 @@ case class ReaderCtx(
         closeOpenedCollectionMapping(indent)
       case _ => ()
 
+  def getIndentOfLatestCollection(): Option[Int] =
+    stateStack.headOption match {
+      case Some(state: ReaderStateWithIndent) => Some(state.indent)
+      case _                                  => None
+    }
+
   def appendState(state: ReaderState): Unit = stateStack.push(state)
 
   def closeOpenedFlowMapping(): List[Token] = stateStack.headOption match
-    case Some(ReaderState.FlowMapping) =>
+    case Some(ReaderState.FlowMapping(_)) =>
       stateStack.pop()
       List(Token.FlowMappingEnd(reader.pos()))
     case _ =>
@@ -52,7 +58,7 @@ case class ReaderCtx(
       case Some(ReaderState.Sequence(_)) =>
         stateStack.pop()
         List(Token.SequenceEnd(reader.pos()))
-      case Some(ReaderState.FlowSequence) =>
+      case Some(ReaderState.FlowSequence(_)) =>
         stateStack.pop()
         List(Token.FlowSequenceEnd(reader.pos()))
       case _ =>
@@ -70,15 +76,16 @@ case class ReaderCtx(
 
   def isAllowedSpecialCharacter(char: Char): Boolean =
     stateStack.headOption match
-      case Some(ReaderState.FlowMapping) if char == '}'                                  => false
-      case Some(ReaderState.FlowMapping) | Some(ReaderState.FlowSequence) if char == ',' => false
-      case Some(ReaderState.FlowSequence) if char == ']'                                 => false
-      case _                                                                             => true
+      case Some(ReaderState.FlowMapping(_)) if char == '}' => false
+      case Some(ReaderState.FlowMapping(_)) | Some(ReaderState.FlowSequence(_)) if char == ',' =>
+        false
+      case Some(ReaderState.FlowSequence(_)) if char == ']' => false
+      case _                                                => true
 
   def isFlowMapping(): Boolean =
     stateStack.headOption match
-      case Some(ReaderState.FlowMapping) => true
-      case _                             => false
+      case Some(ReaderState.FlowMapping(_)) => true
+      case _                                => false
 
   def closeOpenedScopes(): List[Token] =
     @tailrec
