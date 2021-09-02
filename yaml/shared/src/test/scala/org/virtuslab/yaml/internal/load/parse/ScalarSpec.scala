@@ -48,6 +48,33 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(events, expectedEvents)
   }
 
+  test("should parse duble quote scalar value with multiline") {
+    val yaml =
+      s"""description:  'multiline
+         |  plain
+         |               scalar'
+         |type: string
+         |""".stripMargin
+
+    val reader = Scanner(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("description", ScalarStyle.Plain),
+      Scalar("multiline plain scalar", ScalarStyle.SingleQuoted),
+      Scalar("type", ScalarStyle.Plain),
+      Scalar("string", ScalarStyle.Plain),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(events, expectedEvents)
+  }
+
   test("should parse value with double quote") {
     val yaml =
       s"""| "/mnt/ iscsipd"
@@ -102,7 +129,7 @@ class ScalarSpec extends BaseParseSuite:
 
   test("should parse single quote with multiline") {
     val yaml =
-      s"""|description: 'Quote 
+      s"""|description: 'Quote
           | multiline.'
           |""".stripMargin
 

@@ -207,8 +207,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     Scalar(choompedScalar, ScalarStyle.Folded, pos)
 
   private def parseSingleQuoteValue(): Token = {
-    val sb                = new StringBuilder
-    val singleQuoteIndent = indent
+    val sb = new StringBuilder
+
     @tailrec
     def readScalar(): String =
       in.peek() match
@@ -217,15 +217,16 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           sb.append('\'')
           readScalar()
         case Some('\n') =>
-          in.skipCharacter()
-          skipUntilNextIndent(singleQuoteIndent)
+          sb.append(' ')
+          skipUntilNextChar()
           readScalar()
-        case Some('\'') | None =>
+        case Some('\'') =>
           in.skipCharacter()
           sb.result()
         case Some(char) =>
           sb.append(in.read())
           readScalar()
+        case None => sb.result()
 
     val pos = in.pos()
     in.skipCharacter() // skip single quote
@@ -292,6 +293,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     while (in.peek() == Some(' ') && indent < indentBlock) do
       indent += 1
       in.skipCharacter()
+
+  def skipUntilNextChar() =
+    while (in.isWhitespace) do in.skipCharacter()
 
   private def skipComment(): Unit = while !in.isNewline do in.skipCharacter()
 }
