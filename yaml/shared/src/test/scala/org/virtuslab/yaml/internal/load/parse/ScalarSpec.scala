@@ -48,7 +48,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(events, expectedEvents)
   }
 
-  test("should parse duble quote scalar value with multiline") {
+  test("should parse single quote scalar value with multiline") {
     val yaml =
       s"""description:  'multiline
          |  plain
