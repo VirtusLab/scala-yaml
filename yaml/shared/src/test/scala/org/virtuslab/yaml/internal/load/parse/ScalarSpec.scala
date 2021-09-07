@@ -48,6 +48,61 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(events, expectedEvents)
   }
 
+  test("should parse plain scalar wihth new lines") {
+    val yaml =
+      s"""description: new lines
+         |  rest.
+         |properties: object
+          |""".stripMargin
+
+    val reader = Scanner(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("description", ScalarStyle.Plain),
+      Scalar(
+        "new lines rest.",
+        ScalarStyle.Plain
+      ),
+      Scalar("properties", ScalarStyle.Plain),
+      Scalar("object", ScalarStyle.Plain),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(events, expectedEvents)
+  }
+
+  test("should parse multine line plain scalar value") {
+    val yaml =
+      s"""|description: multiline
+          |             plain
+          |             scalar
+          |type: string
+          |""".stripMargin
+
+    val reader = Scanner(yaml)
+    val events = ParserImpl.getEvents(reader)
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("description", ScalarStyle.Plain),
+      Scalar("multiline plain scalar", ScalarStyle.Plain),
+      Scalar("type", ScalarStyle.Plain),
+      Scalar("string", ScalarStyle.Plain),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(events, expectedEvents)
+  }
+
   test("should parse single quote scalar value with multiline") {
     val yaml =
       s"""description:  'multiline
