@@ -46,7 +46,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def parseDocumentStart(): List[Token] =
     in.skipN(4)
-    ctx.parseDocumentStart()
+    ctx.parseDocumentStart(in.column)
 
   private def isDocumentEnd =
     in.peekN(3) == "..." && in.peek(3).exists(_.isWhitespace)
@@ -242,7 +242,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case _ if in.isNewline =>
           skipUntilNextChar()
           sb.append(' ')
-          if (in.column > ctx.getIndentOfLatestCollection().getOrElse(Int.MaxValue)) readScalar()
+          if (ctx.getIndentOfLatestCollection().exists(in.column > _)) readScalar()
           else sb.result()
         case Some(char) =>
           sb.append(in.read())

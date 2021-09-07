@@ -2,7 +2,6 @@ package org.virtuslab.yaml.internal.load.reader
 
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.internal.load.reader.Reader
-import org.virtuslab.yaml.internal.load.reader.ReaderState.ReaderStateWithIndent
 import org.virtuslab.yaml.internal.load.reader.StringReader
 
 import scala.annotation.tailrec
@@ -39,10 +38,7 @@ case class ReaderCtx(
       case _ => ()
 
   def getIndentOfLatestCollection(): Option[Int] =
-    stateStack.headOption match {
-      case Some(state: ReaderStateWithIndent) => Some(state.indent)
-      case _                                  => None
-    }
+    stateStack.headOption.map(_.indent)
 
   def appendState(state: ReaderState): Unit = stateStack.push(state)
 
@@ -101,9 +97,9 @@ case class ReaderCtx(
 
     loop(Nil)
 
-  def parseDocumentStart(): List[Token] =
+  def parseDocumentStart(indent: Int): List[Token] =
     val closedScopes = closeOpenedScopes()
-    stateStack.push(ReaderState.Document)
+    stateStack.push(ReaderState.Document(indent))
     closedScopes :+ Token.DocumentStart(reader.pos())
 
   def parseDocumentEnd(): List[Token] =
