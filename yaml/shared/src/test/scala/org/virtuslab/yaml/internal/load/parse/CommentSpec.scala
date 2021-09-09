@@ -13,7 +13,7 @@ class CommentSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -34,7 +34,7 @@ class CommentSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = Right(
       List(
@@ -57,7 +57,7 @@ class CommentSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,

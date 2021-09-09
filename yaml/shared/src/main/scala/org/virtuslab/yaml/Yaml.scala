@@ -7,6 +7,7 @@ import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
 
 import scala.deriving.Mirror
+import org.virtuslab.yaml.internal.load.parse.Parser
 
 inline def deriveYamlEncoder[T](using m: Mirror.Of[T]): YamlEncoder[T] = YamlEncoder.derived[T]
 inline def deriveYamlDecoder[T](using m: Mirror.Of[T]): YamlDecoder[T] = YamlDecoder.derived[T]
@@ -25,9 +26,12 @@ extension (str: String)
    */
   def as[T](using c: YamlDecoder[T]): Either[YamlError, T] =
     for
-      events <- ParserImpl.getEvents(Scanner(str))
-      node   <- ComposerImpl.fromEvents(events)
-      t      <- node.as[T]
+      events <- {
+        val parser = new ParserImpl(Scanner(str))
+        parser.getEvents()
+      }
+      node <- ComposerImpl.fromEvents(events)
+      t    <- node.as[T]
     yield t
 
 extension [T](t: T)

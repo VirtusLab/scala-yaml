@@ -9,7 +9,7 @@ class MappingSpec extends BaseParseSuite:
   test("should parse empty mapping") {
     val yaml   = "emptyDir: {}"
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -31,7 +31,7 @@ class MappingSpec extends BaseParseSuite:
          |  "19": xw==
          |""".stripMargin
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -52,7 +52,7 @@ class MappingSpec extends BaseParseSuite:
   test("should parse nested empty mapping") {
     val yaml   = "emptyDir: {{{}}}"
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -80,7 +80,7 @@ class MappingSpec extends BaseParseSuite:
          |key2: value
          |""".stripMargin
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -103,7 +103,7 @@ class MappingSpec extends BaseParseSuite:
                   |# Commnet.
                   |period: 10""".stripMargin
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -124,7 +124,7 @@ class MappingSpec extends BaseParseSuite:
 
     val yaml   = "replicas: {{replicas}}"
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -148,7 +148,7 @@ class MappingSpec extends BaseParseSuite:
   test("should parse maping of mappings with {...}") {
     val yaml   = "hostPath: {key: value, path: /dev/log}"
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -170,7 +170,7 @@ class MappingSpec extends BaseParseSuite:
   test("should parse maping key value with } brackets") {
     val yaml   = "name: etcd-{{cell}}"
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,

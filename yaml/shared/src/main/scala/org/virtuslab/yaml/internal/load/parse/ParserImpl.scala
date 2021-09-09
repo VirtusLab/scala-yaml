@@ -1,12 +1,14 @@
 package org.virtuslab.yaml.internal.load.parse
 
-import org.virtuslab.yaml.{ParseError, YamlError}
+import org.virtuslab.yaml.ParseError
+import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.reader.Tokenizer
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 
 import scala.annotation.tailrec
-import org.virtuslab.yaml.Position
+import scala.collection.mutable
 
 private enum Production:
   case ParseStreamStart
@@ -49,202 +51,203 @@ private enum Production:
  * ParseValue            ::= <ParseNode> <ParseOptKey>
  * ParseSequenceEntryOpt ::= epsilon | <ParseNode> ParseSequenceEntryOpt
 */
-object ParserImpl extends Parser:
+class ParserImpl(in: Tokenizer) extends Parser:
   import Production.*
 
-  override def getEvents(in: Tokenizer): Either[YamlError, List[Event]] =
+  private val productions = mutable.ArrayDeque(ParseStreamStart)
+
+  override def getEvents(): Either[YamlError, List[Event]] =
     @tailrec
     def loop(
-        acc: List[Event],
-        productionStack: List[Production]
+        acc: List[Event]
     ): Either[YamlError, List[Event]] = {
-      ParserImpl.getNextEvent(in, productionStack) match
-        case Right((event, next)) =>
-          if event != Event.StreamEnd then loop(acc :+ event, next)
-          else Right(acc :+ event)
+      getNextEvent() match
+        case Right(event) =>
+          if event != Event.StreamEnd then loop(event :: acc)
+          else Right((event :: acc).reverse)
         case Left(err) => Left(err)
     }
-    loop(Nil, List(ParseStreamStart))
+    loop(Nil)
 
-  type EventResult = Either[YamlError, (Event, List[Production])]
+  override def getNextEvent(): Either[YamlError, Event] =
+    if productions.size > 0 then getNextEventImpl()
+    else
+      Left(
+        ParseError("Invalid call of getNextEvent, there is no more events after Event.StreamEnd")
+      )
 
-  def getNextEvent(in: Tokenizer, stack: List[Production]): EventResult = {
+  private def getNextEventImpl(): Either[YamlError, Event] =
     val token = in.peekToken()
 
-    def parseStreamStart() = Right(
-      Event.StreamStart,
-      ParseDocumentStart :: ParseDocumentStartOpt :: ParseStreamEnd :: stack.tail
-    )
+    def parseStreamStart() =
+      productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: ParseStreamEnd :: Nil)
+      Right(Event.StreamStart)
 
     def parseDocumentStart() = token match
       case Token.DocumentStart(pos: Position) =>
         in.popToken()
-        Right(
-          Event.DocumentStart(Some(pos), explicit = true),
-          ParseNode :: ParseDocumentEnd :: stack.tail
-        )
+        productions.prependAll(ParseNode :: ParseDocumentEnd :: Nil)
+        Right(Event.DocumentStart(Some(pos), explicit = true))
       case _ =>
-        Right(
-          Event.DocumentStart(Some(token.pos), explicit = false),
-          ParseNode :: ParseDocumentEnd :: stack.tail
-        )
+        productions.prependAll(ParseNode :: ParseDocumentEnd :: Nil)
+        Right(Event.DocumentStart(Some(token.pos), explicit = false))
 
     def parseDocumentStartOpt() = token match
       case _: Token.DocumentStart =>
-        getNextEvent(in, ParseDocumentStart :: ParseDocumentStartOpt :: stack.tail)
+        productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: Nil)
+        getNextEvent()
       case _ =>
-        getNextEvent(in, stack.tail)
+        getNextEvent()
 
     def parseDocumentEnd() = token match
       case Token.DocumentEnd(pos) =>
         in.popToken()
-        Right(Event.DocumentEnd(Some(pos), true), stack.tail)
+        Right(Event.DocumentEnd(Some(pos), true))
       case _ =>
-        Right(Event.DocumentEnd(Some(token.pos), false), stack.tail)
+        Right(Event.DocumentEnd(Some(token.pos), false))
 
     def parseMappingStart() = token match
       case Token.MappingStart(pos) =>
         in.popToken()
-        Right(Event.MappingStart(Some(pos)), ParseKey :: ParseMappingEnd :: stack.tail)
+        productions.prependAll(ParseKey :: ParseMappingEnd :: Nil)
+        Right(Event.MappingStart(Some(pos)))
       case other @ _ =>
         Left(ParseError.from(Token.MappingStart(token.pos), other))
 
-    def parseFlowMappingStart(): EventResult = token match
+    def parseFlowMappingStart() = token match
       case Token.FlowMappingStart(pos) =>
         in.popToken()
-        Right(
-          Event.FlowMappingStart(Some(pos)),
-          ParseFlowMappingEntry :: ParseFlowMappingEnd :: stack.tail
-        )
+        productions.prependAll(ParseFlowMappingEntry :: ParseFlowMappingEnd :: Nil)
+        Right(Event.FlowMappingStart(Some(pos)))
       case other @ _ =>
         Left(ParseError.from(Token.FlowMappingStart(token.pos), other))
 
-    def parseFlowMappingEnd(): EventResult = token match
+    def parseFlowMappingEnd() = token match
       case Token.FlowMappingEnd(pos) =>
         in.popToken()
-        Right(Event.FlowMappingEnd(Some(pos)), stack.tail)
+        Right(Event.FlowMappingEnd(Some(pos)))
       case other @ _ =>
         Left(ParseError.from(Token.FlowMappingEnd(token.pos), other))
 
-    def parseFlowMappingEntry(): EventResult =
+    def parseFlowMappingEntry() =
       token match
         case Token.Scalar(value, style, pos) =>
           in.popToken()
-          Right(
-            Event.Scalar(value, style, Some(pos)),
-            ParseNode :: ParseFlowMappingEntry :: stack.tail
-          )
+          productions.prependAll(ParseNode :: ParseFlowMappingEntry :: Nil)
+          Right(Event.Scalar(value, style, Some(pos)))
+
         case Token.FlowMappingStart(pos) => {
           in.popToken()
-          Right(
-            Event.FlowMappingStart(Some(pos)),
-            ParseFlowMappingEntry :: ParseFlowMappingEnd :: ParseNode :: stack.tail
-          )
+          productions.prependAll(ParseFlowMappingEntry :: ParseFlowMappingEnd :: ParseNode :: Nil)
+
+          Right(Event.FlowMappingStart(Some(pos)))
         }
         case _ =>
-          getNextEvent(in, stack.tail)
+          getNextEvent()
 
     def parseMappingEnd() = token match
       case Token.MappingEnd(pos) =>
         in.popToken()
-        Right(Event.MappingEnd(Some(pos)), stack.tail)
+        Right(Event.MappingEnd(Some(pos)))
       case other @ _ =>
         Left(ParseError.from(Token.MappingEnd(token.pos), other))
 
     def parseSequenceStart() = token match
       case Token.SequenceStart(pos) =>
         in.popToken()
-        Right(
-          Event.SequenceStart(Some(pos)),
-          ParseNode :: ParseSequenceEntryOpt :: ParseSequenceEnd :: stack.tail
-        )
+        productions.prependAll(ParseNode :: ParseSequenceEntryOpt :: ParseSequenceEnd :: Nil)
+
+        Right(Event.SequenceStart(Some(pos)))
       case other @ _ =>
         Left(ParseError.from(Token.SequenceStart(token.pos), other))
 
     def parseSequenceEnd() = token match
       case Token.SequenceEnd(pos) =>
         in.popToken()
-        Right(Event.SequenceEnd(Some(pos)), stack.tail)
+        Right(Event.SequenceEnd(Some(pos)))
       case other @ _ =>
         Left(ParseError.from(Token.SequenceEnd(token.pos), other))
 
     def parseFlowSequenceStart() = token match
       case Token.FlowSequenceStart(pos) =>
         in.popToken()
-        Right(
-          Event.SequenceStart(Some(pos)),
-          ParseSequenceEntryOpt :: ParseFlowSequenceEnd :: stack.tail
-        )
+        productions.prependAll(ParseSequenceEntryOpt :: ParseFlowSequenceEnd :: Nil)
+
+        Right(Event.SequenceStart(Some(pos)))
       case other @ _ =>
         Left(ParseError.from(Token.FlowSequenceStart(token.pos), other))
 
     def parseFlowSequenceEnd() = token match
       case Token.FlowSequenceEnd(pos) =>
         in.popToken()
-        Right(Event.SequenceEnd(Some(pos)), stack.tail)
+        Right(Event.SequenceEnd(Some(pos)))
       case other @ _ =>
         Left(ParseError.from(Token.FlowSequenceEnd(token.pos), other))
 
     def parseKey() = token match
       case Token.Key(_) =>
         in.popToken()
-        getNextEvent(in, ParseScalar :: ParseValue :: stack.tail)
+        productions.prependAll(ParseScalar :: ParseValue :: Nil)
+        getNextEvent()
       case other @ _ =>
         Left(ParseError.from(Token.Key(token.pos), other))
 
     def parseOptKey() = token match
       case Token.Key(_) => parseKey()
       case _ =>
-        getNextEvent(in, stack.tail)
+        getNextEvent()
 
     def parseValue() = token match
       case Token.Value(_) =>
         in.popToken()
-        getNextEvent(in, ParseNode :: ParseOptKey :: stack.tail)
+        productions.prependAll(ParseNode :: ParseOptKey :: Nil)
+        getNextEvent()
       case other @ _ => Left(ParseError.from(Token.Value(token.pos), other))
 
     def parseScalar() = token match
       case Token.Scalar(value, style, pos) =>
         in.popToken()
-        Right(Event.Scalar(value, style, Some(pos)), stack.tail)
+        Right(Event.Scalar(value, style, Some(pos)))
       case other @ _ =>
         Left(ParseError.from("Token.Scalar", other))
 
-    def parseNode(): EventResult = token match
+    def parseNode() = token match
       case _: Token.MappingStart      => parseMappingStart()
       case _: Token.FlowMappingStart  => parseFlowMappingStart()
       case _: Token.SequenceStart     => parseSequenceStart()
       case _: Token.FlowSequenceStart => parseFlowSequenceStart()
       case _: Token.Scalar            => parseScalar()
       case _ =>
-        Right(Event.Scalar("", ScalarStyle.Plain, Some(token.pos)), stack.tail)
+        Right(Event.Scalar("", ScalarStyle.Plain, Some(token.pos)))
 
     def parseSequenceEntryOpt() = token match
       case _: Token.MappingStart | _: Token.SequenceStart | _: Token.FlowMappingStart |
           _: Token.FlowSequenceStart | _: Token.Scalar =>
-        getNextEvent(in, ParseNode :: ParseSequenceEntryOpt :: stack.tail)
-      case _ => getNextEvent(in, stack.tail)
+        productions.prependAll(ParseNode :: ParseSequenceEntryOpt :: Nil)
+        getNextEvent()
+      case _ =>
+        getNextEvent()
 
-    stack.headOption match
-      case Some(ParseStreamStart)       => parseStreamStart()
-      case Some(ParseStreamEnd)         => Right(Event.StreamEnd, stack.tail)
-      case Some(ParseDocumentStart)     => parseDocumentStart()
-      case Some(ParseDocumentEnd)       => parseDocumentEnd()
-      case Some(ParseDocumentStartOpt)  => parseDocumentStartOpt()
-      case Some(ParseNode)              => parseNode()
-      case Some(ParseSequenceEntryOpt)  => parseSequenceEntryOpt()
-      case Some(ParseMappingStart)      => parseMappingStart()
-      case Some(ParseMappingEnd)        => parseMappingEnd()
-      case Some(ParseFlowMappingEnd)    => parseFlowMappingEnd()
-      case Some(ParseSequenceStart)     => parseSequenceStart()
-      case Some(ParseFlowSequenceStart) => parseFlowSequenceStart()
-      case Some(ParseFlowSequenceEnd)   => parseFlowSequenceEnd()
-      case Some(ParseSequenceEnd)       => parseSequenceEnd()
-      case Some(ParseKey)               => parseKey()
-      case Some(ParseValue)             => parseValue()
-      case Some(ParseOptKey)            => parseOptKey()
-      case Some(ParseScalar)            => parseScalar()
-      case Some(ParseFlowMappingEntry)  => parseFlowMappingEntry()
-      case None                         => ???
+    productions.removeHead() match
+      case ParseStreamStart       => parseStreamStart()
+      case ParseStreamEnd         => Right(Event.StreamEnd)
+      case ParseDocumentStart     => parseDocumentStart()
+      case ParseDocumentEnd       => parseDocumentEnd()
+      case ParseDocumentStartOpt  => parseDocumentStartOpt()
+      case ParseNode              => parseNode()
+      case ParseSequenceEntryOpt  => parseSequenceEntryOpt()
+      case ParseMappingStart      => parseMappingStart()
+      case ParseMappingEnd        => parseMappingEnd()
+      case ParseFlowMappingEnd    => parseFlowMappingEnd()
+      case ParseSequenceStart     => parseSequenceStart()
+      case ParseFlowSequenceStart => parseFlowSequenceStart()
+      case ParseFlowSequenceEnd   => parseFlowSequenceEnd()
+      case ParseSequenceEnd       => parseSequenceEnd()
+      case ParseKey               => parseKey()
+      case ParseValue             => parseValue()
+      case ParseOptKey            => parseOptKey()
+      case ParseScalar            => parseScalar()
+      case ParseFlowMappingEntry  => parseFlowMappingEntry()
+  end getNextEventImpl
 
-  }
+end ParserImpl

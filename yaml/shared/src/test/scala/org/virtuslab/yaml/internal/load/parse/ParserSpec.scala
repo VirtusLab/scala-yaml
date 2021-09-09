@@ -13,7 +13,7 @@ class ParserSpec extends BaseParseSuite:
                   |- Ken Griffey""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       Event.StreamStart,
@@ -37,7 +37,7 @@ class ParserSpec extends BaseParseSuite:
          |rbi: 147""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -69,7 +69,7 @@ class ParserSpec extends BaseParseSuite:
                   |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       Event.StreamStart,
@@ -111,7 +111,7 @@ class ParserSpec extends BaseParseSuite:
                   |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -147,7 +147,7 @@ class ParserSpec extends BaseParseSuite:
                   |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -201,7 +201,7 @@ class ParserSpec extends BaseParseSuite:
                   |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
