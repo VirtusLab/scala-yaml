@@ -1,4 +1,6 @@
-lazy val scala3Version = "3.0.2-RC2"
+import BuildHelper._
+
+lazy val scala3Version = "3.0.2"
 lazy val projectName   = "scala-yaml"
 
 inThisBuild(
@@ -25,37 +27,6 @@ inThisBuild(
   )
 )
 
-lazy val munit: Seq[Setting[_]] = Seq(
-  libraryDependencies ++= Seq(Deps.munit % Test),
-  testFrameworks += new TestFramework("munit.Framework")
-)
-
-lazy val docsSettings = Seq(
-  Compile / doc / scalacOptions ++= Seq(
-    "-project",
-    "Scala-yaml",
-    "-siteroot",
-    "docs",
-    "-project-version",
-    version.value,
-    "-project-logo",
-    "docs/logo.svg",
-    "-social-links:" +
-      "github::https://github.com/VirtusLab/scala-yaml," +
-      "twitter::https://twitter.com/VirtusLab",
-    "-project-footer",
-    s"Copyright (c) 2021, VirtusLab",
-    "-source-links:github://VirtusLab/scala-yaml",
-    "-revision",
-    "master"
-  ),
-  Compile / doc := {
-    val out = (Compile / doc).value
-    IO.copyDirectory((Compile / doc / target).value, file("generated-docs"))
-    out
-  }
-)
-
 lazy val scalaYamlCore = crossProject(JSPlatform, JVMPlatform)
   .in(file("yaml"))
   .settings(
@@ -70,11 +41,10 @@ lazy val scalaYamlCore = crossProject(JSPlatform, JVMPlatform)
 lazy val scalaYamlTestCore = crossProject(JSPlatform, JVMPlatform)
   .in(file("tests/test-core"))
   .settings(
-    name         := "scala-yaml-test-core",
-    scalaVersion := scala3Version,
-    libraryDependencies ++= Seq(Deps.osLib, Deps.munit)
+    name         := "testCore",
+    scalaVersion := scala3Version
   )
-  .settings(munit)
+  .settings(testSettings)
   .dependsOn(scalaYamlCore)
 
 lazy val scalaYamlTestSuite = crossProject(JSPlatform, JVMPlatform)
@@ -82,9 +52,8 @@ lazy val scalaYamlTestSuite = crossProject(JSPlatform, JVMPlatform)
   .configs(IntegrationTest)
   .settings(
     Defaults.itSettings,
-    name         := "scala-yaml-test-suite",
-    scalaVersion := scala3Version,
-    libraryDependencies ++= Seq(Deps.osLib, Deps.munit)
+    name         := "testSuite",
+    scalaVersion := scala3Version
   )
-  .settings(munit)
+  .settings(testSettings)
   .dependsOn(scalaYamlTestCore)
