@@ -12,7 +12,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -34,7 +34,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -55,7 +55,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -83,7 +83,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -119,7 +119,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,

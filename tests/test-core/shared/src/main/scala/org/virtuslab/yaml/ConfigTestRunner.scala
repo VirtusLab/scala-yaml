@@ -19,7 +19,7 @@ case class ConfigTestRunner(yamlPath: os.Path, libYaml: os.Path) extends TestRun
     val yaml   = os.read(yamlPath)
     val reader = Scanner(yaml)
 
-    ParserImpl.getEvents(reader) match {
+    ParserImpl(reader).getEvents() match {
       case Right(events) => {
         val eventYamlTestSuite: String = TestRunnerUtils.convertEventToYamlTestSuiteFormat(events)
         val libYamlEvent               = eventFromLibYaml

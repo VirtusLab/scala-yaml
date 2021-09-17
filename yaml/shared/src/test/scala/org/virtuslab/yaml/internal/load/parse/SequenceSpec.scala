@@ -14,7 +14,7 @@ class SequenceSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -36,7 +36,7 @@ class SequenceSpec extends BaseParseSuite:
     val yaml = "seq: []"
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -63,7 +63,7 @@ class SequenceSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -92,7 +92,7 @@ class SequenceSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,

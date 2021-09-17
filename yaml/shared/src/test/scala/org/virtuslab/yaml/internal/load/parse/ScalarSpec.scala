@@ -13,7 +13,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -36,7 +36,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -56,7 +56,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -86,7 +86,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -112,7 +112,7 @@ class ScalarSpec extends BaseParseSuite:
          |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -136,7 +136,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -152,7 +152,7 @@ class ScalarSpec extends BaseParseSuite:
     val yaml = """ "double \n quote" """
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -170,7 +170,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -189,7 +189,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -218,7 +218,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -247,7 +247,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -271,7 +271,7 @@ class ScalarSpec extends BaseParseSuite:
           |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -287,7 +287,7 @@ class ScalarSpec extends BaseParseSuite:
     val yaml = s""" "{\\" mnt" """
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -308,7 +308,7 @@ class ScalarSpec extends BaseParseSuite:
                   |""".stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -331,7 +331,7 @@ class ScalarSpec extends BaseParseSuite:
                   |        """.stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -364,7 +364,7 @@ class ScalarSpec extends BaseParseSuite:
                   |        """.stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -394,7 +394,7 @@ class ScalarSpec extends BaseParseSuite:
                   |     """.stripMargin
 
     val reader = Scanner(yaml)
-    val events = ParserImpl.getEvents(reader)
+    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,

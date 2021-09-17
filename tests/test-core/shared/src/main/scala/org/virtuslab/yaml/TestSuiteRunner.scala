@@ -18,7 +18,7 @@ case class TestSuiteRunner(testYamlML: os.Path) extends TestRunner {
     val testMl = TestMlEntry.from(os.read(testYamlML))
     val reader = Scanner(testMl.inYaml)
 
-    ParserImpl.getEvents(reader) match
+    ParserImpl(reader).getEvents() match
       case Right(events) =>
         val eventYamlTestSuite  = TestRunnerUtils.convertEventToYamlTestSuiteFormat(events)
         val testSuiteYamlEvents = testMl.seqEvent
