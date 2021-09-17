@@ -51,30 +51,25 @@ private enum Production:
  * ParseValue            ::= <ParseNode> <ParseOptKey>
  * ParseSequenceEntryOpt ::= epsilon | <ParseNode> ParseSequenceEntryOpt
 */
-class ParserImpl(in: Tokenizer) extends Parser:
+final class ParserImpl private (in: Tokenizer) extends Parser:
   import Production.*
 
   private val productions = mutable.ArrayDeque(ParseStreamStart)
 
-  override def getEvents(): Either[YamlError, List[Event]] =
+  private[yaml] def getEvents(): Either[YamlError, List[Event]] =
     @tailrec
-    def loop(
-        acc: List[Event]
-    ): Either[YamlError, List[Event]] = {
+    def loop(events: mutable.ArrayDeque[Event]): Either[YamlError, List[Event]] = {
       getNextEvent() match
         case Right(event) =>
-          if event != Event.StreamEnd then loop(event :: acc)
-          else Right((event :: acc).reverse)
+          if event != Event.StreamEnd then loop(events.append(event))
+          else Right(events.append(event).toList)
         case Left(err) => Left(err)
     }
-    loop(Nil)
+    loop(new mutable.ArrayDeque())
 
   override def getNextEvent(): Either[YamlError, Event] =
     if productions.size > 0 then getNextEventImpl()
-    else
-      Left(
-        ParseError("Invalid call of getNextEvent, there is no more events after Event.StreamEnd")
-      )
+    else Right(Event.StreamEnd)
 
   private def getNextEventImpl(): Either[YamlError, Event] =
     val token = in.peekToken()
@@ -251,3 +246,6 @@ class ParserImpl(in: Tokenizer) extends Parser:
   end getNextEventImpl
 
 end ParserImpl
+
+object ParserImpl:
+  def apply(in: Tokenizer): ParserImpl = new ParserImpl(in)

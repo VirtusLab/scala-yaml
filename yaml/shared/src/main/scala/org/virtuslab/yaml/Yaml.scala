@@ -27,7 +27,7 @@ extension (str: String)
   def as[T](using c: YamlDecoder[T]): Either[YamlError, T] =
     for
       events <- {
-        val parser = new ParserImpl(Scanner(str))
+        val parser = ParserImpl(Scanner(str))
         parser.getEvents()
       }
       node <- ComposerImpl.fromEvents(events)
