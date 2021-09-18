@@ -9,16 +9,33 @@ sealed trait Node:
   def pos: Option[Position]
 
 object Node:
-  final case class ScalarNode(value: String, pos: Option[Position] = None) extends Node
+  final case class ScalarNode private[yaml] (value: String, pos: Option[Position] = None)
+      extends Node
 
-  final case class SequenceNode(nodes: Seq[Node], pos: Option[Position] = None) extends Node
+  object ScalarNode:
+    given (String => ScalarNode)            = ScalarNode(_)
+    inline given (ScalarNode => ScalarNode) = identity
+    def apply(value: String): ScalarNode    = new ScalarNode(value)
+
+  final case class SequenceNode private[yaml] (nodes: Seq[Node], pos: Option[Position] = None)
+      extends Node
   object SequenceNode:
-    def apply(nodes: Node*): SequenceNode = SequenceNode(nodes, None)
+    def apply(nodes: Node*): SequenceNode = new SequenceNode(nodes, None)
 
-  final case class MappingNode(mappings: Seq[KeyValueNode], pos: Option[Position] = None)
-      extends Node
+  final case class MappingNode private[yaml] (
+      mappings: Seq[KeyValueNode],
+      pos: Option[Position] = None
+  ) extends Node
+
   object MappingNode:
-    def apply(nodes: KeyValueNode*): MappingNode = MappingNode(nodes, None)
+    def apply[K](nodes: (K, Node)*)(using conversion: (K => ScalarNode)): MappingNode =
+      val kvn = nodes.map((k, v) => KeyValueNode(conversion(k), v))
+      new MappingNode(kvn, None)
 
-  final case class KeyValueNode(key: ScalarNode, value: Node, pos: Option[Position] = None)
-      extends Node
+  final case class KeyValueNode private[yaml] (
+      key: ScalarNode,
+      value: Node,
+      pos: Option[Position] = None
+  ) extends Node
+
+end Node

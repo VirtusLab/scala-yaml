@@ -44,6 +44,10 @@ extension [T](t: T)
    * - [[Presenter]] present [[Events]] as a character stream
    */
   def asYaml(using encoder: YamlEncoder[T]): String =
-    val node   = encoder.asNode(t)
+    val node = encoder.asNode(t)
+    node.asYaml
+
+extension (node: Node)
+  def asYaml: String =
     val events = SerializerImpl.toEvents(node)
     PresenterImpl.asString(events)
