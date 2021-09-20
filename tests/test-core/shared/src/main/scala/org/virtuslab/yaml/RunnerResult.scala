@@ -5,9 +5,9 @@ trait RunnerResult:
 
 case object RunnerResult:
 
-  case class Success(events: String, expectedEvents: String) extends RunnerResult {
+  case class Success(events: String, expectedEvents: String) extends RunnerResult:
     override def isValid: Boolean = events == expectedEvents
-  }
-  case class Exeception(yamlError: YamlError) extends RunnerResult {
-    override def isValid: Boolean = false
-  }
+
+  case class Exception(events: String, yamlError: YamlError) extends RunnerResult:
+    override val isValid: Boolean = false
+end RunnerResult

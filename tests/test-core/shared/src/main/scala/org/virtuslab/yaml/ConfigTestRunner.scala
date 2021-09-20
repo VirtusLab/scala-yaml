@@ -12,32 +12,15 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle._
 import org.virtuslab.yaml.internal.load.reader.token.Token._
 
-case class ConfigTestRunner(yamlPath: os.Path, libYaml: os.Path) extends TestRunner {
+case class ConfigTestRunner(yamlPath: os.Path, libYaml: os.Path) extends TestRunner:
+  override val inYaml = os.read(yamlPath)
+  override val expectedEvents = os
+    .proc(libYaml, yamlPath)
+    .call(cwd = os.pwd)
+    .out
+    .text()
+    .trim
 
-  def run(): RunnerResult = {
+  override def run(): RunnerResult =
     println(yamlPath)
-    val yaml   = os.read(yamlPath)
-    val reader = Scanner(yaml)
-
-    ParserImpl(reader).getEvents() match {
-      case Right(events) => {
-        val eventYamlTestSuite: String = TestRunnerUtils.convertEventToYamlTestSuiteFormat(events)
-        val libYamlEvent               = eventFromLibYaml
-
-        RunnerResult.Success(eventYamlTestSuite, libYamlEvent)
-      }
-      case Left(e) => RunnerResult.Exeception(e)
-    }
-
-  }
-
-  private def eventFromLibYaml: String = {
-    os
-      .proc(libYaml, yamlPath)
-      .call(cwd = os.pwd)
-      .out
-      .text()
-      .trim
-  }
-
-}
+    super.run()

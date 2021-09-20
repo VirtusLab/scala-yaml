@@ -3,12 +3,12 @@ package org.virtuslab.yaml
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-object TestRunnerUtils {
+object TestRunnerUtils:
 
-  def convertEventToYamlTestSuiteFormat(event: List[Event]): String = {
+  def convertEventToYamlTestSuiteFormat(event: Seq[Event]): String =
     event
       .map(event =>
-        event match {
+        event match
           case _: Event.StreamStart             => "+STR"
           case _: Event.StreamEnd               => "-STR"
           case Event.DocumentStart(_, explicit) => if (explicit) "+DOC ---" else "+DOC"
@@ -25,8 +25,7 @@ object TestRunnerUtils {
               case ScalarStyle.Folded       => s"=VAL >$value"
               case ScalarStyle.Literal      => s"=VAL |$value"
             }
-        }
       )
       .mkString("\n")
-  }
-}
+
+end TestRunnerUtils

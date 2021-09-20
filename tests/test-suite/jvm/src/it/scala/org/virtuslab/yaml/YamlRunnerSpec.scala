@@ -17,6 +17,7 @@ abstract class YamlRunnerSpec extends munit.FunSuite {
       paths match {
         case path :: tail => {
 
+          println(s"Test - $path")
           val runnerResult = createTestRunner(path).run()
 
           if (runnerResult.isValid) {

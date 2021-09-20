@@ -11,19 +11,12 @@ import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle._
 import org.virtuslab.yaml.internal.load.reader.token.Token._
+import scala.annotation.tailrec
+import scala.collection.mutable
 
 case class TestSuiteRunner(testYamlML: os.Path) extends TestRunner {
+  private val testMl = TestMlEntry.from(os.read(testYamlML))
 
-  override def run(): RunnerResult =
-    val testMl = TestMlEntry.from(os.read(testYamlML))
-    val reader = Scanner(testMl.inYaml)
-
-    ParserImpl(reader).getEvents() match
-      case Right(events) =>
-        val eventYamlTestSuite  = TestRunnerUtils.convertEventToYamlTestSuiteFormat(events)
-        val testSuiteYamlEvents = testMl.seqEvent
-
-        RunnerResult.Success(eventYamlTestSuite, testSuiteYamlEvents)
-      case Left(e) => RunnerResult.Exeception(e)
-
+  override val inYaml         = testMl.inYaml
+  override val expectedEvents = testMl.seqEvent
 }
