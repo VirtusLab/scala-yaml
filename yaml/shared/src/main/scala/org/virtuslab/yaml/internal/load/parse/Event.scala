@@ -44,4 +44,6 @@ object Event:
   case class MappingStart(pos: Option[Position] = None)     extends Mapping
   case class MappingEnd(pos: Option[Position] = None)       extends Mapping
   case class FlowMappingStart(pos: Option[Position] = None) extends Mapping
+  object FlowMappingStart                                   extends FlowMappingStart(None)
   case class FlowMappingEnd(pos: Option[Position] = None)   extends Mapping
+  object FlowMappingEnd                                     extends FlowMappingEnd(None)

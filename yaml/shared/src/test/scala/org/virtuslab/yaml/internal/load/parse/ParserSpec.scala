@@ -264,3 +264,63 @@ class ParserSpec extends BaseParseSuite:
 
     assertEventsEquals(events, expectedEvents)
   }
+
+  test("should parse") {
+    val yaml = """implicit block key : [
+                 |  implicit flow key : value,
+                 |]""".stripMargin
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("implicit block key"),
+      SequenceStart(),
+      MappingStart(),
+      Scalar("implicit flow key"),
+      Scalar("value"),
+      MappingEnd(),
+      SequenceEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    val events = yaml.events
+    println(events)
+    assertEventsEquals(events, expectedEvents)
+  }
+
+  test("should parse mapping key with additional space before ':'") {
+    val yaml = "key : value"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("key"),
+      Scalar("value"),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("should parse flow sequence with comma") {
+    val yaml = "[ k: v,]"
+
+    val expectedEvents: List[Event] = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      MappingStart(),
+      Scalar("k"),
+      Scalar("v"),
+      MappingEnd(),
+      SequenceEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }

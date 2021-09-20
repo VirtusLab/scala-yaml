@@ -9,6 +9,7 @@ trait Reader:
   def read(): Char
   def peek(n: Int = 0): Option[Char]
   def peekNext(): Option[Char]
+  def checkNext(predicate: Char => Boolean): Boolean
   def peekN(n: Int): String
   def isWhitespace: Boolean
   def isNextWhitespace: Boolean
@@ -32,6 +33,8 @@ private[yaml] class StringReader(in: String) extends Reader:
   override def peek(n: Int = 0): Option[Char] =
     if offset + n < in.length then Some(in.charAt(offset + n))
     else None
+
+  override def checkNext(predicate: Char => Boolean) = peekNext().exists(predicate)
 
   override def peekNext(): Option[Char] = peek(1)
   override def peekN(n: Int): String    = (0 until n).map(peek(_)).flatten.mkString("")

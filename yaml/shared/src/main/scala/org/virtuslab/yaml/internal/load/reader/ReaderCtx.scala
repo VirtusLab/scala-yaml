@@ -7,7 +7,8 @@ import org.virtuslab.yaml.internal.load.reader.StringReader
 import scala.annotation.tailrec
 import scala.collection.mutable
 import token.Token
-case class ReaderCtx(
+
+final case class ReaderCtx(
     stateStack: mutable.Stack[ReaderState],
     tokens: mutable.ArrayDeque[Token] = mutable.ArrayDeque.empty,
     reader: Reader
@@ -49,16 +50,16 @@ case class ReaderCtx(
     case _ =>
       Nil
 
-  def closeOpenedSequence(): List[Token] =
+  def closeOpenedFlowSequence(): List[Token] =
     stateStack.headOption match
-      case Some(ReaderState.Sequence(_)) =>
-        stateStack.pop()
-        List(Token.SequenceEnd(reader.pos()))
       case Some(ReaderState.FlowSequence(_)) =>
         stateStack.pop()
         List(Token.FlowSequenceEnd(reader.pos()))
       case _ =>
-        Nil
+        val token = closeOpenedCollection()
+        tokens.append(token)
+        closeOpenedFlowSequence()
+
 
   def shouldParseSequenceEntry(indent: Int): Boolean =
     stateStack.headOption match
@@ -70,13 +71,25 @@ case class ReaderCtx(
       case Some(ReaderState.Mapping(i)) if i == indent => true
       case _                                           => false
 
+  private def closeOpenedCollection(): Token =
+    val pos = reader.pos()
+    stateStack.removeHead() match
+      case _: ReaderState.Sequence => Token.SequenceEnd(pos)
+      case _: ReaderState.Mapping => Token.MappingEnd(pos)
+      case _: ReaderState.FlowSequence => Token.FlowSequenceEnd(pos)
+      case _: ReaderState.FlowMapping => Token.FlowMappingEnd(pos)
+      case _: ReaderState.Document => Token.DocumentEnd(pos)
+
+  /**
+   * Check if given character is allowed and can be part of being read scalar
+   */
   def isAllowedSpecialCharacter(char: Char): Boolean =
-    stateStack.headOption match
-      case Some(ReaderState.FlowMapping(_)) if char == '}' => false
-      case Some(ReaderState.FlowMapping(_)) | Some(ReaderState.FlowSequence(_)) if char == ',' =>
-        false
-      case Some(ReaderState.FlowSequence(_)) if char == ']' => false
-      case _                                                => true
+    val flowMapping = stateStack.exists(_.isInstanceOf[ReaderState.FlowMapping])
+    val flowSequence = stateStack.exists(_.isInstanceOf[ReaderState.FlowSequence])
+    if (flowMapping && char == '}') false
+    else if ((flowMapping || flowSequence) && char == ',') false
+    else if (flowSequence && char == ']') false
+    else true
 
   def isFlowMapping(): Boolean =
     stateStack.headOption match

@@ -62,7 +62,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def parseFlowSequenceEnd() =
     in.skipCharacter()
-    ctx.closeOpenedSequence()
+    ctx.closeOpenedFlowSequence()
 
   private def parseFlowMappingStart() =
     in.skipCharacter()
@@ -236,9 +236,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
     def readScalar(): String =
       in.peek() match
-        case Some(':') if in.isNextWhitespace                   => sb.result()
-        case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
-        case Some(' ') if in.peekNext() == Some('#')            => sb.result()
+        case Some(':') if in.isNextWhitespace =>
+          sb.result()
+        case Some(char) if !ctx.isAllowedSpecialCharacter(char) =>
+          sb.result()
+        case Some(' ') if in.checkNext(c => c == '#' || c == ':') =>
+          sb.result()
         case _ if in.isNewline =>
           skipUntilNextChar()
           sb.append(' ')
@@ -263,6 +266,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('|')  => parseLiteral()
       case _          => parseScalarValue()
 
+    skipUntilNextToken()
     in.peek() match
       case Some(':') =>
         ctx.closeOpenedCollectionMapping(scalar.pos.column)
