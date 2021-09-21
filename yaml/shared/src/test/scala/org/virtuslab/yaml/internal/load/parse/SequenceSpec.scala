@@ -13,9 +13,6 @@ class SequenceSpec extends BaseParseSuite:
           |    - -c
           |""".stripMargin
 
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
@@ -29,14 +26,11 @@ class SequenceSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse empty flow sequence") {
     val yaml = "seq: []"
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -49,7 +43,7 @@ class SequenceSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse sequence of sequences") {
@@ -61,9 +55,6 @@ class SequenceSpec extends BaseParseSuite:
           |  - v3
           |  - v4
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -81,7 +72,7 @@ class SequenceSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse sequence of host:port") {
@@ -90,9 +81,6 @@ class SequenceSpec extends BaseParseSuite:
           |portalsSingleQouta: ['10.0.2.16:3260', '10.0.2.17:3260']
           |portalsDoubleQouta: ["10.0.2.16:3260", "10.0.2.17:3260"]
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -117,5 +105,5 @@ class SequenceSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }

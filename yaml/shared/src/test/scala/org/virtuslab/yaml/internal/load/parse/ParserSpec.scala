@@ -12,9 +12,6 @@ class ParserSpec extends BaseParseSuite:
                   |- Sammy Sosa
                   |- Ken Griffey""".stripMargin
 
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
     val expectedEvents = List(
       Event.StreamStart,
       Event.DocumentStart(),
@@ -27,7 +24,7 @@ class ParserSpec extends BaseParseSuite:
       Event.StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse mapping scalars to scalars") {
@@ -35,9 +32,6 @@ class ParserSpec extends BaseParseSuite:
       s"""hr:  65
          |avg: 0.278
          |rbi: 147""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -54,7 +48,7 @@ class ParserSpec extends BaseParseSuite:
       StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse sequence of mapping") {
@@ -67,9 +61,6 @@ class ParserSpec extends BaseParseSuite:
                   |  hr:   63
                   |  avg:  0.288
                   |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       Event.StreamStart,
@@ -96,7 +87,7 @@ class ParserSpec extends BaseParseSuite:
       Event.StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("mapping scalar to sequences") {
@@ -109,9 +100,6 @@ class ParserSpec extends BaseParseSuite:
                   |  - Chicago Cubs
                   |  - Atlanta Braves
                   |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -134,7 +122,7 @@ class ParserSpec extends BaseParseSuite:
       StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse mapping of sequence") {
@@ -145,9 +133,6 @@ class ParserSpec extends BaseParseSuite:
                   |  volumes:
                   |  - name: iscsipd-rw
                   |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -175,7 +160,7 @@ class ParserSpec extends BaseParseSuite:
       StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse kubernetess config") {
@@ -199,9 +184,6 @@ class ParserSpec extends BaseParseSuite:
                   |      fsType: ext4
                   |      readOnly: true
                   |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -262,7 +244,7 @@ class ParserSpec extends BaseParseSuite:
       StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse") {
@@ -286,7 +268,7 @@ class ParserSpec extends BaseParseSuite:
     )
     val events = yaml.events
     println(events)
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse mapping key with additional space before ':'") {
@@ -324,3 +306,5 @@ class ParserSpec extends BaseParseSuite:
 
     assertEventsEquals(yaml.events, expectedEvents)
   }
+
+end ParserSpec

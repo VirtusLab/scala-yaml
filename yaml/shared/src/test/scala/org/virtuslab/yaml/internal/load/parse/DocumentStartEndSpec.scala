@@ -11,9 +11,6 @@ class DocumentStartEndSpec extends BaseParseSuite:
           |k1: v1
           |""".stripMargin
 
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
     val expectedEvents = List(
       StreamStart,
       DocumentStart(explicit = true),
@@ -24,7 +21,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse explicit document end event") {
@@ -32,9 +29,6 @@ class DocumentStartEndSpec extends BaseParseSuite:
       s"""|k1: v1
           |...
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -46,16 +40,13 @@ class DocumentStartEndSpec extends BaseParseSuite:
       DocumentEnd(explicit = true),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse implicit document start event") {
     val yaml =
       s"""|k1: v1
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -67,7 +58,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse implicit and multiple explicit document starts") {
@@ -81,9 +72,6 @@ class DocumentStartEndSpec extends BaseParseSuite:
           |k3: v3
           |...
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -107,7 +95,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
       DocumentEnd(explicit = true),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse multiple explicit document's start events") {
@@ -117,9 +105,6 @@ class DocumentStartEndSpec extends BaseParseSuite:
           |---
           |k2: v2
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -137,5 +122,5 @@ class DocumentStartEndSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }

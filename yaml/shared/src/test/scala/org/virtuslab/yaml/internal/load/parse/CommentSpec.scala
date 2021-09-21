@@ -12,9 +12,6 @@ class CommentSpec extends BaseParseSuite:
           |apiVersion: apps/v1  app # comment
           |""".stripMargin
 
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
@@ -25,16 +22,13 @@ class CommentSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse empty document".ignore) {
     val yaml =
       s"""|#Comment.
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = Right(
       List(
@@ -43,7 +37,7 @@ class CommentSpec extends BaseParseSuite:
         StreamEnd
       )
     )
-    assertEquals(events, expectedEvents)
+    assertEquals(yaml.events, expectedEvents)
   }
 
   test("should parse mapping with comments") {
@@ -55,9 +49,6 @@ class CommentSpec extends BaseParseSuite:
           |  # an external load-balanced IP for the frontend service.
           |  # type: LoadBalancer
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -72,5 +63,5 @@ class CommentSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }

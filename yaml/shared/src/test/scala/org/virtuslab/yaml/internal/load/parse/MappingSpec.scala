@@ -7,9 +7,7 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 class MappingSpec extends BaseParseSuite:
 
   test("should parse empty mapping") {
-    val yaml   = "emptyDir: {}"
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+    val yaml = "emptyDir: {}"
 
     val expectedEvents = List(
       StreamStart,
@@ -22,7 +20,7 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse mapping with double quote key") {
@@ -30,8 +28,6 @@ class MappingSpec extends BaseParseSuite:
       s"""|data:
          |  "19": xw==
          |""".stripMargin
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -46,13 +42,11 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse nested empty mapping") {
-    val yaml   = "emptyDir: {{{}}}"
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+    val yaml = "emptyDir: {{{}}}"
 
     val expectedEvents = List(
       StreamStart,
@@ -71,7 +65,7 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse mapping with empty value") {
@@ -79,8 +73,6 @@ class MappingSpec extends BaseParseSuite:
       s"""key: 
          |key2: value
          |""".stripMargin
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -94,7 +86,7 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse mapping with empty value and comnent") {
@@ -102,8 +94,6 @@ class MappingSpec extends BaseParseSuite:
                   |
                   |# Commnet.
                   |period: 10""".stripMargin
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -117,14 +107,12 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse yaml with template value") {
 
-    val yaml   = "replicas: {{replicas}}"
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+    val yaml = "replicas: {{replicas}}"
 
     val expectedEvents = List(
       StreamStart,
@@ -142,13 +130,11 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("should parse maping of mappings with {...}") {
-    val yaml   = "hostPath: {key: value, path: /dev/log}"
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+    val yaml = "hostPath: {key: value, path: /dev/log}"
 
     val expectedEvents = List(
       StreamStart,
@@ -165,12 +151,10 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
   test("should parse maping key value with } brackets") {
-    val yaml   = "name: etcd-{{cell}}"
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+    val yaml = "name: etcd-{{cell}}"
 
     val expectedEvents = List(
       StreamStart,
@@ -182,5 +166,5 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
