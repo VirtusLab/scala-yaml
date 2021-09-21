@@ -39,7 +39,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('}')                        => parseFlowMappingEnd()
       case Some(',')                        => { in.skipCharacter(); getNextTokens() }
       case Some(_)                          => fetchValue()
-      case None => ctx.closeOpenedScopes() :+ Token.StreamEnd((in.pos()))
+      case None                             => parseStreamEnd()
 
   private def isDocumentStart =
     in.peekN(3) == "---" && in.peek(3).exists(_.isWhitespace)
@@ -54,6 +54,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   private def parseDocumentEnd(): List[Token] =
     in.skipN(4)
     ctx.parseDocumentEnd()
+
+  private def parseStreamEnd(): List[Token] =
+    ctx.parseStreamEnd()
 
   private def parseFlowSequenceStart() =
     in.skipCharacter()
@@ -155,8 +158,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case None => sb.result()
 
     val scalar         = readLiteral()
-    val choompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Scalar(choompedScalar, ScalarStyle.Literal, pos)
+    val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
+    Scalar(chompedScalar, ScalarStyle.Literal, pos)
 
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
@@ -199,8 +202,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case None => sb.result()
 
     val scalar         = readFolded()
-    val choompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Scalar(choompedScalar, ScalarStyle.Folded, pos)
+    val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
+    Scalar(chompedScalar, ScalarStyle.Folded, pos)
 
   private def parseSingleQuoteValue(): Token = {
     val sb = new StringBuilder
