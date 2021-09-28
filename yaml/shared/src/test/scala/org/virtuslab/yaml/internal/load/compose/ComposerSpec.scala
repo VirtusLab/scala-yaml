@@ -50,9 +50,9 @@ class ComposerSuite extends munit.FunSuite:
     )
     val expected = Right(
       MappingNode(
-        "hr"  -> ScalarNode("65"),
-        "avg" -> ScalarNode("0.278"),
-        "rbi" -> ScalarNode("147")
+        KeyValueNode(ScalarNode("hr"), ScalarNode("65")),
+        KeyValueNode(ScalarNode("avg"), ScalarNode("0.278")),
+        KeyValueNode(ScalarNode("rbi"), ScalarNode("147"))
       )
     )
 
@@ -134,14 +134,14 @@ class ComposerSuite extends munit.FunSuite:
     val expected = Right(
       SequenceNode(
         MappingNode(
-          "name" -> ScalarNode("Mark McGwire"),
-          "hr"   -> ScalarNode("65"),
-          "avg"  -> ScalarNode("0.278")
+          KeyValueNode(ScalarNode("name"), ScalarNode("Mark McGwire")),
+          KeyValueNode(ScalarNode("hr"), ScalarNode("65")),
+          KeyValueNode(ScalarNode("avg"), ScalarNode("0.278"))
         ),
         MappingNode(
-          "name" -> ScalarNode("Sammy Sosa"),
-          "hr"   -> ScalarNode("63"),
-          "avg"  -> ScalarNode("0.288")
+          KeyValueNode(ScalarNode("name"), ScalarNode("Sammy Sosa")),
+          KeyValueNode(ScalarNode("hr"), ScalarNode("63")),
+          KeyValueNode(ScalarNode("avg"), ScalarNode("0.288"))
         )
       )
     )

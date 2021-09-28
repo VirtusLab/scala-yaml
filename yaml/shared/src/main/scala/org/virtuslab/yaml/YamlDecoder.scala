@@ -3,8 +3,8 @@ package org.virtuslab.yaml
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Node.*
 
-import scala.compiletime._
-import scala.deriving._
+import scala.compiletime.*
+import scala.deriving.*
 import scala.util.Try
 import scala.reflect.ClassTag
 
@@ -127,6 +127,40 @@ object YamlDecoder:
     case p: Mirror.ProductOf[T] => deriveProduct(p)
     case s: Mirror.SumOf[T]     => sumOf(s)
 
+  private def extractKeyValues(
+      mappings: Seq[KeyValueNode]
+  ): Either[ConstructError, Map[String, Node]] = {
+    val (error, valuesSeq) = mappings
+      .map { mapping =>
+        val key = mapping.key match {
+          case ScalarNode(k, _) => Right(k)
+          case _ => Left(ConstructError(s"Parameter of a class must be a scalar value"))
+        }
+        val value = mapping.value
+        key.map(k => k -> value)
+      }
+      .partitionMap(identity)
+
+    if (error.nonEmpty) Left(error.head)
+    else Right(valuesSeq.toMap)
+  }
+
+  private def constructValues[T](
+      elemLabels: List[String],
+      instances: List[YamlDecoder[_]],
+      valuesMap: Map[String, Node],
+      p: Mirror.ProductOf[T]
+  ) = {
+    val values = elemLabels.zip(instances).map { case (label, c) =>
+      valuesMap.get(label) match
+        case Some(value) => c.construct(value)
+        case None        => Left(ConstructError(s"Key $label doesn't exist in parsed document"))
+    }
+    val (left, right) = values.partitionMap(identity)
+    if left.nonEmpty then Left(left.head)
+    else Right(p.fromProduct(Tuple.fromArray(right.toArray)))
+  }
+
   private inline def deriveProduct[T](p: Mirror.ProductOf[T]) =
     val instances  = summonAll[p.MirroredElemTypes]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
@@ -134,15 +168,10 @@ object YamlDecoder:
       override def construct(node: Node): Either[ConstructError, T] =
         node match
           case Node.MappingNode(mappings, _) =>
-            val valuesMap = mappings.map(e => e.key.value -> e.value).toMap
-            val values = elemLabels.zip(instances).map { case (label, c) =>
-              valuesMap.get(label) match
-                case Some(value) => c.construct(value)
-                case None => Left(ConstructError(s"Key $label doesn't exist in parsed document"))
-            }
-            val (left, right) = values.partitionMap(identity)
-            if left.nonEmpty then Left(left.head)
-            else Right(p.fromProduct(Tuple.fromArray(right.toArray)))
+            for {
+              valuesMap        <- extractKeyValues(mappings)
+              construcedValues <- constructValues(elemLabels, instances, valuesMap, p)
+            } yield (construcedValues)
           case _ =>
             Left(ConstructError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
     }

@@ -2,14 +2,16 @@ package org.virtuslab.yaml.internal
 
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.Node.*
+import org.virtuslab.yaml.syntax.YamlPrimitive
+import scala.language.implicitConversions
 
 class NodeCreationSuite extends munit.FunSuite:
 
   test("mapping-node") {
     val node = MappingNode(
-      "hr"   -> ScalarNode("65"),
-      "avg"  -> ScalarNode("0.278"),
-      "blob" -> ScalarNode("nostradamus")
+      "hr"   -> "65",
+      "avg"  -> "0.278",
+      "blob" -> "nostradamus"
     )
 
     assertEquals(
@@ -23,9 +25,9 @@ class NodeCreationSuite extends munit.FunSuite:
 
   test("sequence-node") {
     val node = SequenceNode(
-      ScalarNode("65"),
-      ScalarNode("66"),
-      ScalarNode("aezakmi")
+      "65",
+      "66",
+      "aezakmi"
     )
 
     assertEquals(
@@ -37,29 +39,19 @@ class NodeCreationSuite extends munit.FunSuite:
     )
   }
 
-  test("scalar-node") {
-    val node = ScalarNode("65")
-
-    assertEquals(
-      node.asYaml,
-      """|65
-         |""".stripMargin
-    )
-  }
-
-  test("nested") {
+  test("nested mapping") {
     val node = SequenceNode(
       MappingNode(
-        "key" -> ScalarNode("value")
+        "key" -> "value"
       ),
       MappingNode(
-        "key2" -> ScalarNode("value2"),
+        "key2" -> "value2",
         "seq" -> SequenceNode(
-          ScalarNode("v1"),
-          ScalarNode("v2")
+          "v1",
+          "v2"
         )
       ),
-      ScalarNode("standalone value")
+      "standalone value"
     )
 
     assertEquals(
