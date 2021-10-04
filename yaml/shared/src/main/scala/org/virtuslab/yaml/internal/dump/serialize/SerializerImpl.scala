@@ -25,7 +25,7 @@ object SerializerImpl extends Serializer:
     Seq(Event.SequenceStart()) ++ events ++ Seq(Event.SequenceEnd())
 
   private def convertKeyValueNode(node: Node.KeyValueNode): Seq[Event] =
-    Seq(Event.Scalar(node.key.value)) ++ convertNode(node.value)
+    convertNode(node.key) ++ convertNode(node.value)
 
   private def convertScalarNode(node: Node.ScalarNode): Seq[Event] =
     Seq(Event.Scalar(node.value))
