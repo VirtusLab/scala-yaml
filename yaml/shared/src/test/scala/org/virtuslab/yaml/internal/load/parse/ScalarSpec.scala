@@ -48,11 +48,11 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(events, expectedEvents)
   }
 
-  test("should parse plain scalar wihth new lines") {
+  test("should parse plain scalar with new lines") {
     val yaml =
-      s"""description: new lines
-         |  rest.
-         |properties: object
+      s"""|description: new lines
+          |  rest.
+          |properties: object
           |""".stripMargin
 
     val reader = Scanner(yaml)
@@ -77,7 +77,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(events, expectedEvents)
   }
 
-  test("should parse multine line plain scalar value") {
+  test("should parse multiline plain scalar value") {
     val yaml =
       s"""|description: multiline
           |             plain

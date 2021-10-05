@@ -141,11 +141,11 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
           getNextEvent()
 
     def parseMappingEnd() = token match
-      case Token.MappingEnd(pos) =>
+      case Token.BlockEnd(pos) =>
         in.popToken()
         Right(Event.MappingEnd(Some(pos)))
       case other @ _ =>
-        Left(ParseError.from(Token.MappingEnd(token.pos), other))
+        Left(ParseError.from(Token.BlockEnd(token.pos), other))
 
     def parseSequenceStart() = token match
       case Token.SequenceStart(pos) =>
@@ -157,11 +157,11 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         Left(ParseError.from(Token.SequenceStart(token.pos), other))
 
     def parseSequenceEnd() = token match
-      case Token.SequenceEnd(pos) =>
+      case Token.BlockEnd(pos) =>
         in.popToken()
         Right(Event.SequenceEnd(Some(pos)))
       case other @ _ =>
-        Left(ParseError.from(Token.SequenceEnd(token.pos), other))
+        Left(ParseError.from(Token.BlockEnd(token.pos), other))
 
     def parseFlowSequenceStart() = token match
       case Token.FlowSequenceStart(pos) =>

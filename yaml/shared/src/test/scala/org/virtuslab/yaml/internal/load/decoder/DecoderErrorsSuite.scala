@@ -19,7 +19,7 @@ class DecoderErrorsSuite extends BaseDecoderErrorSuite:
       yaml.as[Person],
       s"""|For input string: "xxx"
           |age: xxx
-          |     ^^^ at 2:6, expected Int""".stripMargin
+          |     ^^^ at 1:5, expected Int""".stripMargin
     )
   }
 end DecoderErrorsSuite

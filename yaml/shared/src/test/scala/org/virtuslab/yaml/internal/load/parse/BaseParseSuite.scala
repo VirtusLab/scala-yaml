@@ -2,6 +2,7 @@ package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Event.*
+import org.virtuslab.yaml.internal.load.reader.Scanner
 
 class BaseParseSuite extends munit.FunSuite:
 
@@ -31,3 +32,9 @@ class BaseParseSuite extends munit.FunSuite:
     )
     val expected = Right(expectedEvents)
     assertEquals(withoutPosition, expected)
+
+  extension (yaml: String)
+    def events: Either[YamlError, List[Event]] = {
+      val reader = Scanner(yaml)
+      ParserImpl(reader).getEvents()
+    }
