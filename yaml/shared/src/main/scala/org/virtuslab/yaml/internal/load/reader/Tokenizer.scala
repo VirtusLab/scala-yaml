@@ -24,7 +24,6 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def getToken(): Token =
     ctx.tokens.appendAll(getNextTokens())
-    println(ctx.tokens.map(_.getClass.getSimpleName))
     ctx.tokens.head
 
   @tailrec
@@ -42,7 +41,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('}')                        => parseFlowMappingEnd()
       case Some(',')                        => { in.skipCharacter(); getNextTokens() }
       case Some(_)                          => fetchValue()
-      case None => 
+      case None =>
         ctx.checkIndents(-1)
         List(Token.StreamEnd((in.pos())))
 
@@ -82,13 +81,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def parseBlockSequence() =
     val pos = in.pos()
-    val i = ctx.indent
     if (ctx.indent < pos.column) then
       ctx.addIndent(pos.column)
       List(SequenceStart(pos))
     else
       in.skipCharacter()
-      getNextTokens()
+      Token.SequenceValue(pos) :: getNextTokens()
 
   private def parseDoubleQuoteValue(): Token =
     val sb = new StringBuilder
@@ -278,13 +276,16 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some(':') =>
         // ctx.closeOpenedCollectionMapping(scalar.pos.column)
         in.skipCharacter()
-        if (ctx.isFlowMapping()) then
-          List(scalar)
+        if (ctx.isFlowMapping()) then List(scalar)
         else if (ctx.indent < scalar.pos.column) then
           ctx.addIndent(scalar.pos.column)
-          List(MappingStart(scalar.pos), Token.Key(scalar.pos), scalar, Token.Value(scalar.pos))
-        else
-          List(Token.Key(scalar.pos), scalar, Token.Value(scalar.pos))
+          List(
+            MappingStart(scalar.pos),
+            Token.MappingKey(scalar.pos),
+            scalar,
+            Token.MappingValue(scalar.pos)
+          )
+        else List(Token.MappingKey(scalar.pos), scalar, Token.MappingValue(scalar.pos))
       case _ => List(scalar)
 
   def skipUntilNextToken(): Unit =

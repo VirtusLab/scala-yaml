@@ -7,8 +7,7 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class ParserSpec extends BaseParseSuite:
 
-  // todo identless sequence
-  test("should parse kubernetess config".ignore) {
+  test("should parse kubernetess config") {
     val yaml = s"""apiVersion: v1
                   |kind: Pod
                   |metadata:

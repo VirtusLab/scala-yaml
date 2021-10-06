@@ -122,8 +122,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(mappingYaml.as[SequenceTypes], Right(expectedMapping))
   }
 
-  // todo identless sequence
-  test("derive construct for nested case class".ignore) {
+  test("derive construct for nested case class") {
 
     case class Port(port: Int) derives YamlCodec
     case class Selector(app: String, tier: String) derives YamlCodec

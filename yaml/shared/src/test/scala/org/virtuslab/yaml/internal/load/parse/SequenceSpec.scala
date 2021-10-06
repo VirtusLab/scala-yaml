@@ -91,12 +91,10 @@ class SequenceSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  // todo identless sequence
-  test("indentation-less-sequence".ignore) {
+  test("indentation-sequence") {
     val yaml = s"""|containers:
-                   |- name: iscsipd-rw
-                   |volumes:
-                   |- name: iscsipd-rw
+                   | - name iscsipd1-rw
+                   | - name iscsipd2-rw
                    |""".stripMargin
 
     val expectedEvents = List(
@@ -105,16 +103,38 @@ class SequenceSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("containers"),
       SequenceStart(),
-      MappingStart(),
-      Scalar("name"),
-      Scalar("iscsipd-rw"),
+      Scalar("name iscsipd1-rw"),
+      Scalar("name iscsipd2-rw"),
+      SequenceEnd(),
       MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("indentation-less-sequence") {
+    val yaml = s"""|containers:
+                   |- name iscsipd1-rw
+                   |- name iscsipd2-rw
+                   |volumes:
+                   |- name: iscsipd3-rw
+                   |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("containers"),
+      SequenceStart(),
+      Scalar("name iscsipd1-rw"),
+      Scalar("name iscsipd2-rw"),
       SequenceEnd(),
       Scalar("volumes"),
       SequenceStart(),
       MappingStart(),
       Scalar("name"),
-      Scalar("iscsipd-rw"),
+      Scalar("iscsipd3-rw"),
       MappingEnd(),
       SequenceEnd(),
       MappingEnd(),
