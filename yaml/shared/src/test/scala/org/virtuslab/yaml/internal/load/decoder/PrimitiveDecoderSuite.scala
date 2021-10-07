@@ -154,22 +154,22 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
 
   test("derive construct for sequence of mappings") {
 
-    sealed trait Adress derives YamlCodec
-    case class Network(network: String, port: Int) extends Adress
-    case class Local(local: String, port: Int)     extends Adress
+    sealed trait Address derives YamlCodec
+    case class Network(network: String, port: Int) extends Address
+    case class Local(local: String, port: Int)     extends Address
 
-    case class Spec(adresses: List[Adress]) derives YamlCodec
+    case class Spec(addresses: List[Address]) derives YamlCodec
 
     val yaml =
-      s"""adresses:
-        |  - port: 80
-        |    local: localhost
-        |  - port: 81
-        |    network: 127.0.0.1
-        |""".stripMargin
+      s"""|addresses:
+          |  - port: 80
+          |    local: localhost
+          |  - port: 81
+          |    network: 127.0.0.1
+          |""".stripMargin
 
     val expectedSpec = Spec(
-      adresses = List(Local("localhost", 80), Network("127.0.0.1", 81))
+      addresses = List(Local("localhost", 80), Network("127.0.0.1", 81))
     )
 
     assertEquals(yaml.as[Spec], Right(expectedSpec))

@@ -6,53 +6,27 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class SequenceSpec extends BaseParseSuite:
 
-  test("should parse mapping with sequence value") {
+  test("basic-sequence") {
     val yaml =
-      s"""|command:
-          |    - /bin/sh
-          |    - -c
+      s"""|- v1
+          |- v2
           |""".stripMargin
 
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      MappingStart(),
-      Scalar("command"),
       SequenceStart(),
-      Scalar("/bin/sh"),
-      Scalar("-c"),
+      Scalar("v1"),
+      Scalar("v2"),
       SequenceEnd(),
-      MappingEnd(),
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse empty flow sequence") {
-    val yaml = "seq: []"
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      MappingStart(),
-      Scalar("seq"),
-      SequenceStart(),
-      SequenceEnd(),
-      MappingEnd(),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEventsEquals(events, expectedEvents)
-  }
-
-  test("should parse sequence of sequences") {
+  test("sequence-of-sequences") {
     val yaml =
       s"""|-
           |  - v1
@@ -61,9 +35,6 @@ class SequenceSpec extends BaseParseSuite:
           |  - v3
           |  - v4
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -81,18 +52,118 @@ class SequenceSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse sequence of host:port") {
+  test("sequence-of-mappings") {
+    val yaml = s"""-
+                    |  name: Mark McGwire
+                    |  hr:   65
+                    |-
+                    |  name: Sammy Sosa
+                    |  hr:   63
+                    |""".stripMargin
+
+    val expectedEvents = List(
+      Event.StreamStart,
+      Event.DocumentStart(),
+      Event.SequenceStart(),
+      Event.MappingStart(),
+      Event.Scalar("name"),
+      Event.Scalar("Mark McGwire"),
+      Event.Scalar("hr"),
+      Event.Scalar("65"),
+      Event.MappingEnd(),
+      Event.MappingStart(),
+      Event.Scalar("name"),
+      Event.Scalar("Sammy Sosa"),
+      Event.Scalar("hr"),
+      Event.Scalar("63"),
+      Event.MappingEnd(),
+      Event.SequenceEnd(),
+      Event.DocumentEnd(),
+      Event.StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("indentation-sequence") {
+    val yaml = s"""|containers:
+                   | - name iscsipd1-rw
+                   | - name iscsipd2-rw
+                   |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("containers"),
+      SequenceStart(),
+      Scalar("name iscsipd1-rw"),
+      Scalar("name iscsipd2-rw"),
+      SequenceEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("indentation-less-sequence") {
+    val yaml = s"""|containers:
+                   |- name iscsipd1-rw
+                   |- name iscsipd2-rw
+                   |volumes:
+                   |- name: iscsipd3-rw
+                   |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("containers"),
+      SequenceStart(),
+      Scalar("name iscsipd1-rw"),
+      Scalar("name iscsipd2-rw"),
+      SequenceEnd(),
+      Scalar("volumes"),
+      SequenceStart(),
+      MappingStart(),
+      Scalar("name"),
+      Scalar("iscsipd3-rw"),
+      MappingEnd(),
+      SequenceEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("empty-flow-sequence") {
+    val yaml = "seq: []"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("seq"),
+      SequenceStart(),
+      SequenceEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("sequence-host:port") {
     val yaml =
       s"""|portals: [10.0.2.16:3260, 10.0.2.17:3260]
           |portalsSingleQouta: ['10.0.2.16:3260', '10.0.2.17:3260']
           |portalsDoubleQouta: ["10.0.2.16:3260", "10.0.2.17:3260"]
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -117,5 +188,5 @@ class SequenceSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }

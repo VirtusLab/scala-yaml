@@ -22,8 +22,8 @@ trait Reader:
   def pos(): Position
 
 private[yaml] class StringReader(in: String) extends Reader:
-  var line: Int   = 1
-  var column: Int = 1
+  var line: Int   = 0
+  var column: Int = 0
   var offset: Int = 0
   val lines       = in.split("\n").toVector
 
@@ -41,7 +41,7 @@ private[yaml] class StringReader(in: String) extends Reader:
 
   private def isWindowsNewline(c: Char) = c == '\r' && peekNext().exists(_ == '\n')
 
-  private inline def nextLine() = { column = 1; line += 1 }
+  private inline def nextLine() = { column = 0; line += 1 }
   private def skipAndMantainPosition() =
     val char = in.charAt(offset)
     if isWindowsNewline(char) then

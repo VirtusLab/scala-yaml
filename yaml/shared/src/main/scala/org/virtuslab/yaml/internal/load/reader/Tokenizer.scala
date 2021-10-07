@@ -29,7 +29,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   @tailrec
   private def getNextTokens(): List[Token] =
     skipUntilNextToken()
-    in.peek() match
+    ctx.checkIndents(in.pos().column)
+    val peeked = in.peek()
+    peeked match
       case Some('-') if isDocumentStart     => parseDocumentStart()
       case Some('-') if in.isNextWhitespace => parseBlockSequence()
       case Some('.') if isDocumentEnd       => parseDocumentEnd()
@@ -39,7 +41,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('}')                        => parseFlowMappingEnd()
       case Some(',')                        => { in.skipCharacter(); getNextTokens() }
       case Some(_)                          => fetchValue()
-      case None => ctx.closeOpenedScopes() :+ Token.StreamEnd((in.pos()))
+      case None =>
+        ctx.checkIndents(-1)
+        List(Token.StreamEnd((in.pos())))
 
   private def isDocumentStart =
     in.peekN(3) == "---" && in.peek(3).exists(_.isWhitespace)
@@ -57,30 +61,32 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def parseFlowSequenceStart() =
     in.skipCharacter()
-    ctx.appendState(ReaderState.FlowSequence(in.column))
+    ctx.enterFlowSequence
     List(FlowSequenceStart(in.pos()))
 
   private def parseFlowSequenceEnd() =
     in.skipCharacter()
-    ctx.closeOpenedSequence()
+    ctx.leaveFlowSequence
+    List(FlowSequenceEnd(in.pos()))
 
   private def parseFlowMappingStart() =
     in.skipCharacter()
-    ctx.appendState(ReaderState.FlowMapping(in.column))
+    ctx.enterFlowMapping
     List(FlowMappingStart(in.pos()))
 
   private def parseFlowMappingEnd() =
     in.skipCharacter()
-    ctx.closeOpenedFlowMapping()
+    ctx.leaveFlowMapping
+    List(FlowMappingEnd(in.pos()))
 
   private def parseBlockSequence() =
-    ctx.closeOpenedCollectionSequences(in.column)
-    if (ctx.shouldParseSequenceEntry(in.column)) then
-      in.skipCharacter()
-      getNextTokens()
+    val pos = in.pos()
+    if (ctx.indent < pos.column) then
+      ctx.addIndent(pos.column)
+      List(SequenceStart(pos))
     else
-      ctx.appendState(ReaderState.Sequence(in.column))
-      List(SequenceStart(in.pos()))
+      in.skipCharacter()
+      Token.SequenceValue(pos) :: getNextTokens()
 
   private def parseDoubleQuoteValue(): Token =
     val sb = new StringBuilder
@@ -154,9 +160,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readLiteral()
         case None => sb.result()
 
-    val scalar         = readLiteral()
-    val choompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Scalar(choompedScalar, ScalarStyle.Literal, pos)
+    val scalar        = readLiteral()
+    val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
+    Scalar(chompedScalar, ScalarStyle.Literal, pos)
 
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
@@ -198,9 +204,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readFolded()
         case None => sb.result()
 
-    val scalar         = readFolded()
-    val choompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Scalar(choompedScalar, ScalarStyle.Folded, pos)
+    val scalar        = readFolded()
+    val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
+    Scalar(chompedScalar, ScalarStyle.Folded, pos)
 
   private def parseSingleQuoteValue(): Token = {
     val sb = new StringBuilder
@@ -235,14 +241,15 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val scalarIndent = in.column
 
     def readScalar(): String =
-      in.peek() match
+      val peeked = in.peek()
+      peeked match
         case Some(':') if in.isNextWhitespace                   => sb.result()
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
         case Some(' ') if in.peekNext() == Some('#')            => sb.result()
         case _ if in.isNewline =>
           skipUntilNextChar()
           sb.append(' ')
-          if (ctx.getIndentOfLatestCollection().exists(in.column > _)) readScalar()
+          if (in.column > ctx.indent) readScalar()
           else sb.result()
         case Some(char) =>
           sb.append(in.read())
@@ -256,24 +263,28 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def fetchValue(): List[Token] =
     skipUntilNextToken()
-    val scalar: Token = in.peek() match
+    val peeked = in.peek()
+    val scalar: Token = peeked match
       case Some('"')  => parseDoubleQuoteValue()
       case Some('\'') => parseSingleQuoteValue()
       case Some('>')  => parseFoldedValue()
       case Some('|')  => parseLiteral()
       case _          => parseScalarValue()
 
-    in.peek() match
+    val peeked2 = in.peek()
+    peeked2 match
       case Some(':') =>
-        ctx.closeOpenedCollectionMapping(scalar.pos.column)
         in.skipCharacter()
-
-        if (ctx.shouldParseMappingEntry(scalar.pos.column)) then
-          List(Token.Key(scalar.pos), scalar, Token.Value(scalar.pos))
-        else if (!ctx.isFlowMapping()) then
-          ctx.appendState(ReaderState.Mapping(scalar.pos.column))
-          List(MappingStart(scalar.pos), Token.Key(scalar.pos), scalar, Token.Value(scalar.pos))
-        else List(scalar)
+        if (ctx.isInFlowMapping) then List(scalar)
+        else if (ctx.indent < scalar.pos.column) then
+          ctx.addIndent(scalar.pos.column)
+          List(
+            MappingStart(scalar.pos),
+            Token.MappingKey(scalar.pos),
+            scalar,
+            Token.MappingValue(scalar.pos)
+          )
+        else List(Token.MappingKey(scalar.pos), scalar, Token.MappingValue(scalar.pos))
       case _ => List(scalar)
 
   def skipUntilNextToken(): Unit =

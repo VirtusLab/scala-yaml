@@ -7,105 +7,48 @@ import org.virtuslab.yaml.internal.load.reader.StringReader
 import scala.annotation.tailrec
 import scala.collection.mutable
 import token.Token
+import scala.collection.mutable.ArrayDeque
+
 case class ReaderCtx(
-    stateStack: mutable.Stack[ReaderState],
     tokens: mutable.ArrayDeque[Token] = mutable.ArrayDeque.empty,
     reader: Reader
 ) {
 
-  def closeOpenedCollectionSequences(indent: Int): Unit =
-    stateStack.headOption match
-      case Some(ReaderState.Sequence(i)) if i > indent =>
-        stateStack.pop()
-        tokens.append(Token.SequenceEnd(reader.pos()))
-        closeOpenedCollectionSequences(indent)
-      case Some(ReaderState.Mapping(i)) if i > indent =>
-        stateStack.pop()
-        tokens.append(Token.MappingEnd(reader.pos()))
-        closeOpenedCollectionSequences(indent)
-      case _ => ()
+  private val indentations      = mutable.ArrayDeque.empty[Int]
+  private var flowSequenceLevel = 0
+  private var flowMappingLevel  = 0
 
-  def closeOpenedCollectionMapping(indent: Int): Unit =
-    stateStack.headOption match
-      case Some(ReaderState.Sequence(i)) if i >= indent =>
-        stateStack.pop()
-        tokens.append(Token.SequenceEnd(reader.pos()))
-        closeOpenedCollectionMapping(indent)
-      case Some(ReaderState.Mapping(i)) if i > indent =>
-        stateStack.pop()
-        tokens.append(Token.MappingEnd(reader.pos()))
-        closeOpenedCollectionMapping(indent)
-      case _ => ()
+  def indent: Int                     = indentations.lastOption.getOrElse(-1)
+  def addIndent(newIndent: Int): Unit = indentations.append(newIndent)
 
-  def getIndentOfLatestCollection(): Option[Int] =
-    stateStack.headOption.map(_.indent)
+  def checkIndents(current: Int): Unit =
+    if current < indent then
+      indentations.removeLast()
+      tokens.append(Token.BlockEnd(reader.pos()))
+      checkIndents(current)
 
-  def appendState(state: ReaderState): Unit = stateStack.push(state)
+  def enterFlowSequence: Unit = flowSequenceLevel += 1
+  def leaveFlowSequence: Unit = flowSequenceLevel -= 1
 
-  def closeOpenedFlowMapping(): List[Token] = stateStack.headOption match
-    case Some(ReaderState.FlowMapping(_)) =>
-      stateStack.pop()
-      List(Token.FlowMappingEnd(reader.pos()))
-    case _ =>
-      Nil
-
-  def closeOpenedSequence(): List[Token] =
-    stateStack.headOption match
-      case Some(ReaderState.Sequence(_)) =>
-        stateStack.pop()
-        List(Token.SequenceEnd(reader.pos()))
-      case Some(ReaderState.FlowSequence(_)) =>
-        stateStack.pop()
-        List(Token.FlowSequenceEnd(reader.pos()))
-      case _ =>
-        Nil
-
-  def shouldParseSequenceEntry(indent: Int): Boolean =
-    stateStack.headOption match
-      case Some(ReaderState.Sequence(i)) if i == indent => true
-      case _                                            => false
-
-  def shouldParseMappingEntry(indent: Int): Boolean =
-    stateStack.headOption match
-      case Some(ReaderState.Mapping(i)) if i == indent => true
-      case _                                           => false
+  def enterFlowMapping: Unit = flowMappingLevel += 1
+  def leaveFlowMapping: Unit = flowMappingLevel -= 1
 
   def isAllowedSpecialCharacter(char: Char): Boolean =
-    stateStack.headOption match
-      case Some(ReaderState.FlowMapping(_)) if char == '}' => false
-      case Some(ReaderState.FlowMapping(_)) | Some(ReaderState.FlowSequence(_)) if char == ',' =>
-        false
-      case Some(ReaderState.FlowSequence(_)) if char == ']' => false
-      case _                                                => true
+    if ((char == ',' || char == '}') && flowMappingLevel > 0) false
+    else if ((char == ',' || char == ']') && flowSequenceLevel > 0) false
+    else true
 
-  def isFlowMapping(): Boolean =
-    stateStack.headOption match
-      case Some(ReaderState.FlowMapping(_)) => true
-      case _                                => false
-
-  def closeOpenedScopes(): List[Token] =
-    @tailrec
-    def loop(acc: List[Token]): List[Token] =
-      stateStack.headOption match
-        case Some(ReaderState.Sequence(_)) =>
-          stateStack.pop()
-          loop(acc :+ Token.SequenceEnd(reader.pos()))
-        case Some(ReaderState.Mapping(_)) =>
-          stateStack.pop()
-          loop(acc :+ Token.MappingEnd(reader.pos()))
-        case _ => acc
-
-    loop(Nil)
+  def isInFlowMapping: Boolean = flowMappingLevel > 0
 
   def parseDocumentStart(indent: Int): List[Token] =
-    val closedScopes = closeOpenedScopes()
-    stateStack.push(ReaderState.Document(indent))
-    closedScopes :+ Token.DocumentStart(reader.pos())
+    checkIndents(-1)
+    List(Token.DocumentStart(reader.pos()))
 
   def parseDocumentEnd(): List[Token] =
-    closeOpenedScopes() :+ Token.DocumentEnd(reader.pos())
+    checkIndents(-1)
+    List(Token.DocumentEnd(reader.pos()))
 }
 
 case object ReaderCtx:
   def init(in: String): ReaderCtx =
-    ReaderCtx(mutable.Stack.empty, mutable.ArrayDeque.empty, StringReader(in))
+    ReaderCtx(mutable.ArrayDeque.empty, StringReader(in))
