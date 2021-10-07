@@ -10,7 +10,6 @@ import token.Token
 import scala.collection.mutable.ArrayDeque
 
 case class ReaderCtx(
-    stateStack: mutable.Stack[ReaderState],
     tokens: mutable.ArrayDeque[Token] = mutable.ArrayDeque.empty,
     reader: Reader
 ) {
@@ -27,7 +26,6 @@ case class ReaderCtx(
       indentations.removeLast()
       tokens.append(Token.BlockEnd(reader.pos()))
       checkIndents(current)
-    else ()
     
   def enterFlowSequence: Unit = flowSequenceLevel += 1
   def leaveFlowSequence: Unit = flowSequenceLevel -= 1
@@ -40,7 +38,7 @@ case class ReaderCtx(
     else if ((char == ',' || char == ']') && flowSequenceLevel > 0) false
     else true
 
-  def isFlowMapping(): Boolean = flowMappingLevel > 0
+  def isInFlowMapping: Boolean = flowMappingLevel > 0
 
   def parseDocumentStart(indent: Int): List[Token] =
     checkIndents(-1)
@@ -53,4 +51,4 @@ case class ReaderCtx(
 
 case object ReaderCtx:
   def init(in: String): ReaderCtx =
-    ReaderCtx(mutable.Stack.empty, mutable.ArrayDeque.empty, StringReader(in))
+    ReaderCtx(mutable.ArrayDeque.empty, StringReader(in))

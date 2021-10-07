@@ -161,8 +161,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case None => sb.result()
 
     val scalar         = readLiteral()
-    val choompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Scalar(choompedScalar, ScalarStyle.Literal, pos)
+    val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
+    Scalar(chompedScalar, ScalarStyle.Literal, pos)
 
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
@@ -205,8 +205,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case None => sb.result()
 
     val scalar         = readFolded()
-    val choompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Scalar(choompedScalar, ScalarStyle.Folded, pos)
+    val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
+    Scalar(chompedScalar, ScalarStyle.Folded, pos)
 
   private def parseSingleQuoteValue(): Token = {
     val sb = new StringBuilder
@@ -274,9 +274,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val peeked2 = in.peek()
     peeked2 match
       case Some(':') =>
-        // ctx.closeOpenedCollectionMapping(scalar.pos.column)
         in.skipCharacter()
-        if (ctx.isFlowMapping()) then List(scalar)
+        if (ctx.isInFlowMapping) then List(scalar)
         else if (ctx.indent < scalar.pos.column) then
           ctx.addIndent(scalar.pos.column)
           List(
