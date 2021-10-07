@@ -198,7 +198,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse yaml with template value") {
+  test("template-value") {
     val yaml = "replicas: {{replicas}}"
 
     val expectedEvents = List(
@@ -220,10 +220,8 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse empty mapping") {
-    val yaml   = "emptyDir: {}"
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+  test("empty-flow-mapping") {
+    val yaml = "emptyDir: {}"
 
     val expectedEvents = List(
       StreamStart,
@@ -236,13 +234,11 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse nested empty mapping") {
-    val yaml   = "emptyDir: {{{}}}"
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+  test("nested-empty-flow-mapping") {
+    val yaml = "emptyDir: {{{}}}"
 
     val expectedEvents = List(
       StreamStart,
@@ -261,13 +257,11 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse maping of mappings with {...}") {
-    val yaml   = "hostPath: {key: value, path: /dev/log}"
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+  test("mapping-with-flow-mapping-as-value") {
+    val yaml = "hostPath: {key: value, path: /dev/log}"
 
     val expectedEvents = List(
       StreamStart,
@@ -284,5 +278,5 @@ class MappingSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }

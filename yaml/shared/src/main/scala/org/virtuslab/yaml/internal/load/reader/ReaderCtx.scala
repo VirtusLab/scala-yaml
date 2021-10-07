@@ -14,19 +14,19 @@ case class ReaderCtx(
     reader: Reader
 ) {
 
-  private val indentations = mutable.ArrayDeque.empty[Int]
+  private val indentations      = mutable.ArrayDeque.empty[Int]
   private var flowSequenceLevel = 0
-  private var flowMappingLevel = 0
+  private var flowMappingLevel  = 0
 
-  def indent: Int = indentations.lastOption.getOrElse(-1)
+  def indent: Int                     = indentations.lastOption.getOrElse(-1)
   def addIndent(newIndent: Int): Unit = indentations.append(newIndent)
 
-  def checkIndents(current: Int): Unit = 
+  def checkIndents(current: Int): Unit =
     if current < indent then
       indentations.removeLast()
       tokens.append(Token.BlockEnd(reader.pos()))
       checkIndents(current)
-    
+
   def enterFlowSequence: Unit = flowSequenceLevel += 1
   def leaveFlowSequence: Unit = flowSequenceLevel -= 1
 

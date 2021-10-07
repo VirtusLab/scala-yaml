@@ -7,7 +7,7 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class ParserSpec extends BaseParseSuite:
 
-  test("should parse kubernetess config") {
+  test("kubernetes-config") {
     val yaml = s"""apiVersion: v1
                   |kind: Pod
                   |metadata:
@@ -28,9 +28,6 @@ class ParserSpec extends BaseParseSuite:
                   |      fsType: ext4
                   |      readOnly: true
                   |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -91,5 +88,5 @@ class ParserSpec extends BaseParseSuite:
       StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }

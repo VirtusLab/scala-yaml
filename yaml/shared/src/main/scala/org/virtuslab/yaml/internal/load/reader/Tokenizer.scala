@@ -160,7 +160,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readLiteral()
         case None => sb.result()
 
-    val scalar         = readLiteral()
+    val scalar        = readLiteral()
     val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
     Scalar(chompedScalar, ScalarStyle.Literal, pos)
 
@@ -204,7 +204,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readFolded()
         case None => sb.result()
 
-    val scalar         = readFolded()
+    val scalar        = readFolded()
     val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
     Scalar(chompedScalar, ScalarStyle.Folded, pos)
 

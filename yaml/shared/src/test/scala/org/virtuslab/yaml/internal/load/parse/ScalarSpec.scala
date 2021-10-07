@@ -6,14 +6,56 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class ScalarSpec extends BaseParseSuite:
 
-  test("should parse value with special charactar':' as scalar") {
+  test("plain-value") {
+    val yaml =
+      s"""|mnt\\#dd
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("mnt\\\\#dd", ScalarStyle.Plain),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("single-quote") {
+    val yaml =
+      s"""| '/mnt/ \\iscsipd ''skip'''
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("/mnt/ \\\\iscsipd 'skip'", ScalarStyle.SingleQuoted),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("double-quote") {
+    val yaml =
+      s"""|"/mnt/ iscsipd"
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("/mnt/ iscsipd", ScalarStyle.DoubleQuoted),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("unescaped-colon") {
     val yaml =
       s"""|targetPortal: 10.0.2.15:3260:1221:1221
           |iqn: iqn.2001-04.com.example.storage:kube.sys1.xyz
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -27,36 +69,15 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse plain scalar value") {
-    val yaml =
-      s"""| mnt\\#dd
-          |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      Scalar("mnt\\\\#dd", ScalarStyle.Plain),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEventsEquals(events, expectedEvents)
-  }
-
-  test("should parse plain scalar with new lines") {
+  test("with-new-lines") {
     val yaml =
       s"""|description: new lines
           |  rest.
           |properties: object
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -74,19 +95,16 @@ class ScalarSpec extends BaseParseSuite:
       StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse multiline plain scalar value") {
+  test("plain-multiline") {
     val yaml =
       s"""|description: multiline
           |             plain
           |             scalar
           |type: string
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -100,19 +118,16 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse single quote scalar value with multiline") {
+  test("single-quote-multiline") {
     val yaml =
       s"""description:  'multiline
          |  plain
          |               scalar'
          |type: string
          |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -127,69 +142,14 @@ class ScalarSpec extends BaseParseSuite:
       StreamEnd
     )
 
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse value with double quote") {
-    val yaml =
-      s"""| "/mnt/ iscsipd"
-          |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      Scalar("/mnt/ iscsipd", ScalarStyle.DoubleQuoted),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEventsEquals(events, expectedEvents)
-  }
-
-  test("should not espace escape special character in double quote scalar") {
-    val yaml = """ "double \n quote" """
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      Scalar("""double \n quote""", ScalarStyle.DoubleQuoted),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEventsEquals(events, expectedEvents)
-  }
-
-  test("should parse string with single quote") {
-    val yaml =
-      s"""| '/mnt/ \\iscsipd ''skip'''
-          |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      Scalar("/mnt/ \\\\iscsipd 'skip'", ScalarStyle.SingleQuoted),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEventsEquals(events, expectedEvents)
-  }
-
-  test("should parse single quote with multiline") {
+  test("single-quote-multiline-2") {
     val yaml =
       s"""|description: 'Quote
           | multiline.'
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -201,24 +161,62 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse string as folded scalar") {
+  test("dont-escape-in-double-quotes") {
+    val yaml = """ "double \n quote" """
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("""double \n quote""", ScalarStyle.DoubleQuoted),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("double-quote-special-characters") {
     val yaml =
-      s"""|command:
-          |  - bash
-          |  - >-
-          |    set -e
-          |
-          |
-          |    test
-          |
-          |    yaml
+      s"""| "{/mnt/ , {}, [] i"
           |""".stripMargin
 
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("{/mnt/ , {}, [] i", ScalarStyle.DoubleQuoted),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("double-quote-escape-\"character") {
+    val yaml = s""" "{\\" mnt" """
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("{\" mnt", ScalarStyle.DoubleQuoted),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("multiline-folded") {
+    val yaml =
+      s"""|command:
+            |  - bash
+            |  - >-
+            |    set -e
+            |
+            |
+            |    test
+            |
+            |    yaml
+            |""".stripMargin
 
     val expectedEvents = List(
       StreamStart,
@@ -233,10 +231,28 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse string as literal scalar") {
+  test("multiline-folded-skip-lines") {
+    val yaml = s""">
+                  | folded
+                  | text
+                  |
+                  |
+                  |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("folded text\\n", ScalarStyle.Folded),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("multiline-literal-1") {
     val yaml =
       s"""|command:
           |  - bash
@@ -245,9 +261,6 @@ class ScalarSpec extends BaseParseSuite:
           |    CRARG
           |    # We
           |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -262,65 +275,10 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse string containing special charactar as scalar with double quote style") {
-    val yaml =
-      s"""| "{/mnt/ , {}, [] i"
-          |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      Scalar("{/mnt/ , {}, [] i", ScalarStyle.DoubleQuoted),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEventsEquals(events, expectedEvents)
-  }
-
-  test("should parse double quote scalar esceping \" character") {
-    val yaml = s""" "{\\" mnt" """
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      Scalar("{\" mnt", ScalarStyle.DoubleQuoted),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEventsEquals(events, expectedEvents)
-  }
-
-  test("should skip blank lines at the end in folded value") {
-    val yaml = s""">
-                  | folded
-                  | text
-                  |
-                  |
-                  |""".stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      Scalar("folded text\\n", ScalarStyle.Folded),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEventsEquals(events, expectedEvents)
-  }
-
-  test("should parse new lines for literal style") {
+  test("multiline-literal-2") {
 
     val yaml = s"""certificate: |-
                   |        -----BEGIN CERTIFICATE-----
@@ -329,9 +287,6 @@ class ScalarSpec extends BaseParseSuite:
                   |        -----END CERTIFICATE----
                   |kind: v1
                   |        """.stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -348,10 +303,10 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse new lines for literal style with keep final break") {
+  test("multiline-literal-3-keep-lines") {
 
     val yaml = s"""certificate: |+
                   |        -----BEGIN CERTIFICATE-----
@@ -362,9 +317,6 @@ class ScalarSpec extends BaseParseSuite:
                   |
                   |kind: v1
                   |        """.stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -381,10 +333,10 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("should parse literal scalar with multiline") {
+  test("multiline-literal-4") {
     val yaml = s"""key:
                   |  - content: |
                   |     [Unit]
@@ -392,9 +344,6 @@ class ScalarSpec extends BaseParseSuite:
                   |     set -x
                   | 
                   |     """.stripMargin
-
-    val reader = Scanner(yaml)
-    val events = ParserImpl(reader).getEvents()
 
     val expectedEvents = List(
       StreamStart,
@@ -415,5 +364,5 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
