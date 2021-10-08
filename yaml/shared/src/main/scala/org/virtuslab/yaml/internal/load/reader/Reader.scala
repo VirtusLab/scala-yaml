@@ -19,7 +19,7 @@ trait Reader:
   def line: Int
   def column: Int
   def offset: Int
-  def pos(): Position
+  def pos: Position
 
 private[yaml] class StringReader(in: String) extends Reader:
   var line: Int   = 0
@@ -27,7 +27,7 @@ private[yaml] class StringReader(in: String) extends Reader:
   var offset: Int = 0
   val lines       = in.split("\n").toVector
 
-  override def pos() = Position(offset, line, column, lines)
+  override def pos = Position(offset, line, column, lines)
 
   override def peek(n: Int = 0): Option[Char] =
     if offset + n < in.length then Some(in.charAt(offset + n))

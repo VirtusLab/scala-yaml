@@ -6,6 +6,7 @@ import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.reader.Tokenizer
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -76,13 +77,14 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
 
   private def getNextEventImpl(): Either[YamlError, Event] =
     val token = in.peekToken()
+    val pos   = token.pos
 
     def parseStreamStart() =
       productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: ParseStreamEnd :: Nil)
       Right(Event.StreamStart)
 
-    def parseDocumentStart() = token match
-      case Token.DocumentStart(pos: Position) =>
+    def parseDocumentStart() = token.kind match
+      case TokenKind.DocumentStart =>
         in.popToken()
         productions.prependAll(ParseNode() :: ParseDocumentEnd :: Nil)
         Right(Event.DocumentStart(Some(pos), explicit = true))
@@ -90,51 +92,51 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         productions.prependAll(ParseNode() :: ParseDocumentEnd :: Nil)
         Right(Event.DocumentStart(Some(token.pos), explicit = false))
 
-    def parseDocumentStartOpt() = token match
-      case _: Token.DocumentStart =>
+    def parseDocumentStartOpt() = token.kind match
+      case TokenKind.DocumentStart =>
         productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: Nil)
         getNextEvent()
       case _ =>
         getNextEvent()
 
-    def parseDocumentEnd() = token match
-      case Token.DocumentEnd(pos) =>
+    def parseDocumentEnd() = token.kind match
+      case TokenKind.DocumentEnd =>
         in.popToken()
         Right(Event.DocumentEnd(Some(pos), true))
       case _ =>
         Right(Event.DocumentEnd(Some(token.pos), false))
 
-    def parseMappingStart() = token match
-      case Token.MappingStart(pos) =>
+    def parseMappingStart() = token.kind match
+      case TokenKind.MappingStart =>
         in.popToken()
         productions.prependAll(ParseKey :: ParseMappingEnd :: Nil)
         Right(Event.MappingStart(Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from(Token.MappingStart(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.MappingStart, token))
 
-    def parseFlowMappingStart() = token match
-      case Token.FlowMappingStart(pos) =>
+    def parseFlowMappingStart() = token.kind match
+      case TokenKind.FlowMappingStart =>
         in.popToken()
         productions.prependAll(ParseFlowMappingEntry :: ParseFlowMappingEnd :: Nil)
         Right(Event.FlowMappingStart(Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from(Token.FlowMappingStart(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.FlowMappingStart, token))
 
-    def parseFlowMappingEnd() = token match
-      case Token.FlowMappingEnd(pos) =>
+    def parseFlowMappingEnd() = token.kind match
+      case TokenKind.FlowMappingEnd =>
         in.popToken()
         Right(Event.FlowMappingEnd(Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from(Token.FlowMappingEnd(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.FlowMappingEnd, token))
 
     def parseFlowMappingEntry() =
-      token match
-        case Token.Scalar(value, style, pos) =>
+      token.kind match
+        case TokenKind.Scalar(value, style) =>
           in.popToken()
           productions.prependAll(ParseNode() :: ParseFlowMappingEntry :: Nil)
           Right(Event.Scalar(value, style, Some(pos)))
 
-        case Token.FlowMappingStart(pos) => {
+        case TokenKind.FlowMappingStart => {
           in.popToken()
           productions.prependAll(ParseFlowMappingEntry :: ParseFlowMappingEnd :: ParseNode() :: Nil)
 
@@ -143,98 +145,98 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         case _ =>
           getNextEvent()
 
-    def parseMappingEnd() = token match
-      case Token.BlockEnd(pos) =>
+    def parseMappingEnd() = token.kind match
+      case TokenKind.BlockEnd =>
         in.popToken()
         Right(Event.MappingEnd(Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from(Token.BlockEnd(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.BlockEnd, token))
 
     def parseParseImplicitSequenceEnd() =
       Right(Event.SequenceEnd(Some(token.pos)))
 
-    def parseSequenceStart() = token match
-      case Token.SequenceStart(pos) =>
+    def parseSequenceStart() = token.kind match
+      case TokenKind.SequenceStart =>
         in.popToken()
         productions.prependAll(ParseSequenceValue :: ParseSequenceEnd :: Nil)
 
         Right(Event.SequenceStart(Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from(Token.SequenceStart(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.SequenceStart, token))
 
-    def parseSequenceEnd() = token match
-      case Token.BlockEnd(pos) =>
+    def parseSequenceEnd() = token.kind match
+      case TokenKind.BlockEnd =>
         in.popToken()
         Right(Event.SequenceEnd(Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from(Token.BlockEnd(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.BlockEnd, token))
 
-    def parseFlowSequenceStart() = token match
-      case Token.FlowSequenceStart(pos) =>
+    def parseFlowSequenceStart() = token.kind match
+      case TokenKind.FlowSequenceStart =>
         in.popToken()
         productions.prependAll(ParseSequenceValueOpt :: ParseFlowSequenceEnd :: Nil)
 
         Right(Event.SequenceStart(Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from(Token.FlowSequenceStart(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.FlowSequenceStart, token))
 
-    def parseFlowSequenceEnd() = token match
-      case Token.FlowSequenceEnd(pos) =>
+    def parseFlowSequenceEnd() = token.kind match
+      case TokenKind.FlowSequenceEnd =>
         in.popToken()
         Right(Event.SequenceEnd(Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from(Token.FlowSequenceEnd(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.FlowSequenceEnd, token))
 
-    def parseKey() = token match
-      case Token.MappingKey(_) =>
+    def parseKey() = token.kind match
+      case TokenKind.MappingKey =>
         in.popToken()
         productions.prependAll(ParseScalar :: ParseValue :: Nil)
         getNextEvent()
-      case other @ _ =>
-        Left(ParseError.from(Token.MappingKey(token.pos), other))
+      case _ =>
+        Left(ParseError.from(TokenKind.MappingKey, token))
 
-    def parseOptKey() = token match
-      case Token.MappingKey(_) => parseKey()
+    def parseOptKey() = token.kind match
+      case TokenKind.MappingKey => parseKey()
       case _ =>
         getNextEvent()
 
-    def parseValue() = token match
-      case Token.MappingValue(_) =>
+    def parseValue() = token.kind match
+      case TokenKind.MappingValue =>
         in.popToken()
         productions.prependAll(ParseNode(implicitlySeq = true) :: ParseOptKey :: Nil)
         getNextEvent()
-      case other @ _ => Left(ParseError.from(Token.MappingValue(token.pos), other))
+      case _ => Left(ParseError.from(TokenKind.MappingValue, token))
 
-    def parseScalar() = token match
-      case Token.Scalar(value, style, pos) =>
+    def parseScalar() = token.kind match
+      case TokenKind.Scalar(value, style) =>
         in.popToken()
         Right(Event.Scalar(value, style, Some(pos)))
-      case other @ _ =>
-        Left(ParseError.from("Token.Scalar", other))
+      case _ =>
+        Left(ParseError.from("TokenKind.Scalar", token))
 
-    def parseNode(implicitlySeq: Boolean): Either[YamlError, Event] = token match
-      case _: Token.MappingStart      => parseMappingStart()
-      case _: Token.FlowMappingStart  => parseFlowMappingStart()
-      case _: Token.SequenceStart     => parseSequenceStart()
-      case _: Token.FlowSequenceStart => parseFlowSequenceStart()
-      case _: Token.Scalar            => parseScalar()
-      case Token.SequenceValue(pos) if implicitlySeq =>
+    def parseNode(implicitlySeq: Boolean): Either[YamlError, Event] = token.kind match
+      case TokenKind.MappingStart      => parseMappingStart()
+      case TokenKind.FlowMappingStart  => parseFlowMappingStart()
+      case TokenKind.SequenceStart     => parseSequenceStart()
+      case TokenKind.FlowSequenceStart => parseFlowSequenceStart()
+      case TokenKind.Scalar(_, _)      => parseScalar()
+      case TokenKind.SequenceValue if implicitlySeq =>
         productions.prependAll(ParseSequenceValue :: ParseImplicitSequenceEnd :: Nil)
         Right(Event.SequenceStart(Some(pos)))
       case _ =>
         Right(Event.Scalar("", ScalarStyle.Plain, Some(token.pos)))
 
-    def parseSequenceValue() = token match
-      case Token.SequenceValue(_) =>
+    def parseSequenceValue() = token.kind match
+      case TokenKind.SequenceValue =>
         in.popToken()
         productions.prependAll(ParseNode() :: ParseSequenceValueOpt :: Nil)
         getNextEvent()
-      case other @ _ => Left(ParseError.from(Token.SequenceValue(token.pos), other))
+      case _ => Left(ParseError.from(TokenKind.SequenceValue, token))
 
-    def parseSequenceValueOpt() = token match
-      case Token.SequenceValue(_) => parseSequenceValue()
-      case _: Token.MappingStart | _: Token.SequenceStart | _: Token.FlowMappingStart |
-          _: Token.FlowSequenceStart | _: Token.Scalar =>
+    def parseSequenceValueOpt() = token.kind match
+      case TokenKind.SequenceValue => parseSequenceValue()
+      case TokenKind.MappingStart | TokenKind.SequenceStart | TokenKind.FlowMappingStart |
+          TokenKind.FlowSequenceStart | TokenKind.Scalar(_, _) =>
         productions.prependAll(ParseNode() :: ParseSequenceValueOpt :: Nil)
         getNextEvent()
       case _ =>

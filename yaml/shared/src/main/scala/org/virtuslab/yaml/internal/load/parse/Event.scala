@@ -3,7 +3,6 @@ package org.virtuslab.yaml.internal.load.parse
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.internal.load.parse.Event.StreamStart
-import org.virtuslab.yaml.internal.load.reader.token.Token.SequenceStart
 
 /** 
  * 

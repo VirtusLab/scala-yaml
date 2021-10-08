@@ -3,6 +3,7 @@ package org.virtuslab.yaml.internal.load.parse
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Event.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 
 class BaseParseSuite extends munit.FunSuite:
 
@@ -38,3 +39,14 @@ class BaseParseSuite extends munit.FunSuite:
       val reader = Scanner(yaml)
       ParserImpl(reader).getEvents()
     }
+
+    def tokens: List[TokenKind] =
+      val reader = Scanner(yaml)
+      val tokens = scala.collection.mutable.ArrayDeque[TokenKind]()
+      def loop(): List[TokenKind] =
+        val t = reader.peekToken().kind
+        if t == TokenKind.StreamEnd then tokens.toList
+        else
+          tokens.append(reader.popToken().kind)
+          loop()
+      loop()
