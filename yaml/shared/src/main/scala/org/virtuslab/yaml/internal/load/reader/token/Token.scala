@@ -3,27 +3,34 @@ package org.virtuslab.yaml.internal.load.reader.token
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.Position
 
-sealed trait Token:
-  def pos: Position
+final case class Token(kind: TokenKind, pos: Position)
 
-case object Token:
-  case class StreamStart(pos: Position)       extends Token
-  case class StreamEnd(pos: Position)         extends Token
-  case class DocumentStart(pos: Position)     extends Token
-  case class DocumentEnd(pos: Position)       extends Token
-  case class SequenceStart(pos: Position)     extends Token
-  case class BlockEnd(pos: Position)          extends Token
-  case class FlowSequenceStart(pos: Position) extends Token
-  case class FlowSequenceEnd(pos: Position)   extends Token
-  case class MappingStart(pos: Position)      extends Token
-  case class FlowMappingStart(pos: Position)  extends Token
-  case class FlowMappingEnd(pos: Position)    extends Token
-  case class SequenceValue(pos: Position)     extends Token
-  case class MappingKey(pos: Position)        extends Token
-  case class MappingValue(pos: Position)      extends Token
+enum TokenKind:
+  case StreamStart
+  case StreamEnd
+  case DocumentStart
+  case DocumentEnd
+  case SequenceStart
+  case BlockEnd
+  case FlowSequenceStart
+  case FlowSequenceEnd
+  case MappingStart
+  case FlowMappingStart
+  case FlowMappingEnd
+  case SequenceValue
+  case MappingKey
+  case MappingValue
+  case Scalar private (value: String, scalarStyle: ScalarStyle)
 
-  final case class Scalar(value: String, scalarStyle: ScalarStyle, pos: Position) extends Token
-  case object Scalar:
-    def apply(scalar: String, scalarStyle: ScalarStyle, pos: Position): Scalar =
+  def token(pos: Position): Token = Token(this, pos)
+
+object TokenKind:
+  def scalar: Scalar = Scalar("", ScalarStyle.Plain)
+
+  object Scalar:
+    def apply(scalar: String, scalarStyle: ScalarStyle) =
       val escapedScalar = ScalarStyle.escapeSpecialCharacter(scalar, scalarStyle)
-      new Scalar(escapedScalar, scalarStyle, pos)
+      new Scalar(escapedScalar, scalarStyle)
+  end Scalar
+
+end TokenKind

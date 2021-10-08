@@ -7,13 +7,11 @@ import org.virtuslab.yaml.internal.load.reader.StringReader
 import scala.annotation.tailrec
 import scala.collection.mutable
 import token.Token
+import token.TokenKind.*
 import scala.collection.mutable.ArrayDeque
 
-case class ReaderCtx(
-    tokens: mutable.ArrayDeque[Token] = mutable.ArrayDeque.empty,
-    reader: Reader
-) {
-
+case class ReaderCtx(reader: Reader) {
+  val tokens                    = mutable.ArrayDeque.empty[Token]
   private val indentations      = mutable.ArrayDeque.empty[Int]
   private var flowSequenceLevel = 0
   private var flowMappingLevel  = 0
@@ -24,7 +22,7 @@ case class ReaderCtx(
   def checkIndents(current: Int): Unit =
     if current < indent then
       indentations.removeLast()
-      tokens.append(Token.BlockEnd(reader.pos()))
+      tokens.append(Token(BlockEnd, reader.pos))
       checkIndents(current)
 
   def enterFlowSequence: Unit = flowSequenceLevel += 1
@@ -40,15 +38,14 @@ case class ReaderCtx(
 
   def isInFlowMapping: Boolean = flowMappingLevel > 0
 
-  def parseDocumentStart(indent: Int): List[Token] =
+  def parseDocumentStart(indent: Int): Token =
     checkIndents(-1)
-    List(Token.DocumentStart(reader.pos()))
+    Token(DocumentStart, reader.pos)
 
-  def parseDocumentEnd(): List[Token] =
+  def parseDocumentEnd(): Token =
     checkIndents(-1)
-    List(Token.DocumentEnd(reader.pos()))
+    Token(DocumentEnd, reader.pos)
 }
 
-case object ReaderCtx:
-  def init(in: String): ReaderCtx =
-    ReaderCtx(mutable.ArrayDeque.empty, StringReader(in))
+object ReaderCtx:
+  def apply(in: String): ReaderCtx = ReaderCtx(StringReader(in))
