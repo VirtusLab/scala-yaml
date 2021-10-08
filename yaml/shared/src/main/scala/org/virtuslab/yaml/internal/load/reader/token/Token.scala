@@ -10,13 +10,13 @@ enum TokenKind:
   case StreamEnd
   case DocumentStart
   case DocumentEnd
+  case MappingStart
   case SequenceStart
   case BlockEnd
-  case FlowSequenceStart
-  case FlowSequenceEnd
-  case MappingStart
   case FlowMappingStart
   case FlowMappingEnd
+  case FlowSequenceStart
+  case FlowSequenceEnd
   case SequenceValue
   case MappingKey
   case MappingValue

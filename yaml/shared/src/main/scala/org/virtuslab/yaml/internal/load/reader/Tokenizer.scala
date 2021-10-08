@@ -83,7 +83,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     Token(FlowMappingEnd, in.pos)
 
   private def parseBlockSequence() =
-    if (ctx.indent < in.column) then
+    if (ctx.isInFlowCollection && ctx.indent < in.column) then
       ctx.addIndent(in.column)
       Token(SequenceStart, in.pos)
     else
@@ -243,6 +243,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val scalarIndent = in.column
 
     def readScalar(): String =
+      // val xxx = in.peek().get
       val peeked = in.peek()
       peeked match
         case Some(':') if in.isNextWhitespace                   => sb.result()
@@ -251,8 +252,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case _ if in.isNewline =>
           skipUntilNextChar()
           sb.append(' ')
-          if (in.column > ctx.indent) readScalar()
-          else sb.result()
+          // if (ctx.indent == -1 && in.column > ctx.indent) readScalar()
+          sb.result()
         case Some(char) =>
           sb.append(in.read())
           readScalar()
@@ -277,20 +278,16 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     peeked2 match
       case Some(':') =>
         in.skipCharacter()
-        if (ctx.isInFlowMapping) then scalar
-        else if (ctx.indent < scalar.pos.column) then
-          ctx.addIndent(scalar.pos.column)
-          ctx.tokens.appendAll(
-            List(
-              Token(MappingStart, scalar.pos),
-              Token(MappingKey, scalar.pos),
-              scalar
-            )
+        if (ctx.indent < scalar.pos.column) then ctx.addIndent(scalar.pos.column)
+
+        ctx.tokens.appendAll(
+          List(
+            Token(MappingStart, scalar.pos),
+            Token(MappingKey, scalar.pos),
+            scalar
           )
-          Token(MappingValue, scalar.pos)
-        else
-          ctx.tokens.appendAll(List(Token(MappingKey, scalar.pos), scalar))
-          Token(MappingValue, in.pos)
+        )
+        Token(MappingValue, scalar.pos)
       case _ => scalar
 
   def skipUntilNextToken(): Unit =
