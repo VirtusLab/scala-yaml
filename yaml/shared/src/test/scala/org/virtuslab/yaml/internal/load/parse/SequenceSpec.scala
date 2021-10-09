@@ -56,13 +56,13 @@ class SequenceSpec extends BaseParseSuite:
   }
 
   test("sequence-of-mappings") {
-    val yaml = s"""-
-                    |  name: Mark McGwire
-                    |  hr:   65
-                    |-
-                    |  name: Sammy Sosa
-                    |  hr:   63
-                    |""".stripMargin
+    val yaml = s"""|-
+                   |  name: Mark McGwire
+                   |  hr:   65
+                   |-
+                   |  name: Sammy Sosa
+                   |  hr:   63
+                   |""".stripMargin
 
     val expectedEvents = List(
       Event.StreamStart,
@@ -84,7 +84,6 @@ class SequenceSpec extends BaseParseSuite:
       Event.DocumentEnd(),
       Event.StreamEnd
     )
-
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
@@ -158,11 +157,11 @@ class SequenceSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("sequence-host:port") {
+  test("sequence-of-host:port") {
     val yaml =
-      s"""|portals: [10.0.2.16:3260, 10.0.2.17:3260]
+      s"""|portals: [10.0.1.16:3260, 10.0.1.17:3260]
           |portalsSingleQouta: ['10.0.2.16:3260', '10.0.2.17:3260']
-          |portalsDoubleQouta: ["10.0.2.16:3260", "10.0.2.17:3260"]
+          |portalsDoubleQouta: ["10.0.3.16:3260", "10.0.3.17:3260"]
           |""".stripMargin
 
     val expectedEvents = List(
@@ -171,8 +170,8 @@ class SequenceSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("portals"),
       SequenceStart(),
-      Scalar("10.0.2.16:3260"),
-      Scalar("10.0.2.17:3260"),
+      Scalar("10.0.1.16:3260"),
+      Scalar("10.0.1.17:3260"),
       SequenceEnd(),
       Scalar("portalsSingleQouta"),
       SequenceStart(),
@@ -181,8 +180,8 @@ class SequenceSpec extends BaseParseSuite:
       SequenceEnd(),
       Scalar("portalsDoubleQouta"),
       SequenceStart(),
-      Scalar("10.0.2.16:3260", ScalarStyle.DoubleQuoted),
-      Scalar("10.0.2.17:3260", ScalarStyle.DoubleQuoted),
+      Scalar("10.0.3.16:3260", ScalarStyle.DoubleQuoted),
+      Scalar("10.0.3.17:3260", ScalarStyle.DoubleQuoted),
       SequenceEnd(),
       MappingEnd(),
       DocumentEnd(),

@@ -4,7 +4,7 @@ import org.virtuslab.yaml.*
 
 class DockerYamlDecoderSuite extends munit.FunSuite:
 
-  test("derive construct for docker compose file") {
+  test("derive construct for docker compose file".ignore) {
 
     case class Web(build: String, ports: List[String], volumes: List[String]) derives YamlCodec
     case class Redis(image: String) derives YamlCodec
