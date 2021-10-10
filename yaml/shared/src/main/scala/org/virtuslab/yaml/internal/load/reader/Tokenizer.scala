@@ -280,7 +280,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     peeked2 match
       case Some(':') =>
         in.skipCharacter()
-        if (ctx.indent < scalar.pos.column) then
+        if (ctx.indent < scalar.pos.column && !ctx.isInFlowCollection) then
           ctx.addIndent(scalar.pos.column)
           ctx.tokens.appendAll(List(Token(MappingStart, scalar.pos)))
 

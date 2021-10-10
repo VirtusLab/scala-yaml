@@ -220,7 +220,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("empty-flow-mapping".ignore) {
+  test("empty-flow-mapping") {
     val yaml = "emptyDir: {}"
 
     val expectedEvents = List(
@@ -237,7 +237,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("nested-empty-flow-mapping") {
+  test("nested-empty-flow-mapping".only) {
     val yaml = "emptyDir: {{{}}}"
 
     val expectedEvents = List(
@@ -270,9 +270,9 @@ class MappingSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("doubles"),
       FlowMappingStart(),
-      MappingStart(),
       Scalar("double1"),
       Scalar("1.0"),
+      FlowMappingEnd(),
       MappingEnd(),
       DocumentEnd(),
       StreamEnd

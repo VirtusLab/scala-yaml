@@ -59,7 +59,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(numberYaml.as[OptionTypes], Right(expectedNumber))
   }
 
-  test("derive construct for sequence".ignore) {
+  test("derive construct for sequence") {
 
     case class SequenceTypes(doubles: List[Double], floats: Seq[Float], ints: Set[Int])
         derives YamlCodec
@@ -115,7 +115,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(mappingYaml.as[SequenceTypes], Right(expectedMapping))
   }
 
-  test("derive construct for mapping".ignore) {
+  test("derive construct for mapping") {
     case class SequenceTypes(doubles: Map[String, Double], floats: Map[String, List[Float]])
         derives YamlCodec
 
