@@ -26,7 +26,8 @@ object YamlDecoder:
               val msg = node.pos match {
                 case Some(pos) =>
                   s"""|${e.getMessage}
-                      |${pos.errorMsg} at ${pos.line}:${pos.column}, expected $tag""".stripMargin
+                      |at ${pos.line}:${pos.column}, expected $tag
+                      |$pos """.stripMargin
                 case None =>
                   "Cannot decode: ${e.getMessage}"
               }

@@ -83,7 +83,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mappings-of-sequence".ignore) {
+  test("mappings-of-sequence") {
     val yaml = s"""american:
                   |  - Boston Red Sox
                   |  - Detroit Tigers
@@ -237,7 +237,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("nested-empty-flow-mapping".ignore) {
+  test("nested-empty-flow-mapping") {
     val yaml = "emptyDir: {{{}}}"
 
     val expectedEvents = List(

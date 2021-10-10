@@ -9,7 +9,7 @@ class DecoderErrorsSuite extends BaseDecoderErrorSuite:
 
   case class Person(name: String, age: Int) derives YamlCodec
 
-  test("should fail for invalid int") {
+  test("fail-for-invalid-int") {
 
     val yaml = """|name: John
                   |age: xxx
@@ -18,8 +18,10 @@ class DecoderErrorsSuite extends BaseDecoderErrorSuite:
     assertError(
       yaml.as[Person],
       s"""|For input string: "xxx"
+          |at 1:5, expected Int
           |age: xxx
-          |     ^^^ at 1:5, expected Int""".stripMargin
+          |     ^
+          |""".stripMargin
     )
   }
 end DecoderErrorsSuite
