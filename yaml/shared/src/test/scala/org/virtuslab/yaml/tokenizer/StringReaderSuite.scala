@@ -1,10 +1,12 @@
-package org.virtuslab.yaml.internal.load.reader
+package org.virtuslab.yaml.tokenizer
 
 import org.virtuslab.yaml.*
+import org.virtuslab.yaml.*
+import org.virtuslab.yaml.internal.load.reader.StringReader
 
 class StringReaderSuite extends munit.FunSuite:
 
-  test("String reader counts positions correctly") {
+  test("count position") {
     val input = s"""|a
                     |b${"\r"}
                     |c

@@ -1,11 +1,13 @@
-package org.virtuslab.yaml.internal.load.parse
+package org.virtuslab.yaml.parser
 
 import org.virtuslab.yaml.YamlError
+import org.virtuslab.yaml.BaseYamlSuite
+import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.Event.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 
-class BaseParseSuite extends munit.FunSuite:
+trait BaseParseSuite extends BaseYamlSuite:
 
   /**
    * Checks if events are equal and don't care about positions.
@@ -33,20 +35,3 @@ class BaseParseSuite extends munit.FunSuite:
     )
     val expected = Right(expectedEvents)
     assertEquals(withoutPosition, expected)
-
-  extension (yaml: String)
-    def events: Either[YamlError, List[Event]] = {
-      val reader = Scanner(yaml)
-      ParserImpl(reader).getEvents()
-    }
-
-    def tokens: List[TokenKind] =
-      val reader = Scanner(yaml)
-      val tokens = scala.collection.mutable.ArrayDeque[TokenKind]()
-      def loop(): List[TokenKind] =
-        val t = reader.peekToken().kind
-        if t == TokenKind.StreamEnd then tokens.toList
-        else
-          tokens.append(reader.popToken().kind)
-          loop()
-      loop()

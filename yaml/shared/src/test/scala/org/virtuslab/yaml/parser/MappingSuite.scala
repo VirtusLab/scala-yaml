@@ -1,12 +1,12 @@
-package org.virtuslab.yaml.internal.load.parse
+package org.virtuslab.yaml.parser
 
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class MappingSpec extends BaseParseSuite:
+class MappingSuite extends BaseParseSuite:
 
-  test("basic-mapping") {
+  test("basic mapping") {
     val yaml =
       s"""hr:  65
          |avg: 0.278
@@ -30,7 +30,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("nested-mapping") {
+  test("nested mapping") {
     val yaml =
       s"""|key1:
           |  nestedKey1: value1
@@ -60,7 +60,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mapping-of-sequence") {
+  test("mapping of sequence") {
     val yaml =
       s"""|command:
           |    - /bin/sh
@@ -83,7 +83,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mappings-of-sequence") {
+  test("mappings of sequence") {
     val yaml = s"""american:
                   |  - Boston Red Sox
                   |  - Detroit Tigers
@@ -118,7 +118,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mapping-quoted-key") {
+  test("mapping quoted key") {
     val yaml =
       s"""|data:
           |  "19": xw==
@@ -140,7 +140,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mapping-empty-value") {
+  test("mapping empty value") {
     val yaml =
       s"""key: 
           |key2: value
@@ -161,7 +161,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mapping-empty-value-and-comment") {
+  test("mapping empty value and comment") {
     val yaml = s"""key:
                   |
                   |# Comment.
@@ -182,7 +182,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mapping-with-braces-in-value") {
+  test("mapping with braces in value") {
     val yaml = "name: etcd-{{cell}}"
 
     val expectedEvents = List(
@@ -198,7 +198,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("template-value".ignore) {
+  test("template value".ignore) {
     val yaml = "replicas: {{replicas}}"
 
     val expectedEvents = List(
@@ -220,7 +220,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("empty-flow-mapping") {
+  test("empty flow mapping") {
     val yaml = "emptyDir: {}"
 
     val expectedEvents = List(
@@ -237,7 +237,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("nested-empty-flow-mapping") {
+  test("nested empty flow mapping") {
     val yaml = "emptyDir: {{{}}}"
 
     val expectedEvents = List(
@@ -260,7 +260,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mapping-with-flow-mapping-as-value") {
+  test("mapping with flow mapping as value") {
     val yaml =
       s"""doubles: { double1: 1.0 }""".stripMargin
 

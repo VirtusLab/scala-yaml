@@ -1,10 +1,10 @@
-package org.virtuslab.yaml.internal.load.decoder
+package org.virtuslab.yaml.decoder
 
 import org.virtuslab.yaml.*
 
 class PrimitiveDecoderSuite extends munit.FunSuite:
 
-  test("derive construct for primitive number type") {
+  test("numbers") {
 
     case class ValueTypes(
         double: Double,
@@ -39,7 +39,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(numberYaml.as[ValueTypes], Right(expectedNumber))
   }
 
-  test("derive construct for option") {
+  test("option") {
     // todo Option YamlEncoder
     case class OptionTypes(double: Option[Double], float: Option[Float], int: Option[Int])
         derives YamlDecoder
@@ -59,7 +59,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(numberYaml.as[OptionTypes], Right(expectedNumber))
   }
 
-  test("derive construct for sequence") {
+  test("sequence") {
 
     case class SequenceTypes(doubles: List[Double], floats: Seq[Float], ints: Set[Int])
         derives YamlCodec
@@ -92,7 +92,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(sequenceYaml.as[SequenceTypes], Right(expectedSequence))
   }
 
-  test("derive construct for mapping") {
+  test("mapping") {
 
     case class SequenceTypes(doubles: Map[String, Double], floats: Map[String, List[Float]])
         derives YamlCodec
@@ -115,7 +115,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(mappingYaml.as[SequenceTypes], Right(expectedMapping))
   }
 
-  test("derive construct for mapping") {
+  test("mapping") {
     case class SequenceTypes(doubles: Map[String, Double], floats: Map[String, List[Float]])
         derives YamlCodec
 
@@ -133,7 +133,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(flowMappingYaml.as[SequenceTypes], Right(expectedMapping))
   }
 
-  test("derive construct for nested case class") {
+  test("case class") {
 
     case class Port(port: Int) derives YamlCodec
     case class Selector(app: String, tier: String) derives YamlCodec
@@ -162,7 +162,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(yaml.as[Config], Right(expectedConfig))
   }
 
-  test("derive construct for sequence of mappings") {
+  test("sequence of mappings") {
 
     sealed trait Address derives YamlCodec
     case class Network(network: String, port: Int) extends Address

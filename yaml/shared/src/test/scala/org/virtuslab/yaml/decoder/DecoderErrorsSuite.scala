@@ -1,4 +1,4 @@
-package org.virtuslab.yaml.internal.load.decoder
+package org.virtuslab.yaml.decoder
 
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.YamlError
@@ -9,7 +9,7 @@ class DecoderErrorsSuite extends BaseDecoderErrorSuite:
 
   case class Person(name: String, age: Int) derives YamlCodec
 
-  test("fail-for-invalid-int") {
+  test("fail for invalid int") {
 
     val yaml = """|name: John
                   |age: xxx

@@ -1,4 +1,4 @@
-package org.virtuslab.yaml.internal.load.decoder
+package org.virtuslab.yaml.decoder
 
 import org.virtuslab.yaml.*
 

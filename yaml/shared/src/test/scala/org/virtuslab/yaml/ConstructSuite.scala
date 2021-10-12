@@ -1,6 +1,8 @@
-package org.virtuslab.yaml.internal.load.construct
+package org.virtuslab.yaml
 
 import org.virtuslab.yaml.*
+import org.virtuslab.yaml.syntax.YamlPrimitive
+import scala.language.implicitConversions
 
 class ConstructSuite extends munit.FunSuite:
   import Node.*
@@ -26,4 +28,19 @@ class ConstructSuite extends munit.FunSuite:
 
     val bar = MappingNode(KeyValueNode(ScalarNode("price"), ScalarNode("65.997")))
     assertEquals(bar.as[SomeEnum], Right(SomeEnum.Bar(65.997)))
+  }
+
+  test("key must be scalar node") {
+    case class DummyClass(key: String, value: String) derives YamlCodec
+    val node = MappingNode(
+      MappingNode(
+        "key" -> "value"
+      ) -> MappingNode(
+        "key2" -> "value2"
+      )
+    )
+
+    val expectedConstructError =
+      Left(ConstructError(s"Parameter of a class must be a scalar value"))
+    assertEquals(node.as[DummyClass], expectedConstructError)
   }

@@ -1,12 +1,13 @@
-package org.virtuslab.yaml.internal.load.parse
+package org.virtuslab.yaml.parser
 
 import org.virtuslab.yaml.internal.load.reader.Scanner
+import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class SequenceSpec extends BaseParseSuite:
 
-  test("basic-sequence") {
+  test("basic sequence") {
     val yaml =
       s"""|- v1
           |- v2
@@ -26,7 +27,7 @@ class SequenceSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("sequence-of-sequences") {
+  test("sequence of sequences") {
     val yaml =
       s"""|-
           |  - v1
@@ -87,7 +88,7 @@ class SequenceSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("indentation-sequence") {
+  test("indentation sequence") {
     val yaml = s"""|containers:
                    | - name iscsipd1-rw
                    | - name iscsipd2-rw
@@ -109,7 +110,7 @@ class SequenceSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("indentation-less-sequence") {
+  test("indentation less sequence") {
     val yaml = s"""|containers:
                    |- name iscsipd1-rw
                    |- name iscsipd2-rw
@@ -140,7 +141,7 @@ class SequenceSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("empty-flow-sequence") {
+  test("empty flow sequence") {
     val yaml = "seq: []"
 
     val expectedEvents = List(
@@ -157,7 +158,7 @@ class SequenceSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("sequence-of-host:port") {
+  test("sequence of host:port") {
     val yaml =
       s"""|portals: [10.0.1.16:3260, 10.0.1.17:3260]
           |portalsSingleQouta: ['10.0.2.16:3260', '10.0.2.17:3260']
