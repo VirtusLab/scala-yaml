@@ -237,7 +237,7 @@ class MappingSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("nested-empty-flow-mapping".only) {
+  test("nested-empty-flow-mapping") {
     val yaml = "emptyDir: {{{}}}"
 
     val expectedEvents = List(

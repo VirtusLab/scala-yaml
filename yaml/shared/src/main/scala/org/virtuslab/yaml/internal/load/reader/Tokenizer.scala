@@ -83,9 +83,6 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     Token(FlowMappingEnd, in.pos)
 
   private def parseBlockSequence() =
-    val isIn = ctx.isInFlowCollection
-    val i    = ctx.indent
-    val col  = in.column
     if (!ctx.isInFlowCollection && ctx.indent < in.column) then
       ctx.addIndent(in.column)
       Token(SequenceStart, in.pos)
