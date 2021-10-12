@@ -25,19 +25,18 @@ class CommentSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("empty-document".ignore) {
+  test("empty-document") {
     val yaml =
-      s"""|#Comment.
-          |""".stripMargin
+      s"""|#Comment.""".stripMargin
 
-    val expectedEvents = Right(
-      List(
+    val expectedEvents = List(
         StreamStart,
+        DocumentStart(),
+        Scalar(""),
         DocumentEnd(),
         StreamEnd
-      )
     )
-    assertEquals(yaml.events, expectedEvents)
+    assertEventsEquals(yaml.events, expectedEvents)
   }
 
   test("comments-in-mapping") {

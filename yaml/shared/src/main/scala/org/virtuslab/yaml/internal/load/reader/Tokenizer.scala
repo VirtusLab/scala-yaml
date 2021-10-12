@@ -306,5 +306,5 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   def skipUntilNextChar() =
     while (in.isWhitespace) do in.skipCharacter()
 
-  private def skipComment(): Unit = while !in.isNewline do in.skipCharacter()
+  private def skipComment(): Unit = while (in.peek().isDefined && !in.isNewline) do in.skipCharacter()
 }
