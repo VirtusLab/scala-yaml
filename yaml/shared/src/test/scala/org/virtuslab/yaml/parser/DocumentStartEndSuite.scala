@@ -1,11 +1,11 @@
-package org.virtuslab.yaml.internal.load.parse
+package org.virtuslab.yaml.parser
 
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.Scanner
 
 class DocumentStartEndSpec extends BaseParseSuite:
 
-  test("explicit-document-start") {
+  test("explicit document start") {
     val yaml =
       s"""|---
           |k1: v1
@@ -24,7 +24,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("explicit-document-end") {
+  test("explicit document end") {
     val yaml =
       s"""|k1: v1
           |...
@@ -43,7 +43,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("implicit-document-start") {
+  test("implicit document start") {
     val yaml =
       s"""|k1: v1
           |""".stripMargin
@@ -61,7 +61,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("multiple-documents-with-implicit-start") {
+  test("multiple documents with implicit start") {
     val yaml =
       s"""|k1: v1
           |...
@@ -98,7 +98,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("multiple-documents-with-explicit-start") {
+  test("multiple documents with explicit start") {
     val yaml =
       s"""|---
           |k1: v1

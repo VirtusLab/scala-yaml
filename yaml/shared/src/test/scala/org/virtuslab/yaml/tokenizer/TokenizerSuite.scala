@@ -1,6 +1,7 @@
-package org.virtuslab.yaml.internal.load.reader
+package org.virtuslab.yaml.tokenizer
 
 import org.virtuslab.yaml.*
+import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.parse.Event.MappingStart
@@ -32,7 +33,7 @@ class TokenizerSuite extends munit.FunSuite:
     assertEquals(yaml.tokens, tokens)
   }
 
-  test("block-mapping") {
+  test("block mapping") {
     val yaml = "k : v"
 
     val tokens = List(
@@ -64,7 +65,7 @@ class TokenizerSuite extends munit.FunSuite:
     assertEquals(yaml.tokens, tokens)
   }
 
-  test("flow-mapping") {
+  test("flow mapping") {
     val yaml = """|{ v1 : v2, }
                   |""".stripMargin
 
@@ -80,7 +81,7 @@ class TokenizerSuite extends munit.FunSuite:
     assertEquals(yaml.tokens, tokens)
   }
 
-  test("flow-sequence") {
+  test("flow sequence") {
     val yaml = """|[ v1, v2, ]
                   |""".stripMargin
 

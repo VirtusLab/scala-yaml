@@ -33,7 +33,8 @@ lazy val scalaYamlCore = crossProject(JSPlatform, JVMPlatform)
     name              := projectName,
     scalaVersion      := scala3Version,
     semanticdbVersion := scalafixSemanticdb.revision,
-    semanticdbEnabled := true
+    semanticdbEnabled := true,
+    libraryDependencies ++= Seq(Deps.pprint % Test)
   )
   .settings(docsSettings)
   .settings(munit)

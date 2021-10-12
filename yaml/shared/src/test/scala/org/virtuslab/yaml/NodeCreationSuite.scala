@@ -1,4 +1,4 @@
-package org.virtuslab.yaml.internal
+package org.virtuslab.yaml
 
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.Node.*
@@ -7,7 +7,7 @@ import scala.language.implicitConversions
 
 class NodeCreationSuite extends munit.FunSuite:
 
-  test("mapping-node") {
+  test("mapping node") {
     val node = MappingNode(
       "hr"   -> "65",
       "avg"  -> "0.278",
@@ -23,7 +23,7 @@ class NodeCreationSuite extends munit.FunSuite:
     )
   }
 
-  test("sequence-node") {
+  test("sequence node") {
     val node = SequenceNode(
       "65",
       "66",

@@ -1,4 +1,4 @@
-package org.virtuslab.yaml.internal.load.parse
+package org.virtuslab.yaml.parser
 
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.Scanner
@@ -6,7 +6,7 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class ScalarSpec extends BaseParseSuite:
 
-  test("plain-value") {
+  test("plain value") {
     val yaml =
       s"""|mnt\\#dd
           |""".stripMargin
@@ -21,7 +21,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("single-quote") {
+  test("single quote") {
     val yaml =
       s"""| '/mnt/ \\iscsipd ''skip'''
           |""".stripMargin
@@ -36,7 +36,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("double-quote") {
+  test("double quote") {
     val yaml =
       s"""|"/mnt/ iscsipd"
           |""".stripMargin
@@ -51,7 +51,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("unescaped-colon") {
+  test("unescaped colon") {
     val yaml =
       s"""|targetPortal: 10.0.2.15:3260:1221:1221
           |iqn: iqn.2001-04.com.example.storage:kube.sys1.xyz
@@ -72,7 +72,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("with-new-lines") {
+  test("with new lines") {
     val yaml =
       s"""|description: new lines
           |  rest.
@@ -98,7 +98,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("plain-multiline") {
+  test("plain multiline") {
     val yaml =
       s"""|description: multiline
           |             plain
@@ -121,7 +121,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("single-quote-multiline") {
+  test("single quote multiline") {
     val yaml =
       s"""description:  'multiline
          |  plain
@@ -145,7 +145,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("single-quote-multiline-2") {
+  test("single quote multiline 2") {
     val yaml =
       s"""|description: 'Quote
           | multiline.'
@@ -164,7 +164,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("dont-escape-in-double-quotes") {
+  test("dont escape in double quotes") {
     val yaml = """ "double \n quote" """
 
     val expectedEvents = List(
@@ -177,7 +177,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("double-quote-special-characters") {
+  test("double quote special characters") {
     val yaml =
       s"""| "{/mnt/ , {}, [] i"
           |""".stripMargin
@@ -192,7 +192,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("double-quote-escape-\"character") {
+  test("double quote escape \"character") {
     val yaml = s""" "{\\" mnt" """
 
     val expectedEvents = List(
@@ -205,7 +205,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("multiline-folded") {
+  test("multiline folded") {
     val yaml =
       s"""|command:
             |  - bash
@@ -234,7 +234,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("multiline-folded-skip-lines") {
+  test("multiline folded skip lines") {
     val yaml = s""">
                   | folded
                   | text
@@ -252,7 +252,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("multiline-literal-1") {
+  test("multiline literal 1") {
     val yaml =
       s"""|command:
           |  - bash
@@ -278,7 +278,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("multiline-literal-2") {
+  test("multiline literal 2") {
 
     val yaml = s"""certificate: |-
                   |        -----BEGIN CERTIFICATE-----
@@ -306,7 +306,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("multiline-literal-3-keep-lines") {
+  test("multiline literal 3 keep lines") {
 
     val yaml = s"""certificate: |+
                   |        -----BEGIN CERTIFICATE-----
@@ -336,7 +336,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("multiline-literal-4") {
+  test("multiline literal 4") {
     val yaml = s"""key:
                   |  - content: |
                   |     [Unit]

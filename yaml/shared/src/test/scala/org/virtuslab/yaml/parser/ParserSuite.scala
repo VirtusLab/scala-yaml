@@ -1,13 +1,13 @@
-package org.virtuslab.yaml.internal.load.parse
+package org.virtuslab.yaml.parser
 
 import org.virtuslab.yaml.internal.load.parse._
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class ParserSpec extends BaseParseSuite:
+class ParserSuite extends BaseParseSuite:
 
-  test("kubernetes-config") {
+  test("kubernetes config") {
     val yaml = s"""apiVersion: v1
                   |kind: Pod
                   |metadata:

@@ -1,4 +1,4 @@
-package org.virtuslab.yaml.internal.load.compose
+package org.virtuslab.yaml
 
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Node.*
