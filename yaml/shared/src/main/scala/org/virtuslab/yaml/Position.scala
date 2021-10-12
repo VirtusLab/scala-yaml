@@ -6,4 +6,6 @@ final case class Position(offset: Int, line: Int, column: Int, input: Vector[Str
     val spaces       = column
     val circumflexes = msg.length - spaces
     s"""|$msg
-        |${" " * spaces}${"^" * circumflexes}""".stripMargin
+        |${" " * spaces}^""".stripMargin
+
+  override def toString: String = s"Position($line, $column), offset $offset"

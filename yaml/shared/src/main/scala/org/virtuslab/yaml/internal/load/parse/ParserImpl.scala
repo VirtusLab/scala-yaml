@@ -15,45 +15,72 @@ private enum Production:
   case ParseStreamStart
   case ParseStreamEnd
   case ParseDocumentStart
-  case ParseDocumentStartOpt
   case ParseDocumentEnd
+  case ParseDocumentStartOpt
+
+  case ParseNode
+  case ParseScalar
+
   case ParseMappingStart
   case ParseMappingEnd
-  case ParseFlowMappingEnd
+  case ParseMappingEntry
+  case ParseMappingValue
+  case ParseMappingValueNode
+  case ParseMappingSequenceEnd
+  case ParseMappingEntryOpt
+
   case ParseSequenceStart
+  case ParseSequenceEnd
+  case ParseSequenceEntry
+  case ParseSequenceEntryOpt
+
+  case ParseFlowMappingStart
+  case ParseFlowMappingEntryOpt
+  case ParseFlowMappingEnd
+
   case ParseFlowSequenceStart
   case ParseFlowSequenceEnd
-  case ParseSequenceEnd
-  case ParseNode(implicitlySeq: Boolean = false)
-  case ParseKey
-  case ParseValue
-  case ParseOptKey
-  case ParseScalar
-  case ParseFlowMappingEntry
-  case ParseSequenceValue
-  case ParseSequenceValueOpt
-  case ParseImplicitSequenceEnd
+  case ParseFlowSequenceEntry
+  case ParseFlowSequenceEntryOpt
 
 /**
  * Parser takes a stream of [[Token]]s and produces a series of serialization [[Event]]s. Parsing can fail due to ill-formed input.
  * 
  * ParserImpl is using following productions:
  * 
- * ParseStreamStart      ::= <ParseDocumentStart> <ParseDocumentStartOpt> ParseStreamEnd
- * ParseDocumentStart    ::= <ParseNode> ParseDocumentEnd
- * ParseDocumentStartOpt ::= epsilon | <ParseDocumentStart> <ParseDocumentStartOpt>
- * ParseNode             ::= <ParseMappingStart> | <ParseFlowMappingStart> | <ParseSequenceStart> | <ParseFlowSequenceStart> | ParseScalar
- * ParseNodeOpt          ::= epsilon | <ParseMappingStart> | <ParseFlowMappingStart> | <ParseSequenceStart> | ParseScalar
- * ParseMappingStart     ::= <ParseKey> ParseMappingEnd
- * ParseFlowMappingStart ::= <ParseFlowMappingEntry> ParseFlowMappingEnd
- * ParseFlowMappingEntry ::= <ParseScalar> | <ParseFlowMappingEntry> <ParseFlowMappingEnd> <ParseNode>
- * ParseSequenceStart    ::= <ParseNode> <ParseSequenceValueOpt> ParseSequenceEnd
- * ParseFlowSequenceStart::= <ParseSequenceValueOpt> ParseFlowSequenceEnd
- * ParseKey              ::= <ParseScalar> <ParseValue>
- * ParseOptKey           ::= epsilon | <ParseKey>
- * ParseValue            ::= <ParseNode> <ParseOptKey>
- * ParseSequenceValue    ::= <ParseNode> ParseSequenceValueOpt
- * ParseSequenceValueOpt ::= epsilon | <ParseNode> ParseSequenceValueOpt
+ * ParseStreamStart              ::= (stream_start) ParseDocumentStart ParseDocumentStartOpt ParseStreamEnd
+ * ParseStreamEnd                ::= (stream_end)
+ *         
+ * ParseDocumentStart            ::= (document_start) ParseNode ParseDocumentEnd
+ * ParseDocumentEnd              ::= (document_end)
+ * ParseDocumentStartOpt         ::= epsilon | ParseDocumentStart ParseDocumentStartOpt
+ * 
+ * ParseNode(indentLess=false)   ::= ParseMappingStart | ParseFlowMappingStart |
+ *                                   ParseSequenceStart(indentLess) | ParseFlowSequenceStart | ParseScalar
+ * ParseScalar                   ::= scalar
+ * 
+ * ParseMappingStart             ::= mapping_start ParseMappingEntry ParseMappingEnd
+ * ParseMappingEnd               ::= mapping_end
+ * ParseMappingEntry             ::= mapping_key ParseScalar ParseMappingValue ParseMappingEntryOpt
+ * ParseMappingValue             ::= mapping_value ParseNode(true)
+ * ParseMappingEntryOpt          ::= epsilon | ParseMappingEntry
+ * 
+ * 
+ * ParseSequenceStart(indentLess)::= (seq_start) ParseSequenceEntry ParseSequenceEnd(indentLess)
+ * ParseSequenceEnd(indentLess)  ::= (seq_end)
+ * ParseSequenceEntry            ::= seq_value ParseNode ParseSequenceEntryOpt
+ * ParseSequenceEntryOpt         ::= epsilon | ParseSequenceEntry
+ * 
+ * 
+ * ParseFlowMappingStart         ::= flow_mapping_start ParseMappingEntry ParseFlowMappingEnd
+ * ParseFlowMappingEnd           ::= flow_mapping_end
+ * 
+ * 
+ * ParseFlowSequenceStart        ::= flow_seq_start ParseFlowSequenceEntryOpt ParseFlowSequenceEnd
+ * ParseFlowSequenceEnd          ::= flow_seq_end
+ * ParseFlowSequenceEntry        ::= ParseNode ParseFlowSequenceEntryOpt
+ * ParseFlowSequenceEntryOpt     ::= epsilon | ParseFlowSequenceEntry
+ * 
 */
 final class ParserImpl private (in: Tokenizer) extends Parser:
   import Production.*
@@ -86,10 +113,10 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     def parseDocumentStart() = token.kind match
       case TokenKind.DocumentStart =>
         in.popToken()
-        productions.prependAll(ParseNode() :: ParseDocumentEnd :: Nil)
+        productions.prependAll(ParseNode :: ParseDocumentEnd :: Nil)
         Right(Event.DocumentStart(Some(pos), explicit = true))
       case _ =>
-        productions.prependAll(ParseNode() :: ParseDocumentEnd :: Nil)
+        productions.prependAll(ParseNode :: ParseDocumentEnd :: Nil)
         Right(Event.DocumentStart(Some(token.pos), explicit = false))
 
     def parseDocumentStartOpt() = token.kind match
@@ -109,41 +136,10 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     def parseMappingStart() = token.kind match
       case TokenKind.MappingStart =>
         in.popToken()
-        productions.prependAll(ParseKey :: ParseMappingEnd :: Nil)
+        productions.prependAll(ParseMappingEntry :: ParseMappingEnd :: Nil)
         Right(Event.MappingStart(Some(pos)))
       case _ =>
         Left(ParseError.from(TokenKind.MappingStart, token))
-
-    def parseFlowMappingStart() = token.kind match
-      case TokenKind.FlowMappingStart =>
-        in.popToken()
-        productions.prependAll(ParseFlowMappingEntry :: ParseFlowMappingEnd :: Nil)
-        Right(Event.FlowMappingStart(Some(pos)))
-      case _ =>
-        Left(ParseError.from(TokenKind.FlowMappingStart, token))
-
-    def parseFlowMappingEnd() = token.kind match
-      case TokenKind.FlowMappingEnd =>
-        in.popToken()
-        Right(Event.FlowMappingEnd(Some(pos)))
-      case _ =>
-        Left(ParseError.from(TokenKind.FlowMappingEnd, token))
-
-    def parseFlowMappingEntry() =
-      token.kind match
-        case TokenKind.Scalar(value, style) =>
-          in.popToken()
-          productions.prependAll(ParseNode() :: ParseFlowMappingEntry :: Nil)
-          Right(Event.Scalar(value, style, Some(pos)))
-
-        case TokenKind.FlowMappingStart => {
-          in.popToken()
-          productions.prependAll(ParseFlowMappingEntry :: ParseFlowMappingEnd :: ParseNode() :: Nil)
-
-          Right(Event.FlowMappingStart(Some(pos)))
-        }
-        case _ =>
-          getNextEvent()
 
     def parseMappingEnd() = token.kind match
       case TokenKind.BlockEnd =>
@@ -152,14 +148,41 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case _ =>
         Left(ParseError.from(TokenKind.BlockEnd, token))
 
-    def parseParseImplicitSequenceEnd() =
-      Right(Event.SequenceEnd(Some(token.pos)))
+    def parseMappingEntry() = token.kind match
+      case TokenKind.MappingKey =>
+        in.popToken()
+        productions.prependAll(ParseScalar :: ParseMappingValue :: ParseMappingEntryOpt :: Nil)
+        getNextEvent()
+      case _ =>
+        Left(ParseError.from(TokenKind.MappingKey, token))
+
+    def parseMappingValue() = token.kind match
+      case TokenKind.MappingValue =>
+        in.popToken()
+        productions.prependAll(ParseMappingValueNode :: Nil)
+        getNextEvent()
+      case _ => Left(ParseError.from(TokenKind.MappingValue, token))
+
+    def parseMappingValueNode() = token.kind match
+      case TokenKind.SequenceValue =>
+        productions.prependAll(ParseSequenceEntry :: ParseMappingSequenceEnd :: Nil)
+        Right(Event.SequenceStart(Some(pos)))
+      case _ => parseNode()
+
+    def parseMappingSequenceEnd() =
+      Right(Event.SequenceEnd(Some(pos)))
+
+    def parseMappingEntryOpt() = token.kind match
+      case TokenKind.MappingKey =>
+        productions.prependAll(ParseMappingEntry :: Nil)
+        getNextEvent()
+      case _ =>
+        getNextEvent()
 
     def parseSequenceStart() = token.kind match
       case TokenKind.SequenceStart =>
         in.popToken()
-        productions.prependAll(ParseSequenceValue :: ParseSequenceEnd :: Nil)
-
+        productions.prependAll(ParseSequenceEntry :: ParseSequenceEnd :: Nil)
         Right(Event.SequenceStart(Some(pos)))
       case _ =>
         Left(ParseError.from(TokenKind.SequenceStart, token))
@@ -171,11 +194,50 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case _ =>
         Left(ParseError.from(TokenKind.BlockEnd, token))
 
+    def parseSequenceEntry() = token.kind match
+      case TokenKind.SequenceValue =>
+        in.popToken()
+        productions.prependAll(ParseNode :: ParseSequenceEntryOpt :: Nil)
+        getNextEvent()
+      case _ => Left(ParseError.from(TokenKind.SequenceValue, token))
+
+    def parseSequenceEntryOpt() = token.kind match
+      case TokenKind.SequenceValue =>
+        productions.prependAll(ParseSequenceEntry :: Nil)
+        getNextEvent()
+      case _ =>
+        getNextEvent()
+
+    def parseFlowMappingStart() = token.kind match
+      case TokenKind.FlowMappingStart =>
+        in.popToken()
+        productions.prependAll(ParseFlowMappingEntryOpt :: ParseFlowMappingEnd :: Nil)
+        Right(Event.FlowMappingStart(Some(pos)))
+      case _ =>
+        Left(ParseError.from(TokenKind.FlowMappingStart, token))
+
+    def parseFlowMappingEntryOpt() = token.kind match
+      case TokenKind.MappingKey =>
+        in.popToken()
+        productions.prependAll(ParseScalar :: ParseMappingValue :: ParseFlowMappingEntryOpt :: Nil)
+        getNextEvent()
+      case TokenKind.FlowMappingStart =>
+        productions.prependAll(ParseNode :: Nil)
+        parseFlowMappingStart()
+      case _ =>
+        getNextEvent()
+
+    def parseFlowMappingEnd() = token.kind match
+      case TokenKind.FlowMappingEnd =>
+        in.popToken()
+        Right(Event.FlowMappingEnd(Some(pos)))
+      case _ =>
+        Left(ParseError.from(TokenKind.FlowMappingEnd, token))
+
     def parseFlowSequenceStart() = token.kind match
       case TokenKind.FlowSequenceStart =>
         in.popToken()
-        productions.prependAll(ParseSequenceValueOpt :: ParseFlowSequenceEnd :: Nil)
-
+        productions.prependAll(ParseFlowSequenceEntryOpt :: ParseFlowSequenceEnd :: Nil)
         Right(Event.SequenceStart(Some(pos)))
       case _ =>
         Left(ParseError.from(TokenKind.FlowSequenceStart, token))
@@ -187,25 +249,17 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case _ =>
         Left(ParseError.from(TokenKind.FlowSequenceEnd, token))
 
-    def parseKey() = token.kind match
-      case TokenKind.MappingKey =>
-        in.popToken()
-        productions.prependAll(ParseScalar :: ParseValue :: Nil)
+    def parseFlowSequenceEntry() =
+      productions.prependAll(ParseNode :: ParseFlowSequenceEntryOpt :: Nil)
+      getNextEvent()
+
+    def parseFlowSequenceEntryOpt() = token.kind match
+      case TokenKind.MappingStart | TokenKind.SequenceStart | TokenKind.FlowMappingStart |
+          TokenKind.FlowSequenceStart | _: TokenKind.Scalar =>
+        productions.prependAll(ParseFlowSequenceEntry :: Nil)
         getNextEvent()
       case _ =>
-        Left(ParseError.from(TokenKind.MappingKey, token))
-
-    def parseOptKey() = token.kind match
-      case TokenKind.MappingKey => parseKey()
-      case _ =>
         getNextEvent()
-
-    def parseValue() = token.kind match
-      case TokenKind.MappingValue =>
-        in.popToken()
-        productions.prependAll(ParseNode(implicitlySeq = true) :: ParseOptKey :: Nil)
-        getNextEvent()
-      case _ => Left(ParseError.from(TokenKind.MappingValue, token))
 
     def parseScalar() = token.kind match
       case TokenKind.Scalar(value, style) =>
@@ -214,58 +268,47 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case _ =>
         Left(ParseError.from("TokenKind.Scalar", token))
 
-    def parseNode(implicitlySeq: Boolean): Either[YamlError, Event] = token.kind match
+    def parseNode(): Either[YamlError, Event] = token.kind match
       case TokenKind.MappingStart      => parseMappingStart()
       case TokenKind.FlowMappingStart  => parseFlowMappingStart()
-      case TokenKind.SequenceStart     => parseSequenceStart()
       case TokenKind.FlowSequenceStart => parseFlowSequenceStart()
       case TokenKind.Scalar(_, _)      => parseScalar()
-      case TokenKind.SequenceValue if implicitlySeq =>
-        productions.prependAll(ParseSequenceValue :: ParseImplicitSequenceEnd :: Nil)
-        Right(Event.SequenceStart(Some(pos)))
+      case TokenKind.SequenceStart     => parseSequenceStart()
       case _ =>
         Right(Event.Scalar("", ScalarStyle.Plain, Some(token.pos)))
 
-    def parseSequenceValue() = token.kind match
-      case TokenKind.SequenceValue =>
-        in.popToken()
-        productions.prependAll(ParseNode() :: ParseSequenceValueOpt :: Nil)
-        getNextEvent()
-      case _ => Left(ParseError.from(TokenKind.SequenceValue, token))
-
-    def parseSequenceValueOpt() = token.kind match
-      case TokenKind.SequenceValue => parseSequenceValue()
-      case TokenKind.MappingStart | TokenKind.SequenceStart | TokenKind.FlowMappingStart |
-          TokenKind.FlowSequenceStart | TokenKind.Scalar(_, _) =>
-        productions.prependAll(ParseNode() :: ParseSequenceValueOpt :: Nil)
-        getNextEvent()
-      case _ =>
-        getNextEvent()
-
     productions.removeHead() match
-      case ParseStreamStart         => parseStreamStart()
-      case ParseStreamEnd           => Right(Event.StreamEnd)
-      case ParseDocumentStart       => parseDocumentStart()
-      case ParseDocumentEnd         => parseDocumentEnd()
-      case ParseDocumentStartOpt    => parseDocumentStartOpt()
-      case ParseNode(implicitly)    => parseNode(implicitly)
-      case ParseMappingStart        => parseMappingStart()
-      case ParseMappingEnd          => parseMappingEnd()
-      case ParseFlowMappingEnd      => parseFlowMappingEnd()
-      case ParseSequenceStart       => parseSequenceStart()
-      case ParseImplicitSequenceEnd => parseParseImplicitSequenceEnd()
-      case ParseSequenceValue       => parseSequenceValue()
-      case ParseSequenceValueOpt    => parseSequenceValueOpt()
-      case ParseFlowSequenceStart   => parseFlowSequenceStart()
-      case ParseFlowSequenceEnd     => parseFlowSequenceEnd()
-      case ParseSequenceEnd         => parseSequenceEnd()
-      case ParseKey                 => parseKey()
-      case ParseValue               => parseValue()
-      case ParseOptKey              => parseOptKey()
-      case ParseScalar              => parseScalar()
-      case ParseFlowMappingEntry    => parseFlowMappingEntry()
-  end getNextEventImpl
+      case ParseStreamStart      => parseStreamStart()
+      case ParseStreamEnd        => Right(Event.StreamEnd)
+      case ParseDocumentStart    => parseDocumentStart()
+      case ParseDocumentEnd      => parseDocumentEnd()
+      case ParseDocumentStartOpt => parseDocumentStartOpt()
 
+      case ParseNode   => parseNode()
+      case ParseScalar => parseScalar()
+
+      case ParseMappingStart       => parseMappingStart()
+      case ParseMappingEnd         => parseMappingEnd()
+      case ParseMappingEntry       => parseMappingEntry()
+      case ParseMappingValue       => parseMappingValue()
+      case ParseMappingValueNode   => parseMappingValueNode()
+      case ParseMappingSequenceEnd => parseMappingSequenceEnd()
+      case ParseMappingEntryOpt    => parseMappingEntryOpt()
+
+      case ParseSequenceStart    => parseSequenceStart()
+      case ParseSequenceEnd      => parseSequenceEnd()
+      case ParseSequenceEntry    => parseSequenceEntry()
+      case ParseSequenceEntryOpt => parseSequenceEntryOpt()
+
+      case ParseFlowMappingStart    => parseFlowMappingStart()
+      case ParseFlowMappingEntryOpt => parseFlowMappingEntryOpt()
+      case ParseFlowMappingEnd      => parseFlowMappingEnd()
+
+      case ParseFlowSequenceStart    => parseFlowSequenceStart()
+      case ParseFlowSequenceEnd      => parseFlowSequenceEnd()
+      case ParseFlowSequenceEntry    => parseFlowSequenceEntry()
+      case ParseFlowSequenceEntryOpt => parseFlowSequenceEntryOpt()
+  end getNextEventImpl
 end ParserImpl
 
 object ParserImpl:

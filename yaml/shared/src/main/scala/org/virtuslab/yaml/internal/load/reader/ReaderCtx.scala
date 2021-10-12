@@ -36,7 +36,9 @@ case class ReaderCtx(reader: Reader) {
     else if ((char == ',' || char == ']') && flowSequenceLevel > 0) false
     else true
 
-  def isInFlowMapping: Boolean = flowMappingLevel > 0
+  def isInFlowMapping: Boolean    = flowMappingLevel > 0
+  def isInFlowSequence: Boolean   = flowSequenceLevel > 0
+  def isInFlowCollection: Boolean = isInFlowMapping || isInFlowSequence
 
   def parseDocumentStart(indent: Int): Token =
     checkIndents(-1)
