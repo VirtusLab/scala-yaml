@@ -14,7 +14,7 @@ object ParseError:
   def from(expected: String, got: Token): ParseError = ParseError(
     s"""|Expected 
         |$expected but instead got ${got.kind}
-        |${got.pos}""".stripMargin
+        |${got.pos.errorMsg}""".stripMargin
   )
   def from(expected: TokenKind, got: Token): ParseError = ParseError.from(expected.toString, got)
 

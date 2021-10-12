@@ -30,11 +30,11 @@ class CommentSpec extends BaseParseSuite:
       s"""|#Comment.""".stripMargin
 
     val expectedEvents = List(
-        StreamStart,
-        DocumentStart(),
-        Scalar(""),
-        DocumentEnd(),
-        StreamEnd
+      StreamStart,
+      DocumentStart(),
+      Scalar(""),
+      DocumentEnd(),
+      StreamEnd
     )
     assertEventsEquals(yaml.events, expectedEvents)
   }

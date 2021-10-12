@@ -27,7 +27,7 @@ object YamlDecoder:
                 case Some(pos) =>
                   s"""|${e.getMessage}
                       |at ${pos.line}:${pos.column}, expected $tag
-                      |$pos """.stripMargin
+                      |${pos.errorMsg} """.stripMargin
                 case None =>
                   "Cannot decode: ${e.getMessage}"
               }
