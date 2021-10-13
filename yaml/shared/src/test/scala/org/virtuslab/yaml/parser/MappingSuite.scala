@@ -221,16 +221,13 @@ class MappingSuite extends BaseParseSuite:
   }
 
   test("empty flow mapping") {
-    val yaml = "emptyDir: {}"
+    val yaml = "{}"
 
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      MappingStart(),
-      Scalar("emptyDir"),
       FlowMappingStart(),
       FlowMappingEnd(),
-      MappingEnd(),
       DocumentEnd(),
       StreamEnd
     )
@@ -238,42 +235,116 @@ class MappingSuite extends BaseParseSuite:
   }
 
   test("nested empty flow mapping") {
-    val yaml = "emptyDir: {{{}}}"
+    val yaml = "{{}}"
 
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      MappingStart(),
-      Scalar("emptyDir"),
-      FlowMappingStart(),
       FlowMappingStart(),
       FlowMappingStart(),
       FlowMappingEnd(),
-      Scalar(""),
       FlowMappingEnd(),
-      Scalar(""),
-      FlowMappingEnd(),
-      MappingEnd(),
       DocumentEnd(),
       StreamEnd
     )
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("mapping with flow mapping as value") {
+  test("flow mapping with empty flow seq") {
+    val yaml = "{[]}"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      FlowMappingStart(),
+      SequenceStart(),
+      SequenceEnd(),
+      FlowMappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("mapping with scalar as value") {
     val yaml =
-      s"""doubles: { double1: 1.0 }""".stripMargin
+      s"""{key: value,}""".stripMargin
 
     val events = List(
       StreamStart,
       DocumentStart(),
-      MappingStart(),
-      Scalar("doubles"),
       FlowMappingStart(),
-      Scalar("double1"),
+      Scalar("key"),
+      Scalar("value"),
+      FlowMappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, events)
+  }
+
+  test("mapping with flow mapping as value") {
+    val yaml =
+      s"""|{ 
+          |  {double: 1.0}
+          |}""".stripMargin
+
+    val events = List(
+      StreamStart,
+      DocumentStart(),
+      FlowMappingStart(),
+      FlowMappingStart(),
+      Scalar("double"),
       Scalar("1.0"),
       FlowMappingEnd(),
-      MappingEnd(),
+      FlowMappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, events)
+  }
+
+  test("flow mapping with flow seq as value") {
+    val yaml =
+      s"""|{
+          |  doubles: [v1, v2, ]
+          |}""".stripMargin
+
+    val events = List(
+      StreamStart,
+      DocumentStart(),
+      FlowMappingStart(),
+      Scalar("doubles"),
+      SequenceStart(),
+      Scalar("v1"),
+      Scalar("v2"),
+      SequenceEnd(),
+      FlowMappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, events)
+  }
+
+  test("flow mapping with scalar kv pairs") {
+    val yaml =
+      s"""|{
+          |  k1: v1,
+          |  k2: v2
+          |}""".stripMargin
+
+    val events = List(
+      StreamStart,
+      DocumentStart(),
+      FlowMappingStart(),
+      Scalar("k1"),
+      Scalar("v1"),
+      Scalar("k2"),
+      Scalar("v2"),
+      FlowMappingEnd(),
       DocumentEnd(),
       StreamEnd
     )

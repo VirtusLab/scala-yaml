@@ -27,7 +27,6 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     ctx.tokens.append(getNextTokens())
     ctx.tokens.head
 
-  @tailrec
   private def getNextTokens(): Token =
     skipUntilNextToken()
     ctx.checkIndents(in.column)
@@ -42,11 +41,11 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('}')                        => parseFlowMappingEnd()
       case Some(',') =>
         in.skipCharacter()
-        getNextTokens()
+        Token(Comma, in.pos)
       case Some(_) => fetchValue()
       case None =>
         ctx.checkIndents(-1)
-        StreamEnd.token(in.pos)
+        Token(StreamEnd, in.pos)
 
   private def isDocumentStart =
     in.peekN(3) == "---" && in.peek(3).exists(_.isWhitespace)
@@ -246,6 +245,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       val peeked = in.peek()
       peeked match
         case Some(':') if in.isNextWhitespace                   => sb.result()
+        case Some(':') if in.peekNext().exists(_ == ',')        => sb.result()
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
         case Some(' ') if in.peekNext() == Some('#')            => sb.result()
         case _ if in.isNewline =>
@@ -253,10 +253,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           sb.append(' ')
           if (in.column > ctx.indent) readScalar()
           else sb.result()
-        case Some(char) =>
+        case Some(char) if char != ',' =>
           sb.append(in.read())
           readScalar()
-        case None => sb.result()
+        case Some(_) | None => sb.result()
 
     val pos    = in.pos
     val scalar = readScalar()

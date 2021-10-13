@@ -5,7 +5,7 @@ import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.Event._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class SequenceSpec extends BaseParseSuite:
+class SequenceSuite extends BaseParseSuite:
 
   test("basic sequence") {
     val yaml =
@@ -142,16 +142,45 @@ class SequenceSpec extends BaseParseSuite:
   }
 
   test("empty flow sequence") {
-    val yaml = "seq: []"
+    val yaml = "[]"
 
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      MappingStart(),
-      Scalar("seq"),
       SequenceStart(),
       SequenceEnd(),
-      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("empty nested flow sequence") {
+    val yaml = "[[]]"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      SequenceStart(),
+      SequenceEnd(),
+      SequenceEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("empty flow sequence with empty flow mapping") {
+    val yaml = "[{}]"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      FlowMappingStart(),
+      FlowMappingEnd(),
+      SequenceEnd(),
       DocumentEnd(),
       StreamEnd
     )
@@ -185,6 +214,31 @@ class SequenceSpec extends BaseParseSuite:
       Scalar("10.0.3.17:3260", ScalarStyle.DoubleQuoted),
       SequenceEnd(),
       MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("flow sequence with single pair") {
+    val yaml = s"""|[
+                   |[ nested ],
+                   |single: pair
+                   |]
+                   |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      SequenceStart(),
+      Scalar("nested"),
+      SequenceEnd(),
+      MappingStart(),
+      Scalar("single"),
+      Scalar("pair"),
+      MappingEnd(),
+      SequenceEnd(),
       DocumentEnd(),
       StreamEnd
     )
