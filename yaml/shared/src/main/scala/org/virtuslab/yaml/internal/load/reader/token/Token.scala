@@ -20,13 +20,10 @@ enum TokenKind:
   case SequenceValue
   case MappingKey
   case MappingValue
+  case Comma
   case Scalar private (value: String, scalarStyle: ScalarStyle)
 
-  def token(pos: Position): Token = Token(this, pos)
-
 object TokenKind:
-  def scalar: Scalar = Scalar("", ScalarStyle.Plain)
-
   object Scalar:
     def apply(scalar: String, scalarStyle: ScalarStyle) =
       val escapedScalar = ScalarStyle.escapeSpecialCharacter(scalar, scalarStyle)
