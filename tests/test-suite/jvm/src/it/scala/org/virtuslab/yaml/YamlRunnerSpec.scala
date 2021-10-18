@@ -7,23 +7,40 @@ abstract class YamlRunnerSpec extends munit.FunSuite {
   def resourcePath: String
   def createTestRunner(yamlPath: os.Path): TestRunner
 
+  val verbose                       = false
+  val predicate: os.Path => Boolean = _ => true
+
   val yamlDirPath              = getClass.getResource(resourcePath)
   val yamlDir                  = new File(yamlDirPath.getPath)
-  val yamlPaths: List[os.Path] = yamlDir.listFiles().map(os.Path(_)).toList
+  val yamlPaths: List[os.Path] = yamlDir.listFiles().map(os.Path(_)).filter(predicate).toList
 
   test("should parse yaml to event") {
 
     def loop(paths: List[os.Path], failsPath: List[os.Path]): List[os.Path] = {
       paths match {
         case path :: tail => {
-
-          val runnerResult = createTestRunner(path).run()
-          if (runnerResult.isValid) {
-            loop(tail, failsPath)
-          } else {
-            println(s"Failed test - $path")
-            loop(tail, path :: failsPath)
+          val testRunner = createTestRunner(path)
+          if (verbose) {
+            println(s"Running $path")
+            println(testRunner.inYaml)
           }
+          val runnerResult = testRunner.run()
+          runnerResult match
+            case RunnerResult.Success(_) => loop(tail, failsPath)
+            case RunnerResult.InvalidEvents(obtained, expected) =>
+              println(s"Failed test - $path")
+              if (verbose) {
+                println(s"Obtained:\n$obtained")
+                println(s"Expected:\n$expected")
+              }
+              loop(tail, path :: failsPath)
+            case RunnerResult.Error(eventsUntilError, error) =>
+              println(s"Error in test - $path")
+              if (verbose) {
+                println(s"Obtained:\n$eventsUntilError")
+                println(s"Encountered error:\n$error")
+              }
+              loop(tail, path :: failsPath)
         }
         case Nil => failsPath
       }

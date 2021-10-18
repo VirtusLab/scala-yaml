@@ -21,7 +21,7 @@ trait TestRunner():
   def run(): RunnerResult =
     val reader = Scanner(inYaml)
     val parser = ParserImpl(reader)
-    val acc    = new mutable.ArrayDeque[Event](50)
+    val acc    = new mutable.ArrayDeque[Event]()
 
     @tailrec
     def loop(): RunnerResult = {
@@ -29,13 +29,9 @@ trait TestRunner():
         case Right(event) =>
           acc.append(event)
           if event != Event.StreamEnd then loop()
-          else
-            val events   = TestRunnerUtils.convertEventToYamlTestSuiteFormat(acc.toSeq)
-            val expected = expectedEvents
-            RunnerResult.Success(events, expected)
-        case Left(e) =>
-          val events = TestRunnerUtils.convertEventToYamlTestSuiteFormat(acc.toSeq)
-          RunnerResult.Exception(events, e)
+          else RunnerResult(acc.toList, expectedEvents)
+        case Left(error) =>
+          RunnerResult(acc.toList, expectedEvents, error)
     }
     loop()
   end run
