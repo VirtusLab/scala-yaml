@@ -32,14 +32,15 @@ case object TestMlEntry {
       .stripPrefix("--- test-event")
       .trim
 
-  def from(testMl: String): TestMlEntry = {
+  def from(testYamlML: os.Path): TestMlEntry = {
+    val content = os.read(testYamlML)
 
     TestMlEntry(
-      description = "",
+      description = testYamlML.toString,
       from = "",
       tags = "",
-      inYaml = extractInYaml(testMl),
-      seqEvent = extractSeqEvent(testMl)
+      inYaml = extractInYaml(content).trim,
+      seqEvent = extractSeqEvent(content)
     )
   }
 }

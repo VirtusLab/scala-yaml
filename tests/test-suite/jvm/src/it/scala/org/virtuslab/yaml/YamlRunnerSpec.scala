@@ -18,7 +18,6 @@ abstract class YamlRunnerSpec extends munit.FunSuite {
         case path :: tail => {
 
           val runnerResult = createTestRunner(path).run()
-
           if (runnerResult.isValid) {
             loop(tail, failsPath)
           } else {
@@ -30,13 +29,19 @@ abstract class YamlRunnerSpec extends munit.FunSuite {
       }
     }
 
-    val failsPath         = loop(yamlPaths, Nil)
-    val successParsedYaml = (yamlPaths.size - failsPath.size).toDouble
+    val failsPath = loop(yamlPaths, Nil)
 
-    println(
-      s"$successParsedYaml - ${yamlPaths.size} - ${"%.2f"
-        .format(successParsedYaml / yamlPaths.size * 100)}%"
-    )
+    val all    = yamlPaths.size
+    val failed = failsPath.size
+    val passed = (yamlPaths.size - failsPath.size)
+
+    val summary = s"""|
+                      |SUMMARY
+                      |
+                      |Passed: $passed/$all ${"%.2f".format(100 * passed.toFloat / all.toFloat)}%
+                      |Failed: $failed/$all ${"%.2f".format(100 * failed.toFloat / all.toFloat)}%
+                      |""".stripMargin
+    println(summary)
 
     assert(failsPath.isEmpty)
   }
