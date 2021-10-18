@@ -7,6 +7,7 @@ import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator.*
 
 import scala.util.Try
 import scala.annotation.tailrec
+import org.virtuslab.yaml.Position
 
 trait Tokenizer:
   def peekToken(): Token
@@ -39,6 +40,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some(']')                        => parseFlowSequenceEnd()
       case Some('{')                        => parseFlowMappingStart()
       case Some('}')                        => parseFlowMappingEnd()
+      case Some('&')                        => parseAnchor()
+      case Some('*')                        => parseAlias()
       case Some(',') =>
         in.skipCharacter()
         Token(Comma, in.pos)
@@ -88,6 +91,31 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     else
       in.skipCharacter()
       Token(SequenceValue, in.pos)
+
+  private def parseAnchorName(): (String, Position) =
+    val invalidChars = Set('[', ']', '{', '}', ',')
+    val sb           = new StringBuilder
+
+    @tailrec
+    def readAnchorName(): String =
+      in.peek() match
+        case Some(char) if !invalidChars(char) && !in.isWhitespace =>
+          sb.append(in.read())
+          readAnchorName()
+        case _ => sb.result()
+
+    val pos = in.pos
+    in.skipCharacter()
+    val name = readAnchorName()
+    (name, pos)
+
+  private def parseAnchor() =
+    val (name, pos) = parseAnchorName()
+    Token(Anchor(name), pos)
+
+  private def parseAlias() =
+    val (name, pos) = parseAnchorName()
+    Token(Alias(name), pos)
 
   private def parseDoubleQuoteValue(): Token =
     val sb = new StringBuilder

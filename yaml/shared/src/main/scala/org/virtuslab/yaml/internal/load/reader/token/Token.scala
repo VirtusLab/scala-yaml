@@ -10,6 +10,8 @@ enum TokenKind:
   case StreamEnd
   case DocumentStart
   case DocumentEnd
+  case Anchor(value: String)
+  case Alias(value: String)
   case MappingStart
   case SequenceStart
   case BlockEnd
