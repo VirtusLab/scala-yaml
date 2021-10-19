@@ -15,6 +15,7 @@ trait Reader:
   def isNewline: Boolean
   def skipCharacter(): Unit
   def skipN(n: Int): Unit
+  def skipWhitespaces(): Unit
 
   def line: Int
   def column: Int
@@ -66,6 +67,10 @@ private[yaml] class StringReader(in: String) extends Reader:
     loop(n)
 
   override def skipCharacter(): Unit = skipAndMantainPosition()
+
+  def skipWhitespaces(): Unit =
+    while (isWhitespace)
+      skipCharacter()
 
   override def read(): Char =
     skipCharacter()

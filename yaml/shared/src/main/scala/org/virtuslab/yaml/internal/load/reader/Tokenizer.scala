@@ -275,6 +275,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('|')  => parseLiteral()
       case _          => parseScalarValue()
 
+    in.skipWhitespaces()
     val peeked2 = in.peek()
     peeked2 match
       case Some(':') =>

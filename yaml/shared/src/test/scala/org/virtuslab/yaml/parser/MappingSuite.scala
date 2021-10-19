@@ -351,3 +351,28 @@ class MappingSuite extends BaseParseSuite:
 
     assertEventsEquals(yaml.events, events)
   }
+
+  test("implicit block key in sequence flow") {
+    val yaml =
+      s""""implicit block key" : [
+           |  "implicit flow key" : value,
+           | ]""".stripMargin
+
+    val events = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("implicit block key", style = ScalarStyle.DoubleQuoted),
+      SequenceStart(),
+      MappingStart(),
+      Scalar("implicit flow key", style = ScalarStyle.DoubleQuoted),
+      Scalar("value"),
+      MappingEnd(),
+      SequenceEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, events)
+  }
