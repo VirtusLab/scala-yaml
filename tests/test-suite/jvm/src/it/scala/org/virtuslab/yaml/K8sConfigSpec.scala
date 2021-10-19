@@ -1,10 +1,10 @@
 package org.virtuslab.yaml
 
-class ConfigSpec extends YamlRunnerSpec {
+class K8sConfigSpec extends YamlRunnerSpec {
 
   val libYamlPath = os.Path(System.getenv("LIB_YAML_PATH"))
 
   override def resourcePath: String                   = "/yaml/configs"
-  def createTestRunner(yamlPath: os.Path): TestRunner = ConfigTestRunner(yamlPath, libYamlPath)
+  def createTestRunner(yamlPath: os.Path): TestRunner = K8sYamlTestRunner(yamlPath, libYamlPath)
 
 }

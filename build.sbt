@@ -39,15 +39,6 @@ lazy val scalaYamlCore = crossProject(JSPlatform, JVMPlatform)
   .settings(docsSettings)
   .settings(munit)
 
-lazy val scalaYamlTestCore = crossProject(JSPlatform, JVMPlatform)
-  .in(file("tests/test-core"))
-  .settings(
-    name         := "testCore",
-    scalaVersion := scala3Version
-  )
-  .settings(testSettings)
-  .dependsOn(scalaYamlCore)
-
 lazy val scalaYamlTestSuite = crossProject(JSPlatform, JVMPlatform)
   .in(file("tests/test-suite"))
   .configs(IntegrationTest)
@@ -57,4 +48,4 @@ lazy val scalaYamlTestSuite = crossProject(JSPlatform, JVMPlatform)
     scalaVersion := scala3Version
   )
   .settings(testSettings)
-  .dependsOn(scalaYamlTestCore)
+  .dependsOn(scalaYamlCore)
