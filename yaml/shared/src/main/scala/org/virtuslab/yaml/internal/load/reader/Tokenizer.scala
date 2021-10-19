@@ -99,12 +99,14 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           in.skipN(2)
           sb.append("\"")
           readScalar()
-        case Some('"') | None =>
+        case Some('"') =>
           in.skipCharacter()
           sb.result()
         case Some(char) =>
           sb.append(in.read())
           readScalar()
+        case None =>
+          sb.result()
 
     val pos = in.pos
     in.skipCharacter() // skip double quote
