@@ -124,6 +124,7 @@ pages = [{"l":"api/index.html","n":"Scala-yaml","t":"Scala-yaml","d":"","k":"sta
 {"l":"api/org/virtuslab/yaml/internal/load/reader/Reader.html","n":"read","t":"def read(): Char","d":"org/virtuslab/yaml/internal/load/reader/Reader","k":"def"},
 {"l":"api/org/virtuslab/yaml/internal/load/reader/Reader.html","n":"skipCharacter","t":"def skipCharacter(): Unit","d":"org/virtuslab/yaml/internal/load/reader/Reader","k":"def"},
 {"l":"api/org/virtuslab/yaml/internal/load/reader/Reader.html","n":"skipN","t":"def skipN(n: Int): Unit","d":"org/virtuslab/yaml/internal/load/reader/Reader","k":"def"},
+{"l":"api/org/virtuslab/yaml/internal/load/reader/Reader.html","n":"skipWhitespaces","t":"def skipWhitespaces(): Unit","d":"org/virtuslab/yaml/internal/load/reader/Reader","k":"def"},
 {"l":"api/org/virtuslab/yaml/internal/load/reader/ReaderCtx.html","n":"ReaderCtx","t":"class ReaderCtx(reader: Reader)","d":"org/virtuslab/yaml/internal/load/reader/ReaderCtx","k":"class"},
 {"l":"api/org/virtuslab/yaml/internal/load/reader/ReaderCtx.html","n":"addIndent","t":"def addIndent(newIndent: Int): Unit","d":"org/virtuslab/yaml/internal/load/reader/ReaderCtx","k":"def"},
 {"l":"api/org/virtuslab/yaml/internal/load/reader/ReaderCtx.html","n":"checkIndents","t":"def checkIndents(current: Int): Unit","d":"org/virtuslab/yaml/internal/load/reader/ReaderCtx","k":"def"},
