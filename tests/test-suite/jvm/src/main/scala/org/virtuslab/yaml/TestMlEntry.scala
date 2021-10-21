@@ -39,7 +39,7 @@ case object TestMlEntry {
       description = testYamlML.toString,
       from = "",
       tags = "",
-      inYaml = extractInYaml(content).trim,
+      inYaml = extractInYaml(content),
       seqEvent = extractSeqEvent(content)
     )
   }
