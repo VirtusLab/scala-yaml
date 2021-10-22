@@ -12,7 +12,7 @@ class StringReaderSuite extends munit.FunSuite:
                     |c
                     |""".stripMargin
 
-    val lines  = input.split("\n").toVector
+    val lines  = input.split("\n", -1).toVector
     val reader = StringReader(input)
     assertEquals(reader.pos, Position(0, 0, 0, lines))
     assertEquals(reader.read(), 'a')
@@ -23,4 +23,19 @@ class StringReaderSuite extends munit.FunSuite:
     reader.skipCharacter()
     assertEquals(reader.pos, Position(5, 2, 0, lines))
     assertEquals(reader.read(), 'c')
+  }
+
+  test("parse planin value with empty lines") {
+    val input = s"""|a
+                    |
+                    |
+                    |""".stripMargin
+
+    val lines  = input.split("\n", -1).toVector
+    val reader = StringReader(input)
+    assertEquals(reader.pos, Position(0, 0, 0, lines))
+    assertEquals(reader.read(), 'a')
+    assertEquals(reader.pos, Position(1, 0, 1, lines))
+    assertEquals(reader.read(), '\n')
+    assertEquals(reader.pos.errorMsg, "\n^")
   }

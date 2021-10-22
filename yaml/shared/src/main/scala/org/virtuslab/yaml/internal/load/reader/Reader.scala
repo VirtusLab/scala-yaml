@@ -26,7 +26,7 @@ private[yaml] class StringReader(in: String) extends Reader:
   var line: Int   = 0
   var column: Int = 0
   var offset: Int = 0
-  val lines       = in.split("\n").toVector
+  val lines       = in.split("\n", -1).toVector
 
   override def pos = Position(offset, line, column, lines)
 
