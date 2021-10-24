@@ -244,3 +244,21 @@ class SequenceSuite extends BaseParseSuite:
     )
     assertEventsEquals(yaml.events, expectedEvents)
   }
+
+  test("spec flow sequence".only) {
+    val yaml = s"""[
+                  |"double
+                  | quoted"
+                  |]""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("double quoted", ScalarStyle.DoubleQuoted),
+      SequenceEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
