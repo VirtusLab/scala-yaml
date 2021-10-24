@@ -70,7 +70,7 @@ private[yaml] class StringReader(in: String) extends Reader:
 
   override def skipCharacter(): Unit = skipAndMantainPosition()
 
-  def skipWhitespaces(): Unit =
+  override def skipWhitespaces(): Unit =
     while (isWhitespace)
       skipCharacter()
 

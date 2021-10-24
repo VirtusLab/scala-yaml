@@ -286,7 +286,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('|')  => parseLiteral()
       case _          => parseScalarValue()
 
-    in.skipWhitespaces()
+    skipUntilNextToken()
     val peeked2 = in.peek()
     peeked2 match
       case Some(':') =>
@@ -305,7 +305,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case _ => scalar
 
   def skipUntilNextToken(): Unit =
-    while (in.peek() == Some(' ')) do in.skipCharacter()
+    while (in.isWhitespace) do in.skipCharacter()
 
     if in.peek() == Some('#') then skipComment()
 

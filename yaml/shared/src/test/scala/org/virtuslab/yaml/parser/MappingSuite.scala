@@ -430,3 +430,23 @@ class MappingSuite extends BaseParseSuite:
 
     assertEventsEquals(yaml.events, expectedEvents)
   }
+
+  test("skip comment in flom mapping") {
+    val yaml =
+      s"""|---
+          |{ "foo" # comment
+          |  :bar }""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      FlowMappingStart(),
+      Scalar("foo", ScalarStyle.DoubleQuoted),
+      Scalar("bar"),
+      FlowMappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
