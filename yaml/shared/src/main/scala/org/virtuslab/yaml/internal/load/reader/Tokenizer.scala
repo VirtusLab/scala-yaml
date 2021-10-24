@@ -179,25 +179,22 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
-      while (in.peekNext() == Some('\n')) {
+      while (in.isNewline) {
         in.skipCharacter()
         sb.append("\n")
       }
-
-      in.skipCharacter()
-      skipUntilNextIndent(foldedIndent)
 
     @tailrec
     def readFolded(): String =
       in.peek() match
         case _ if in.isNewline =>
-          if (in.peekNext() == Some('\n') && in.peek(2) != None) {
+          if (in.isNextNewline) {
             chompedEmptyLines()
             readFolded()
           } else {
             in.skipCharacter()
             skipUntilNextIndent(foldedIndent)
-            if (!in.isWhitespace && in.column != foldedIndent) then sb.result()
+            if (in.column != foldedIndent || in.peek() == None) then sb.result()
             else
               sb.append(" ")
               readFolded()

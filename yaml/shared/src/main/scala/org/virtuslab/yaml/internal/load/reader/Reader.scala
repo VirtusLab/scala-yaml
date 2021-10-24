@@ -13,6 +13,7 @@ trait Reader:
   def isWhitespace: Boolean
   def isNextWhitespace: Boolean
   def isNewline: Boolean
+  def isNextNewline: Boolean
   def skipCharacter(): Unit
   def skipN(n: Int): Unit
   def skipWhitespaces(): Unit
@@ -39,6 +40,7 @@ private[yaml] class StringReader(in: String) extends Reader:
   override def isWhitespace             = peek().exists(_.isWhitespace)
   override def isNextWhitespace         = peekNext().exists(_.isWhitespace)
   override def isNewline                = peek().exists(c => c == '\n' || isWindowsNewline(c))
+  override def isNextNewline            = peekNext().exists(c => c == '\n' || isWindowsNewline(c))
 
   private def isWindowsNewline(c: Char) = c == '\r' && peekNext().exists(_ == '\n')
 
