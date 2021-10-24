@@ -259,6 +259,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case Some(':') if in.isNextWhitespace                   => sb.result()
         case Some(':') if in.peekNext().exists(_ == ',')        => sb.result()
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
+        case _ if isDocumentEnd || isDocumentStart              => sb.result()
         case Some(' ') if in.peekNext() == Some('#')            => sb.result()
         case _ if in.isNewline =>
           if (in.isNextNewline) then chompedEmptyLines()

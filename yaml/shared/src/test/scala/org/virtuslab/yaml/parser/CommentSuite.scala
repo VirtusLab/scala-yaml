@@ -31,9 +31,6 @@ class CommentSpec extends BaseParseSuite:
 
     val expectedEvents = List(
       StreamStart,
-      DocumentStart(),
-      Scalar(""),
-      DocumentEnd(),
       StreamEnd
     )
     assertEventsEquals(yaml.events, expectedEvents)
