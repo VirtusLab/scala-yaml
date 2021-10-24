@@ -267,7 +267,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           skipUntilNextChar()
           if (in.column > ctx.indent) readScalar()
           else sb.result()
-        case Some(char) if char != ',' =>
+        case Some(char) =>
           sb.append(in.read())
           readScalar()
         case Some(_) | None => sb.result()

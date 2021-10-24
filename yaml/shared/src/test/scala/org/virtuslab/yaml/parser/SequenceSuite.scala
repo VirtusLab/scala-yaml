@@ -262,3 +262,21 @@ class SequenceSuite extends BaseParseSuite:
     )
     assertEventsEquals(yaml.events, expectedEvents)
   }
+
+  test("empty flow sequence with empty flow mapping2") {
+    val yaml =
+      """
+        |- Up, up, and away!
+        |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("Up, up, and away!"),
+      SequenceEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
