@@ -245,7 +245,7 @@ class SequenceSuite extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("spec flow sequence".only) {
+  test("spec flow sequence") {
     val yaml = s"""[
                   |"double
                   | quoted"

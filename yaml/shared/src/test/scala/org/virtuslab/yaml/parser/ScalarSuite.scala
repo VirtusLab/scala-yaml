@@ -252,7 +252,7 @@ class ScalarSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("folded indent scalar".only) {
+  test("folded indent scalar") {
     val yaml = s"""|--- >
                    |line1
                    |line3

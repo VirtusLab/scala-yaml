@@ -399,3 +399,34 @@ class MappingSuite extends BaseParseSuite:
 
     assertEventsEquals(yaml.events, expectedEvents)
   }
+
+  test("doyuble flow mapping") {
+    val yaml =
+      s"""|---
+          |- { "single line", a: b}
+          |- { "multi
+          |  line", a: b}""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      SequenceStart(),
+      FlowMappingStart(),
+      Scalar("single line", ScalarStyle.DoubleQuoted),
+      Scalar(""),
+      Scalar("a"),
+      Scalar("b"),
+      FlowMappingEnd(),
+      FlowMappingStart(),
+      Scalar("multi line", ScalarStyle.DoubleQuoted),
+      Scalar(""),
+      Scalar("a"),
+      Scalar("b"),
+      FlowMappingEnd(),
+      SequenceEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }

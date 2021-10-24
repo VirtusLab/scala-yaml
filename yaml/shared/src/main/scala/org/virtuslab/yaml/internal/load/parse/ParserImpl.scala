@@ -278,6 +278,9 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case TokenKind.FlowSequenceStart =>
         productions.prependAll(ParseFlowNode :: Nil)
         getNextEventImpl()
+      case TokenKind.Scalar(_, _) =>
+        productions.prependAll(ParseNode :: ParseFlowMappingComma :: ParseFlowMappingEntry :: Nil)
+        parseFlowNode()
       case _ =>
         getNextEventImpl()
 

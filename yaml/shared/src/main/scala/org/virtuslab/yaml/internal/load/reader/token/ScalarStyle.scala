@@ -11,7 +11,7 @@ end ScalarStyle
 case object ScalarStyle:
   def escapeSpecialCharacter(scalar: String, scalarStyle: ScalarStyle): String =
     scalarStyle match
-      case ScalarStyle.DoubleQuoted => escapeSpecialCharacterDoubleQuote(scalar)
+      case ScalarStyle.DoubleQuoted => scalar
       case _ =>
         scalar.flatMap { char =>
           char match
@@ -20,9 +20,9 @@ case object ScalarStyle:
             case other => other.toString
         }
 
-  def escapeSpecialCharacterDoubleQuote(scalar: String) = 
+  def escapeSpecialCharacterDoubleQuote(scalar: String) =
     scalar.flatMap { char =>
-          char match
-            case '\n'  => ""
-            case other => other.toString
+      char match
+        case '\n'  => ""
+        case other => other.toString
     }

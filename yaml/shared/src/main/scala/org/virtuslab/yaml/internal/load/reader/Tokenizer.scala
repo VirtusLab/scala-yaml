@@ -95,6 +95,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     @tailrec
     def readScalar(): String =
       in.peek() match
+        case _ if in.isNewline =>
+          skipUntilNextChar()
+          sb.append(" ")
+          readScalar()
         case Some('\\') if in.peekNext() == Some('"') =>
           in.skipN(2)
           sb.append("\"")
@@ -179,7 +183,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
-      while (in.isNewline) {
+      while (in.isNextNewline) {
         in.skipCharacter()
         sb.append("\n")
       }
@@ -190,6 +194,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case _ if in.isNewline =>
           if (in.isNextNewline) {
             chompedEmptyLines()
+            if (in.peek().isDefined) then
+              in.skipCharacter()
+              skipUntilNextIndent(foldedIndent)
             readFolded()
           } else {
             in.skipCharacter()
