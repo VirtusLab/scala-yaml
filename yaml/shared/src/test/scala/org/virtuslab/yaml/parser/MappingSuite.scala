@@ -376,3 +376,26 @@ class MappingSuite extends BaseParseSuite:
 
     assertEventsEquals(yaml.events, events)
   }
+
+  test("mapping scalar with empty lines") {
+    val yaml =
+      s"""|---
+          |plain: a
+          | b
+          |
+          | c
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      MappingStart(),
+      Scalar("plain"),
+      Scalar("a b\\nc"),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }

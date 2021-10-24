@@ -240,6 +240,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val sb           = new StringBuilder
     val scalarIndent = in.column
 
+    def chompedEmptyLines() =
+      while (in.isNextNewline) {
+        in.skipCharacter()
+        sb.append("\n")
+      }
+
     def readScalar(): String =
       val peeked = in.peek()
       peeked match
@@ -248,8 +254,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
         case Some(' ') if in.peekNext() == Some('#')            => sb.result()
         case _ if in.isNewline =>
+          if (in.isNextNewline) then chompedEmptyLines()
+          else sb.append(' ')
           skipUntilNextChar()
-          sb.append(' ')
           if (in.column > ctx.indent) readScalar()
           else sb.result()
         case Some(char) if char != ',' =>
