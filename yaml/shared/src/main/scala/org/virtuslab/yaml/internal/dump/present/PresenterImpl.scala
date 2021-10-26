@@ -27,7 +27,7 @@ object PresenterImpl extends Presenter:
               insertSequencePadding()
               pushAndIncreaseIndent(Event.SequenceStart())
               parseSequence(tail)
-            case Event.Scalar(value, _, _) =>
+            case Event.Scalar(value, _, _, _) =>
               insertSequencePadding()
               // todo escape string using doublequotes
               sb.append(value)
@@ -44,7 +44,7 @@ object PresenterImpl extends Presenter:
         case Event.MappingEnd(_) :: tail =>
           popAndDecreaseIndent()
           tail
-        case Event.Scalar(value, _, _) :: tail =>
+        case Event.Scalar(value, _, _, _) :: tail =>
           appendKey(value)
           val rest = parseNode(tail)
           parseMapping(rest)

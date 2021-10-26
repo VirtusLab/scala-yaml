@@ -195,6 +195,8 @@ class TokenizerSuite extends BaseYamlSuite:
   test("anchor & alias in mapping") {
     val yaml = """|First occurrence: &anchor Value
                   |Second occurrence: *anchor
+                  |Override anchor: &anchor Bar
+                  |Reuse anchor: *anchor
                   |""".stripMargin
 
     val tokens = List(
@@ -206,6 +208,15 @@ class TokenizerSuite extends BaseYamlSuite:
       Scalar("Value", ScalarStyle.Plain),
       MappingKey,
       Scalar("Second occurrence", ScalarStyle.Plain),
+      MappingValue,
+      Alias("anchor"),
+      MappingKey,
+      Scalar("Override anchor", ScalarStyle.Plain),
+      MappingValue,
+      Anchor("anchor"),
+      Scalar("Bar", ScalarStyle.Plain),
+      MappingKey,
+      Scalar("Reuse anchor", ScalarStyle.Plain),
       MappingValue,
       Alias("anchor"),
       BlockEnd

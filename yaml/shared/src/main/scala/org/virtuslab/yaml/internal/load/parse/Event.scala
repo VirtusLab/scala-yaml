@@ -3,6 +3,7 @@ package org.virtuslab.yaml.internal.load.parse
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.internal.load.parse.Event.StreamStart
+import org.virtuslab.yaml.internal.load.parse.Event.Node
 
 /** 
  * 
@@ -29,18 +30,23 @@ object Event:
       extends Document
 
   sealed trait Node extends Event
+
+
+  final case class Alias(id: String, pos: Option[Position] = None) extends Event
+
   final case class Scalar(
       value: String,
       style: ScalarStyle = ScalarStyle.Plain,
-      pos: Option[Position] = None
+      pos: Option[Position] = None,
+      anchor: Option[String] = None
   ) extends Node
 
   sealed trait Sequence                                  extends Node
-  case class SequenceStart(pos: Option[Position] = None) extends Sequence
+  case class SequenceStart(pos: Option[Position] = None, anchor: Option[String] = None) extends Sequence
   case class SequenceEnd(pos: Option[Position] = None)   extends Sequence
 
   sealed trait Mapping                                      extends Node
-  case class MappingStart(pos: Option[Position] = None)     extends Mapping
+  case class MappingStart(pos: Option[Position] = None, anchor: Option[String] = None)     extends Mapping
   case class MappingEnd(pos: Option[Position] = None)       extends Mapping
-  case class FlowMappingStart(pos: Option[Position] = None) extends Mapping
+  case class FlowMappingStart(pos: Option[Position] = None, anchor: Option[String] = None) extends Mapping
   case class FlowMappingEnd(pos: Option[Position] = None)   extends Mapping
