@@ -376,3 +376,79 @@ class MappingSuite extends BaseParseSuite:
 
     assertEventsEquals(yaml.events, events)
   }
+
+  test("mapping scalar with empty lines") {
+    val yaml =
+      s"""|---
+          |plain: a
+          | b
+          |
+          | c
+          | 
+          | 
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      MappingStart(),
+      Scalar("plain"),
+      Scalar("a b\\nc"),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("double flow mapping") {
+    val yaml =
+      s"""|---
+          |- { "single line", a: b}
+          |- { "multi
+          |  line", a: b}""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      SequenceStart(),
+      FlowMappingStart(),
+      Scalar("single line", ScalarStyle.DoubleQuoted),
+      Scalar(""),
+      Scalar("a"),
+      Scalar("b"),
+      FlowMappingEnd(),
+      FlowMappingStart(),
+      Scalar("multi line", ScalarStyle.DoubleQuoted),
+      Scalar(""),
+      Scalar("a"),
+      Scalar("b"),
+      FlowMappingEnd(),
+      SequenceEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("skip comment in flom mapping") {
+    val yaml =
+      s"""|---
+          |{ "foo" # comment
+          |  :bar }""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      FlowMappingStart(),
+      Scalar("foo", ScalarStyle.DoubleQuoted),
+      Scalar("bar"),
+      FlowMappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEventsEquals(yaml.events, expectedEvents)
+  }

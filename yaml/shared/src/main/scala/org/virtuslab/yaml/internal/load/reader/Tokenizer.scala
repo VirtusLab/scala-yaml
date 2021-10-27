@@ -95,6 +95,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     @tailrec
     def readScalar(): String =
       in.peek() match
+        case _ if in.isNewline =>
+          skipUntilNextChar()
+          sb.append(" ")
+          readScalar()
         case Some('\\') if in.peekNext() == Some('"') =>
           in.skipN(2)
           sb.append("\"")
@@ -179,25 +183,25 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
-      while (in.peekNext() == Some('\n')) {
+      while (in.isNextNewline) {
         in.skipCharacter()
         sb.append("\n")
       }
-
-      in.skipCharacter()
-      skipUntilNextIndent(foldedIndent)
 
     @tailrec
     def readFolded(): String =
       in.peek() match
         case _ if in.isNewline =>
-          if (in.peekNext() == Some('\n') && in.peek(2) != None) {
+          if (in.isNextNewline) {
             chompedEmptyLines()
+            if (in.peek().isDefined) then
+              in.skipCharacter()
+              skipUntilNextIndent(foldedIndent)
             readFolded()
           } else {
             in.skipCharacter()
             skipUntilNextIndent(foldedIndent)
-            if (!in.isWhitespace && in.column != foldedIndent) then sb.result()
+            if (in.column != foldedIndent || in.peek() == None) then sb.result()
             else
               sb.append(" ")
               readFolded()
@@ -243,19 +247,27 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val sb           = new StringBuilder
     val scalarIndent = in.column
 
+    def chompedEmptyLines() =
+      while (in.isNextNewline) {
+        in.skipCharacter()
+        sb.append("\n")
+      }
+
     def readScalar(): String =
       val peeked = in.peek()
       peeked match
         case Some(':') if in.isNextWhitespace                   => sb.result()
         case Some(':') if in.peekNext().exists(_ == ',')        => sb.result()
         case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
+        case _ if isDocumentEnd || isDocumentStart              => sb.result()
         case Some(' ') if in.peekNext() == Some('#')            => sb.result()
         case _ if in.isNewline =>
+          if (in.isNextNewline) then chompedEmptyLines()
+          else sb.append(' ')
           skipUntilNextChar()
-          sb.append(' ')
           if (in.column > ctx.indent) readScalar()
           else sb.result()
-        case Some(char) if char != ',' =>
+        case Some(char) =>
           sb.append(in.read())
           readScalar()
         case Some(_) | None => sb.result()
@@ -275,7 +287,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('|')  => parseLiteral()
       case _          => parseScalarValue()
 
-    in.skipWhitespaces()
+    skipUntilNextToken()
     val peeked2 = in.peek()
     peeked2 match
       case Some(':') =>
@@ -294,7 +306,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case _ => scalar
 
   def skipUntilNextToken(): Unit =
-    while (in.peek() == Some(' ')) do in.skipCharacter()
+    while (in.isWhitespace) do in.skipCharacter()
 
     if in.peek() == Some('#') then skipComment()
 

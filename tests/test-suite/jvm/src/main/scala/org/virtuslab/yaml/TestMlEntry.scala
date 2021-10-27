@@ -12,7 +12,7 @@ case object TestMlEntry {
 
   private def extractInYaml(testMl: String): String =
     val patternIn =
-      raw"--- in-yaml(\(<\)|\(\+\)|)(([^\n]*\n+)+?)--- (in-json|error|out-yaml|emit-yaml|test-event)".r
+      raw"--- in-yaml(\(<\)|\(\+\)|\(<\+\)|)(([^\n]*\n+)+?)--- (in-json|error|out-yaml|emit-yaml|test-event)".r
 
     patternIn
       .findAllIn(testMl)

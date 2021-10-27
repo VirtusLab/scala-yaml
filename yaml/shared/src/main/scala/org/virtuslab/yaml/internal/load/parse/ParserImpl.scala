@@ -124,7 +124,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     val pos   = token.pos
 
     def parseStreamStart() =
-      productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: ParseStreamEnd :: Nil)
+      productions.prependAll(ParseDocumentStartOpt :: ParseStreamEnd :: Nil)
       Right(Event.StreamStart)
 
     def parseDocumentStart() = token.kind match
@@ -138,6 +138,10 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
 
     def parseDocumentStartOpt() = token.kind match
       case TokenKind.DocumentStart =>
+        productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: Nil)
+        getNextEventImpl()
+      case TokenKind.MappingStart | TokenKind.Scalar(_, _) | TokenKind.SequenceStart |
+          TokenKind.FlowMappingStart | TokenKind.FlowSequenceStart =>
         productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: Nil)
         getNextEventImpl()
       case _ =>
@@ -278,6 +282,9 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case TokenKind.FlowSequenceStart =>
         productions.prependAll(ParseFlowNode :: Nil)
         getNextEventImpl()
+      case TokenKind.Scalar(_, _) =>
+        productions.prependAll(ParseNode :: ParseFlowMappingComma :: ParseFlowMappingEntry :: Nil)
+        parseFlowNode()
       case _ =>
         getNextEventImpl()
 

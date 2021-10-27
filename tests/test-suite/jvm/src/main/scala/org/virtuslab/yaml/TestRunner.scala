@@ -47,7 +47,7 @@ object TestRunnerUtils:
           case _: Event.StreamStart             => "+STR"
           case _: Event.StreamEnd               => "-STR"
           case Event.DocumentStart(_, explicit) => if (explicit) "+DOC ---" else "+DOC"
-          case Event.DocumentEnd(_, explicit)   => if (explicit) "-DOC ---" else "-DOC"
+          case Event.DocumentEnd(_, explicit)   => if (explicit) "-DOC ..." else "-DOC"
           case _: Event.SequenceStart           => "+SEQ"
           case _: Event.SequenceEnd             => "-SEQ"
           case _: Event.MappingStart | _: Event.FlowMappingStart => "+MAP"

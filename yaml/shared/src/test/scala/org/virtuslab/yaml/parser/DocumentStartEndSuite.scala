@@ -24,6 +24,17 @@ class DocumentStartEndSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
+  test("parse empty document") {
+    val yaml =
+      s"""|""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
   test("explicit document end") {
     val yaml =
       s"""|k1: v1
@@ -54,6 +65,31 @@ class DocumentStartEndSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("k1"),
       Scalar("v1"),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
+  test("document after document end marker") {
+    val yaml =
+      s"""|---
+          |scalar1
+          |...
+          |key: value
+          |
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      Scalar("scalar1"),
+      DocumentEnd(explicit = true),
+      DocumentStart(),
+      MappingStart(),
+      Scalar("key"),
+      Scalar("value"),
       MappingEnd(),
       DocumentEnd(),
       StreamEnd

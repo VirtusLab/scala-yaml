@@ -19,3 +19,10 @@ case object ScalarStyle:
             case '\n'  => "\\n"
             case other => other.toString
         }
+
+  def escapeSpecialCharacterDoubleQuote(scalar: String) =
+    scalar.flatMap { char =>
+      char match
+        case '\n'  => ""
+        case other => other.toString
+    }
