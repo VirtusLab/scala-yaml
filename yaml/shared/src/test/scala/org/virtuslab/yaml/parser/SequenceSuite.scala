@@ -263,7 +263,7 @@ class SequenceSuite extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("empty flow sequence with empty flow mapping2") {
+  test("sequence with comma in value") {
     val yaml =
       """
         |- Up, up, and away!

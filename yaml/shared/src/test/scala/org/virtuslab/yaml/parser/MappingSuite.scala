@@ -384,6 +384,8 @@ class MappingSuite extends BaseParseSuite:
           | b
           |
           | c
+          | 
+          | 
           |""".stripMargin
 
     val expectedEvents = List(
@@ -400,7 +402,7 @@ class MappingSuite extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-  test("doyuble flow mapping") {
+  test("double flow mapping") {
     val yaml =
       s"""|---
           |- { "single line", a: b}
