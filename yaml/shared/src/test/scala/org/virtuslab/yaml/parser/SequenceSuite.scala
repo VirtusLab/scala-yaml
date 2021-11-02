@@ -23,7 +23,6 @@ class SequenceSuite extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-
     assertEventsEquals(yaml.events, expectedEvents)
   }
 

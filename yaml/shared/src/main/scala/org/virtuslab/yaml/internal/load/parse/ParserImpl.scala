@@ -21,7 +21,6 @@ private enum Production:
   case ParseNode
   case ParseScalar
 
-  case ParseMappingStart
   case ParseMappingEnd
   case ParseMappingEntry
   case ParseMappingValue
@@ -29,20 +28,17 @@ private enum Production:
   case ParseMappingSequenceEnd
   case ParseMappingEntryOpt
 
-  case ParseSequenceStart
   case ParseSequenceEnd
   case ParseSequenceEntry
   case ParseSequenceEntryOpt
 
   case ParseFlowNode
 
-  case ParseFlowMappingStart
   case ParseFlowMappingEnd
   case ParseFlowMappingEntry
   case ParseFlowMappingEntryOpt
   case ParseFlowMappingComma
 
-  case ParseFlowSeqStart
   case ParseFlowSeqEnd
   case ParseFlowSeqEntry
   case ParseFlowSeqEntryOpt
@@ -109,6 +105,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     def loop(events: mutable.ArrayDeque[Event]): Either[YamlError, List[Event]] = {
       getNextEvent() match
         case Right(event) =>
+          println(event)
           if event != Event.StreamEnd then loop(events.append(event))
           else Right(events.append(event).toList)
         case Left(err) => Left(err)
@@ -141,7 +138,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: Nil)
         getNextEventImpl()
       case TokenKind.MappingStart | TokenKind.Scalar(_, _) | TokenKind.SequenceStart |
-          TokenKind.FlowMappingStart | TokenKind.FlowSequenceStart =>
+          TokenKind.FlowMappingStart | TokenKind.FlowSequenceStart | _: TokenKind.Anchor =>
         productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: Nil)
         getNextEventImpl()
       case _ =>
@@ -153,14 +150,6 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         Right(Event.DocumentEnd(Some(pos), true))
       case _ =>
         Right(Event.DocumentEnd(Some(token.pos), false))
-
-    def parseMappingStart() = token.kind match
-      case TokenKind.MappingStart =>
-        in.popToken()
-        productions.prependAll(ParseMappingEntry :: ParseMappingEnd :: Nil)
-        Right(Event.MappingStart(Some(pos)))
-      case _ =>
-        Left(ParseError.from(TokenKind.MappingStart, token))
 
     def parseMappingEnd() = token.kind match
       case TokenKind.BlockEnd =>
@@ -229,24 +218,6 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case _ =>
         getNextEventImpl()
 
-    def parseFlowNode() = token.kind match
-      case TokenKind.FlowMappingStart =>
-        productions.prependAll(ParseFlowMappingStart :: Nil)
-        getNextEventImpl()
-      case TokenKind.FlowSequenceStart =>
-        productions.prependAll(ParseFlowSeqStart :: Nil)
-        getNextEventImpl()
-      case TokenKind.Scalar(_, _) =>
-        productions.prependAll(ParseScalar :: Nil)
-        getNextEventImpl()
-      case _ =>
-        val expected = List(
-          TokenKind.FlowMappingStart.toString,
-          TokenKind.FlowSequenceStart.toString,
-          TokenKind.Scalar.toString
-        )
-        Left(ParseError.from(s"one of ${expected.mkString("", " or ", ".")}", token))
-
     def parseFlowMappingStart() = token.kind match
       case TokenKind.FlowMappingStart =>
         in.popToken()
@@ -283,7 +254,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         productions.prependAll(ParseFlowNode :: Nil)
         getNextEventImpl()
       case TokenKind.Scalar(_, _) =>
-        productions.prependAll(ParseNode :: ParseFlowMappingComma :: ParseFlowMappingEntry :: Nil)
+        productions.prependAll(ParseFlowNode :: ParseFlowMappingComma :: ParseFlowMappingEntry :: Nil)
         parseFlowNode()
       case _ =>
         getNextEventImpl()
@@ -302,14 +273,6 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         getNextEventImpl()
       case _ =>
         getNextEventImpl()
-
-    def parseFlowSeqStart() = token.kind match
-      case TokenKind.FlowSequenceStart =>
-        in.popToken()
-        productions.prependAll(ParseFlowSeqEntryOpt :: ParseFlowSeqEnd :: Nil)
-        Right(Event.SequenceStart(Some(pos)))
-      case _ =>
-        Left(ParseError.from(TokenKind.FlowSequenceStart, token))
 
     def parseFlowSeqEnd() = token.kind match
       case TokenKind.FlowSequenceEnd =>
@@ -362,21 +325,52 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case _ =>
         getNextEventImpl()
 
-    def parseScalar() = token.kind match
-      case TokenKind.Scalar(value, style) =>
-        in.popToken()
-        Right(Event.Scalar(value, style, Some(pos)))
-      case _ =>
-        Left(ParseError.from(TokenKind.Scalar.toString, token))
+    def parseScalar() =
+      val (anchor, nextToken) = parseNodeAttributes()
+      nextToken.kind match
+        case TokenKind.Scalar(value, style) =>
+          in.popToken()
+          Right(Event.Scalar(value, style, Some(pos), anchor))
+        case _ =>
+          Left(ParseError.from(TokenKind.Scalar.toString, token))
 
-    def parseNode(): Either[YamlError, Event] = token.kind match
-      case TokenKind.MappingStart      => parseMappingStart()
-      case TokenKind.FlowMappingStart  => parseFlowMappingStart()
-      case TokenKind.FlowSequenceStart => parseFlowSeqStart()
-      case TokenKind.Scalar(_, _)      => parseScalar()
-      case TokenKind.SequenceStart     => parseSequenceStart()
-      case _ =>
-        Right(Event.Scalar("", ScalarStyle.Plain, Some(token.pos)))
+    inline def parseFlowNode() = parseNode(couldParseBlockColl = false)
+
+    def parseNode(couldParseBlockColl: Boolean = true): Either[YamlError, Event] =
+      val (anchor, nextToken) = parseNodeAttributes()
+
+      nextToken.kind match
+        case TokenKind.Alias(alias) =>
+          if anchor.isDefined then
+            Left(ParseError.from("Alias cannot have an anchor", nextToken))
+          else
+            in.popToken()
+            Right(Event.Alias(alias))
+        case TokenKind.MappingStart if couldParseBlockColl =>
+          in.popToken()
+          productions.prependAll(ParseMappingEntry :: ParseMappingEnd :: Nil)
+          Right(Event.MappingStart(Some(pos), anchor))
+        case TokenKind.SequenceStart if couldParseBlockColl =>
+          parseSequenceStart()
+        case TokenKind.FlowMappingStart =>
+          in.popToken()
+          productions.prependAll(ParseFlowMappingEntryOpt :: ParseFlowMappingEnd :: Nil)
+          Right(Event.FlowMappingStart(Some(pos)))
+        case TokenKind.FlowSequenceStart =>
+          in.popToken()
+          productions.prependAll(ParseFlowSeqEntryOpt :: ParseFlowSeqEnd :: Nil)
+          Right(Event.SequenceStart(Some(pos)))
+        case TokenKind.Scalar(value, style) =>
+          in.popToken()
+          Right(Event.Scalar(value, style, Some(pos), anchor))
+        case _ =>
+          Right(Event.Scalar("", ScalarStyle.Plain, Some(token.pos), anchor))
+
+    def parseNodeAttributes() = token.kind match
+      case TokenKind.Anchor(value) =>
+        in.popToken()
+        (Some(value), in.peekToken())
+      case _ => (None, token)
 
     productions.removeHead() match
       case ParseStreamStart      => parseStreamStart()
@@ -388,7 +382,6 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case ParseNode   => parseNode()
       case ParseScalar => parseScalar()
 
-      case ParseMappingStart       => parseMappingStart()
       case ParseMappingEnd         => parseMappingEnd()
       case ParseMappingEntry       => parseMappingEntry()
       case ParseMappingValue       => parseMappingValue()
@@ -396,20 +389,17 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case ParseMappingSequenceEnd => parseMappingSequenceEnd()
       case ParseMappingEntryOpt    => parseMappingEntryOpt()
 
-      case ParseSequenceStart    => parseSequenceStart()
       case ParseSequenceEnd      => parseSequenceEnd()
       case ParseSequenceEntry    => parseSequenceEntry()
       case ParseSequenceEntryOpt => parseSequenceEntryOpt()
 
       case ParseFlowNode => parseFlowNode()
 
-      case ParseFlowMappingStart    => parseFlowMappingStart()
       case ParseFlowMappingEnd      => parseFlowMappingEnd()
       case ParseFlowMappingEntry    => parseFlowMappingEntry()
       case ParseFlowMappingEntryOpt => parseFlowMappingEntryOpt()
       case ParseFlowMappingComma    => parseFlowMappingComma()
 
-      case ParseFlowSeqStart    => parseFlowSeqStart()
       case ParseFlowSeqEnd      => parseFlowSeqEnd()
       case ParseFlowSeqEntry    => parseFlowSeqEntry()
       case ParseFlowSeqEntryOpt => parseFlowSeqEntryOpt()

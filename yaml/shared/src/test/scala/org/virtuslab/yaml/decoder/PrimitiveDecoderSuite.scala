@@ -115,7 +115,7 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     assertEquals(mappingYaml.as[SequenceTypes], Right(expectedMapping))
   }
 
-  test("mapping") {
+  test("mapping-2") {
     case class SequenceTypes(doubles: Map[String, Double], floats: Map[String, List[Float]])
         derives YamlCodec
 

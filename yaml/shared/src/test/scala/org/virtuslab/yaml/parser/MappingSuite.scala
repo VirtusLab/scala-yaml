@@ -182,6 +182,28 @@ class MappingSuite extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
+  test("flow mapping") {
+    val yaml = s"""doubles: { double1: 1.0, double2: 2.0 }""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("doubles"),
+      FlowMappingStart(),
+      Scalar("double1"),
+      Scalar("1.0"),
+      Scalar("double2"),
+      Scalar("2.0"),
+      FlowMappingEnd(),
+      MappingEnd(),
+      DocumentEnd(),
+      StreamEnd
+    )
+    
+    assertEventsEquals(yaml.events, expectedEvents)
+  }
+
   test("mapping with braces in value") {
     val yaml = "name: etcd-{{cell}}"
 
