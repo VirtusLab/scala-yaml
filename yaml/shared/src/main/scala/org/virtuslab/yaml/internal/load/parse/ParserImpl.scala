@@ -105,7 +105,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     def loop(events: mutable.ArrayDeque[Event]): Either[YamlError, List[Event]] = {
       getNextEvent() match
         case Right(event) =>
-          if event != Event.StreamEnd then loop(events.append(event))
+          if event.kind != EventKind.StreamEnd then loop(events.append(event))
           else Right(events.append(event).toList)
         case Left(err) => Left(err)
     }
@@ -113,7 +113,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
 
   override def getNextEvent(): Either[YamlError, Event] =
     if productions.size > 0 then getNextEventImpl()
-    else Right(Event.StreamEnd)
+    else Right(Event.streamEnd)
 
   private def getNextEventImpl(): Either[YamlError, Event] =
     val token = in.peekToken()
@@ -121,16 +121,16 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
 
     def parseStreamStart() =
       productions.prependAll(ParseDocumentStartOpt :: ParseStreamEnd :: Nil)
-      Right(Event.StreamStart)
+      Right(Event(EventKind.StreamStart, token.pos))
 
     def parseDocumentStart() = token.kind match
       case TokenKind.DocumentStart =>
         in.popToken()
         productions.prependAll(ParseNode :: ParseDocumentEnd :: Nil)
-        Right(Event.DocumentStart(Some(pos), explicit = true))
+        Right(Event(EventKind.DocumentStart(explicit = true), pos))
       case _ =>
         productions.prependAll(ParseNode :: ParseDocumentEnd :: Nil)
-        Right(Event.DocumentStart(Some(token.pos), explicit = false))
+        Right(Event(EventKind.DocumentStart(explicit = false), pos))
 
     def parseDocumentStartOpt() = token.kind match
       case TokenKind.DocumentStart =>
@@ -146,14 +146,14 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     def parseDocumentEnd() = token.kind match
       case TokenKind.DocumentEnd =>
         in.popToken()
-        Right(Event.DocumentEnd(Some(pos), true))
+        Right(Event(EventKind.DocumentEnd(true), pos))
       case _ =>
-        Right(Event.DocumentEnd(Some(token.pos), false))
+        Right(Event(EventKind.DocumentEnd(false), pos))
 
     def parseMappingEnd() = token.kind match
       case TokenKind.BlockEnd =>
         in.popToken()
-        Right(Event.MappingEnd(Some(pos)))
+        Right(Event(EventKind.MappingEnd, pos))
       case _ =>
         Left(ParseError.from(TokenKind.BlockEnd, token))
 
@@ -175,11 +175,11 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     def parseMappingValueNode() = token.kind match
       case TokenKind.SequenceValue =>
         productions.prependAll(ParseSequenceEntry :: ParseMappingSequenceEnd :: Nil)
-        Right(Event.SequenceStart(Some(pos)))
+        Right(Event(EventKind.SequenceStart(), pos))
       case _ => parseNode()
 
     def parseMappingSequenceEnd() =
-      Right(Event.SequenceEnd(Some(pos)))
+      Right(Event(EventKind.SequenceEnd, pos))
 
     def parseMappingEntryOpt() = token.kind match
       case TokenKind.MappingKey =>
@@ -192,14 +192,14 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case TokenKind.SequenceStart =>
         in.popToken()
         productions.prependAll(ParseSequenceEntry :: ParseSequenceEnd :: Nil)
-        Right(Event.SequenceStart(Some(pos)))
+        Right(Event(EventKind.SequenceStart(), pos))
       case _ =>
         Left(ParseError.from(TokenKind.SequenceStart, token))
 
     def parseSequenceEnd() = token.kind match
       case TokenKind.BlockEnd =>
         in.popToken()
-        Right(Event.SequenceEnd(Some(pos)))
+        Right(Event(EventKind.SequenceEnd, pos))
       case _ =>
         Left(ParseError.from(TokenKind.BlockEnd, token))
 
@@ -221,14 +221,14 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case TokenKind.FlowMappingStart =>
         in.popToken()
         productions.prependAll(ParseFlowMappingEntryOpt :: ParseFlowMappingEnd :: Nil)
-        Right(Event.FlowMappingStart(Some(pos)))
+        Right(Event(EventKind.FlowMappingStart(), pos))
       case _ =>
         Left(ParseError.from(TokenKind.FlowMappingStart, token))
 
     def parseFlowMappingEnd() = token.kind match
       case TokenKind.FlowMappingEnd =>
         in.popToken()
-        Right(Event.FlowMappingEnd(Some(pos)))
+        Right(Event(EventKind.FlowMappingEnd, pos))
       case _ =>
         Left(ParseError.from(TokenKind.FlowMappingEnd, token))
 
@@ -278,14 +278,14 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     def parseFlowSeqEnd() = token.kind match
       case TokenKind.FlowSequenceEnd =>
         in.popToken()
-        Right(Event.SequenceEnd(Some(pos)))
+        Right(Event(EventKind.SequenceEnd, pos))
       case _ =>
         Left(ParseError.from(TokenKind.FlowSequenceEnd, token))
 
     def parseFlowSeqEntry() = token.kind match
       case TokenKind.MappingKey =>
         productions.prependAll(ParseFlowSeqPairKey :: ParseFlowSeqComma :: Nil)
-        Right(Event.MappingStart(Some(token.pos)))
+        Right(Event(EventKind.MappingStart(), pos))
       case _ =>
         productions.prependAll(ParseFlowNode :: ParseFlowSeqComma :: Nil)
         getNextEventImpl()
@@ -303,7 +303,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         in.popToken()
         productions.prependAll(
           ParseFlowNode :: ParseFlowSeqPairValue :: ReturnEvent(t =>
-            Event.MappingEnd(Some(t.pos))
+            Event(EventKind.MappingEnd, t.pos)
           ) :: Nil
         )
         getNextEventImpl()
@@ -331,7 +331,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       nextToken.kind match
         case TokenKind.Scalar(value, style) =>
           in.popToken()
-          Right(Event.Scalar(value, style, Some(pos), anchor))
+          Right(Event(EventKind.Scalar(value, style, NodeEventMetadata(anchor)), pos))
         case _ =>
           Left(ParseError.from(TokenKind.Scalar.toString, token))
 
@@ -345,36 +345,38 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
           if anchor.isDefined then Left(ParseError.from("Alias cannot have an anchor", nextToken))
           else
             in.popToken()
-            Right(Event.Alias(alias))
+            Right(Event(EventKind.Alias(Anchor(alias)), nextToken.pos))
         case TokenKind.MappingStart if couldParseBlockCollection =>
           in.popToken()
           productions.prependAll(ParseMappingEntry :: ParseMappingEnd :: Nil)
-          Right(Event.MappingStart(Some(pos), anchor))
+          Right(Event(EventKind.MappingStart(NodeEventMetadata(anchor)), nextToken.pos))
         case TokenKind.SequenceStart if couldParseBlockCollection =>
           parseSequenceStart()
         case TokenKind.FlowMappingStart =>
           in.popToken()
           productions.prependAll(ParseFlowMappingEntryOpt :: ParseFlowMappingEnd :: Nil)
-          Right(Event.FlowMappingStart(Some(pos)))
+          Right(Event(EventKind.FlowMappingStart(), nextToken.pos))
         case TokenKind.FlowSequenceStart =>
           in.popToken()
           productions.prependAll(ParseFlowSeqEntryOpt :: ParseFlowSeqEnd :: Nil)
-          Right(Event.SequenceStart(Some(pos)))
+          Right(Event(EventKind.SequenceStart(), nextToken.pos))
         case TokenKind.Scalar(value, style) =>
           in.popToken()
-          Right(Event.Scalar(value, style, Some(pos), anchor))
+          Right(Event(EventKind.Scalar(value, style, NodeEventMetadata(anchor)), nextToken.pos))
         case _ =>
-          Right(Event.Scalar("", ScalarStyle.Plain, Some(token.pos), anchor))
+          Right(
+            Event(EventKind.Scalar("", ScalarStyle.Plain, NodeEventMetadata(anchor)), nextToken.pos)
+          )
 
     def parseNodeAttributes() = token.kind match
       case TokenKind.Anchor(value) =>
         in.popToken()
-        (Some(value), in.peekToken())
+        (Some(Anchor(value)), in.peekToken())
       case _ => (None, token)
 
     productions.removeHead() match
       case ParseStreamStart      => parseStreamStart()
-      case ParseStreamEnd        => Right(Event.StreamEnd)
+      case ParseStreamEnd        => Right(Event(EventKind.StreamEnd, pos))
       case ParseDocumentStart    => parseDocumentStart()
       case ParseDocumentEnd      => parseDocumentEnd()
       case ParseDocumentStartOpt => parseDocumentStartOpt()

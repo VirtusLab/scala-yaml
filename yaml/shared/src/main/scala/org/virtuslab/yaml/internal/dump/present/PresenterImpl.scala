@@ -1,50 +1,51 @@
 package org.virtuslab.yaml.internal.dump.present
 
-import org.virtuslab.yaml.internal.load.parse.Event
+import org.virtuslab.yaml.internal.load.parse.EventKind
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.Position
 
 import scala.annotation.tailrec
 import scala.collection.mutable
 
 object PresenterImpl extends Presenter:
-  override def asString(events: Seq[Event]): String = {
+  override def asString(events: Seq[EventKind]): String = {
     val sb      = new StringBuilder
-    val stack   = new mutable.Stack[Event]
+    val stack   = new mutable.Stack[EventKind]
     val newline = System.lineSeparator()
 
     var toplevelNode = true // toplevel node should't insert newline and increase indent
     var indent       = 0
 
-    def parseNode(events: List[Event]): List[Event] =
+    def parseNode(events: List[EventKind]): List[EventKind] =
       events match
         case head :: tail =>
           head match
-            case _: Event.MappingStart =>
+            case _: MappingStart =>
               insertSequencePadding()
-              pushAndIncreaseIndent(Event.MappingStart())
+              pushAndIncreaseIndent(MappingStart())
               parseMapping(tail)
-            case _: Event.SequenceStart =>
+            case _: SequenceStart =>
               insertSequencePadding()
-              pushAndIncreaseIndent(Event.SequenceStart())
+              pushAndIncreaseIndent(SequenceStart())
               parseSequence(tail)
-            case Event.Scalar(value, _, _, _) =>
+            case Scalar(value, _, _) =>
               insertSequencePadding()
               // todo escape string using doublequotes
               sb.append(value)
               sb.append(newline)
               tail
-            case Event.DocumentStart(_, _) => parseNode(tail)
-            case Event.DocumentEnd(_, _)   => parseNode(tail)
-            case _                         => events
+            case DocumentStart(_) => parseNode(tail)
+            case DocumentEnd(_)   => parseNode(tail)
+            case _                => events
         case Nil => Nil
 
     @tailrec
-    def parseMapping(events: List[Event]): List[Event] = {
+    def parseMapping(events: List[EventKind]): List[EventKind] = {
       events match
-        case Event.MappingEnd(_) :: tail =>
+        case MappingEnd :: tail =>
           popAndDecreaseIndent()
           tail
-        case Event.Scalar(value, _, _, _) :: tail =>
+        case Scalar(value, _, _) :: tail =>
           appendKey(value)
           val rest = parseNode(tail)
           parseMapping(rest)
@@ -52,9 +53,9 @@ object PresenterImpl extends Presenter:
     }
 
     @tailrec
-    def parseSequence(events: List[Event]): List[Event] =
+    def parseSequence(events: List[EventKind]): List[EventKind] =
       events match
-        case Event.SequenceEnd(_) :: tail =>
+        case SequenceEnd :: tail =>
           popAndDecreaseIndent()
           tail
         case _ =>
@@ -67,12 +68,12 @@ object PresenterImpl extends Presenter:
       sb.append(": ")
 
     def insertSequencePadding() = stack.headOption match
-      case Some(_: Event.SequenceStart) =>
+      case Some(_: SequenceStart) =>
         sb.append(" " * indent)
         sb.append("- ")
       case _ => ()
 
-    def pushAndIncreaseIndent(event: Event) =
+    def pushAndIncreaseIndent(event: EventKind) =
       if toplevelNode then toplevelNode = false
       else
         indent += 2

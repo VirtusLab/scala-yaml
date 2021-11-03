@@ -1,9 +1,10 @@
-package org.virtuslab.yaml.parser
+package org.virtuslab.yaml
+package parser
 
-import org.virtuslab.yaml.internal.load.parse.Event._
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
 
-class DocumentStartEndSpec extends BaseParseSuite:
+class DocumentStartEndSpec extends BaseYamlSuite:
 
   test("explicit document start") {
     val yaml =
@@ -17,11 +18,11 @@ class DocumentStartEndSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("k1"),
       Scalar("v1"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("parse empty document") {
@@ -32,7 +33,7 @@ class DocumentStartEndSpec extends BaseParseSuite:
       StreamStart,
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("explicit document end") {
@@ -47,11 +48,11 @@ class DocumentStartEndSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("k1"),
       Scalar("v1"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(explicit = true),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("implicit document start") {
@@ -65,11 +66,11 @@ class DocumentStartEndSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("k1"),
       Scalar("v1"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("document after document end marker") {
@@ -90,11 +91,11 @@ class DocumentStartEndSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("key"),
       Scalar("value"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("multiple documents with implicit start") {
@@ -115,23 +116,23 @@ class DocumentStartEndSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("k1"),
       Scalar("v1"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(explicit = true),
       DocumentStart(explicit = true),
       MappingStart(),
       Scalar("k2"),
       Scalar("v2"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(explicit = true),
       DocumentStart(explicit = true),
       MappingStart(),
       Scalar("k3"),
       Scalar("v3"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(explicit = true),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("multiple documents with explicit start") {
@@ -148,15 +149,15 @@ class DocumentStartEndSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("k1"),
       Scalar("v1"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       DocumentStart(explicit = true),
       MappingStart(),
       Scalar("k2"),
       Scalar("v2"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }

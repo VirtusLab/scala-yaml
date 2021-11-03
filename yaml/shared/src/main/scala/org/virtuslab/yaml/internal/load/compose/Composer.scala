@@ -4,6 +4,7 @@ import org.virtuslab.yaml.ComposerError
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Event
+import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.Position
@@ -30,14 +31,15 @@ object ComposerImpl extends Composer:
 
   private def composeNode(events: List[Event]): ComposeResult[Node] = events match
     case head :: tail =>
-      head match
-        case _: Event.StreamStart | _: Event.DocumentStart     => composeNode(tail)
-        case _: Event.SequenceStart                            => composeSequenceNode(tail)
-        case _: Event.MappingStart | _: Event.FlowMappingStart => composeMappingNode(tail)
-        case s: Event.Scalar                                   => composeScalarNode(s, tail)
+      head.kind match
+        case EventKind.StreamStart | _: EventKind.DocumentStart        => composeNode(tail)
+        case _: EventKind.SequenceStart                                => composeSequenceNode(tail)
+        case _: EventKind.MappingStart | _: EventKind.FlowMappingStart => composeMappingNode(tail)
+        case s: EventKind.Scalar =>
+          Right(Result(Node.ScalarNode(s.value, head.pos), tail))
         // todo #88
-        case _: Event.Alias => Left(ComposerError(s"Aliases aren't currently supported"))
-        case event          => Left(ComposerError(s"Expected Node, but found: $event"))
+        case _: EventKind.Alias => Left(ComposerError(s"Aliases aren't currently supported"))
+        case event              => Left(ComposerError(s"Expected YAML node, but found: $event"))
     case Nil =>
       Left(ComposerError("No events available"))
 
@@ -49,7 +51,8 @@ object ComposerImpl extends Composer:
         firstChildPos: Option[Position] = None
     ): ComposeResultWithPos[List[Node]] = events match
       case Nil => Left(ComposerError("Not found SequenceEnd event for sequence"))
-      case (_: Event.SequenceEnd) :: tail => Right((Result(children, tail), firstChildPos))
+      case (Event(EventKind.SequenceEnd, _)) :: tail =>
+        Right((Result(children, tail), firstChildPos))
       case _ =>
         composeNode(events) match
           case Right(node, rest) => parseChildren(rest, children :+ node, node.pos)
@@ -69,31 +72,27 @@ object ComposerImpl extends Composer:
     ): ComposeResultWithPos[List[Node.KeyValueNode]] = {
       events match
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
-        case (_: Event.MappingEnd | _: Event.FlowMappingEnd) :: tail =>
+        case Event(EventKind.MappingEnd | EventKind.FlowMappingEnd, _) :: tail =>
           Right((Result(mappings, tail), firstChildPos))
-        case (s: Event.Scalar) :: tail =>
+        case (e @ Event(
+              EventKind.StreamStart | EventKind.StreamEnd | _: EventKind.DocumentStart |
+              _: EventKind.DocumentEnd,
+              _
+            )) :: tail =>
+          Left(ComposerError(s"Invalid event, got: ${e.kind}, expected Node"))
+        case _ =>
           val mapping =
             for
-              key <- composeScalarNode(s, tail).map(_.node)
-              v   <- composeNode(tail)
-            yield Result(Node.KeyValueNode(key, v.node, key.pos), v.remaining)
+              key <- composeNode(events)
+              v   <- composeNode(key.remaining)
+            yield Result(Node.KeyValueNode(key.node, v.node, key.node.pos), v.remaining)
 
           mapping match
             case Right(node, rest) => parseMappings(rest, mappings :+ node, node.pos)
             case Left(err)         => Left(err)
-
-        case head :: tail =>
-          Left(ComposerError(s"Invalid event, got: $head, expected Scalar"))
     }
 
     parseMappings(events, Nil).map { case (Result(nodes, rest), pos) =>
       Result(Node.MappingNode(nodes, pos), rest)
     }
   }
-
-  private def composeScalarNode(
-      event: Event.Scalar,
-      tail: List[Event]
-  ): ComposeResult[Node.ScalarNode] = Right(
-    Result(Node.ScalarNode(event.value, event.pos), tail)
-  )

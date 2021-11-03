@@ -1,8 +1,7 @@
 package org.virtuslab.yaml
 
 import org.virtuslab.yaml.YamlError
-import org.virtuslab.yaml.internal.load.parse.Event
-import org.virtuslab.yaml.internal.load.parse.Event.*
+import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
@@ -10,9 +9,9 @@ import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 trait BaseYamlSuite extends munit.FunSuite {
 
   extension (yaml: String)
-    def events: Either[YamlError, List[Event]] = {
+    def events: Either[YamlError, List[EventKind]] = {
       val reader = Scanner(yaml)
-      ParserImpl(reader).getEvents()
+      ParserImpl(reader).getEvents().map(_.map(_.kind))
     }
 
     def tokens: List[TokenKind] =
