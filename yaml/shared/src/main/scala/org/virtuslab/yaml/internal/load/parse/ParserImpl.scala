@@ -105,7 +105,6 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     def loop(events: mutable.ArrayDeque[Event]): Either[YamlError, List[Event]] = {
       getNextEvent() match
         case Right(event) =>
-          println(event)
           if event != Event.StreamEnd then loop(events.append(event))
           else Right(events.append(event).toList)
         case Left(err) => Left(err)
@@ -336,9 +335,9 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         case _ =>
           Left(ParseError.from(TokenKind.Scalar.toString, token))
 
-    inline def parseFlowNode() = parseNode(couldParseBlockColl = false)
+    inline def parseFlowNode() = parseNode(couldParseBlockCollection = false)
 
-    def parseNode(couldParseBlockColl: Boolean = true): Either[YamlError, Event] =
+    def parseNode(couldParseBlockCollection: Boolean = true): Either[YamlError, Event] =
       val (anchor, nextToken) = parseNodeAttributes()
 
       nextToken.kind match
@@ -347,11 +346,11 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
           else
             in.popToken()
             Right(Event.Alias(alias))
-        case TokenKind.MappingStart if couldParseBlockColl =>
+        case TokenKind.MappingStart if couldParseBlockCollection =>
           in.popToken()
           productions.prependAll(ParseMappingEntry :: ParseMappingEnd :: Nil)
           Right(Event.MappingStart(Some(pos), anchor))
-        case TokenKind.SequenceStart if couldParseBlockColl =>
+        case TokenKind.SequenceStart if couldParseBlockCollection =>
           parseSequenceStart()
         case TokenKind.FlowMappingStart =>
           in.popToken()
