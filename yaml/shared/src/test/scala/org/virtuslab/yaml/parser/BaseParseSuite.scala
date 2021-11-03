@@ -31,6 +31,7 @@ trait BaseParseSuite extends BaseYamlSuite:
           case e: Event.FlowMappingStart => e.copy(pos = None)
           case e: Event.FlowMappingEnd   => e.copy(pos = None)
           case e: Event.Scalar           => e.copy(pos = None)
+          case e: Event.Alias            => e.copy(pos = None)
       }
     )
     val expected = Right(expectedEvents)

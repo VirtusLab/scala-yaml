@@ -40,27 +40,31 @@ end TestRunner
 
 object TestRunnerUtils:
 
-  def convertEventToYamlTestSuiteFormat(event: Seq[Event]): String =
-    event
-      .map(event =>
-        event match
-          case _: Event.StreamStart             => "+STR"
-          case _: Event.StreamEnd               => "-STR"
-          case Event.DocumentStart(_, explicit) => if (explicit) "+DOC ---" else "+DOC"
-          case Event.DocumentEnd(_, explicit)   => if (explicit) "-DOC ..." else "-DOC"
-          case _: Event.SequenceStart           => "+SEQ"
-          case _: Event.SequenceEnd             => "-SEQ"
-          case _: Event.MappingStart | _: Event.FlowMappingStart => "+MAP"
-          case _: Event.MappingEnd | _: Event.FlowMappingEnd     => "-MAP"
-          case Event.Scalar(value, style, _) =>
-            style match {
-              case ScalarStyle.Plain        => s"=VAL :$value"
-              case ScalarStyle.DoubleQuoted => s"""=VAL "$value"""
-              case ScalarStyle.SingleQuoted => s"=VAL '$value"
-              case ScalarStyle.Folded       => s"=VAL >$value"
-              case ScalarStyle.Literal      => s"=VAL |$value"
-            }
-      )
+  extension (anchor: Option[String])
+    def asString: String = anchor.map(anchor => s" &$anchor").getOrElse("")
+
+  def convertEventToYamlTestSuiteFormat(events: Seq[Event]): String =
+    events
+      .map {
+        case _: Event.StreamStart                          => "+STR"
+        case _: Event.StreamEnd                            => "-STR"
+        case Event.DocumentStart(_, explicit)              => if (explicit) "+DOC ---" else "+DOC"
+        case Event.DocumentEnd(_, explicit)                => if (explicit) "-DOC ..." else "-DOC"
+        case s: Event.SequenceStart                        => s"+SEQ${s.anchor.asString}"
+        case _: Event.SequenceEnd                          => "-SEQ"
+        case m: Event.MappingStart                         => s"+MAP${m.anchor.asString}"
+        case m: Event.FlowMappingStart                     => s"+MAP${m.anchor.asString}"
+        case _: Event.MappingEnd | _: Event.FlowMappingEnd => "-MAP"
+        case Event.Alias(id, _)                            => s"=ALI *$id"
+        case Event.Scalar(value, style, _, anchor) =>
+          style match {
+            case ScalarStyle.Plain        => s"=VAL${anchor.asString} :$value"
+            case ScalarStyle.DoubleQuoted => s"""=VAL${anchor.asString} "$value"""
+            case ScalarStyle.SingleQuoted => s"=VAL${anchor.asString} '$value"
+            case ScalarStyle.Folded       => s"=VAL${anchor.asString} >$value"
+            case ScalarStyle.Literal      => s"=VAL${anchor.asString} |$value"
+          }
+      }
       .mkString("\n")
 
 end TestRunnerUtils

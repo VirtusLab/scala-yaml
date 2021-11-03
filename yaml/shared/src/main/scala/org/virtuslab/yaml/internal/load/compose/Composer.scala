@@ -35,7 +35,9 @@ object ComposerImpl extends Composer:
         case _: Event.SequenceStart                            => composeSequenceNode(tail)
         case _: Event.MappingStart | _: Event.FlowMappingStart => composeMappingNode(tail)
         case s: Event.Scalar                                   => composeScalarNode(s, tail)
-        case event => Left(ComposerError(s"Unexpected event $event"))
+        // todo #88
+        case _: Event.Alias => Left(ComposerError(s"Aliases aren't currently supported"))
+        case event          => Left(ComposerError(s"Expected Node, but found: $event"))
     case Nil =>
       Left(ComposerError("No events available"))
 

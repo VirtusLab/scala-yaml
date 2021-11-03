@@ -191,3 +191,75 @@ class TokenizerSuite extends BaseYamlSuite:
 
     assertEquals(yaml.tokens, tokens)
   }
+
+  test("anchor & alias in mapping") {
+    val yaml = """|First occurrence: &anchor Value
+                  |Second occurrence: *anchor
+                  |Override anchor: &anchor Bar
+                  |Reuse anchor: *anchor
+                  |""".stripMargin
+
+    val tokens = List(
+      MappingStart,
+      MappingKey,
+      Scalar("First occurrence", ScalarStyle.Plain),
+      MappingValue,
+      Anchor("anchor"),
+      Scalar("Value", ScalarStyle.Plain),
+      MappingKey,
+      Scalar("Second occurrence", ScalarStyle.Plain),
+      MappingValue,
+      Alias("anchor"),
+      MappingKey,
+      Scalar("Override anchor", ScalarStyle.Plain),
+      MappingValue,
+      Anchor("anchor"),
+      Scalar("Bar", ScalarStyle.Plain),
+      MappingKey,
+      Scalar("Reuse anchor", ScalarStyle.Plain),
+      MappingValue,
+      Alias("anchor"),
+      BlockEnd
+    )
+
+    assertEquals(yaml.tokens, tokens)
+  }
+
+  test("anchor & alias in sequence") {
+    val yaml = """|---
+                  |hr:
+                  |  - Mark McGwire
+                  |  # Following node labeled SS
+                  |  - &SS Sammy Sosa
+                  |rbi:
+                  |  - *SS # Subsequent occurrence
+                  |  - Ken Griffey
+                  |""".stripMargin
+
+    val tokens = List(
+      DocumentStart,
+      MappingStart,
+      MappingKey,
+      Scalar("hr", ScalarStyle.Plain),
+      MappingValue,
+      SequenceStart,
+      SequenceValue,
+      Scalar("Mark McGwire", ScalarStyle.Plain),
+      SequenceValue,
+      Anchor("SS"),
+      Scalar("Sammy Sosa", ScalarStyle.Plain),
+      BlockEnd,
+      MappingKey,
+      Scalar("rbi", ScalarStyle.Plain),
+      MappingValue,
+      SequenceStart,
+      SequenceValue,
+      Alias("SS"),
+      SequenceValue,
+      Scalar("Ken Griffey", ScalarStyle.Plain),
+      BlockEnd,
+      BlockEnd
+    )
+
+    assertEquals(yaml.tokens, tokens)
+  }
