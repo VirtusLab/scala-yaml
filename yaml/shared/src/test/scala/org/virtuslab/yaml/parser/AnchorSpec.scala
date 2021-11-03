@@ -1,9 +1,12 @@
-package org.virtuslab.yaml.parser
+package org.virtuslab.yaml
+package parser
 
-import org.virtuslab.yaml.internal.load.parse.Event._
+import org.virtuslab.yaml.internal.load.parse.Anchor
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.reader.Scanner
 
-class AnchorSpec extends BaseParseSuite:
+class AnchorSpec extends BaseYamlSuite:
 
   test("in mapping") {
     val yaml =
@@ -18,19 +21,18 @@ class AnchorSpec extends BaseParseSuite:
       DocumentStart(),
       MappingStart(),
       Scalar("First occurrence"),
-      Scalar("Foo", anchor = Some("anchor")),
+      Scalar("Foo", metadata = NodeEventMetadata(Anchor("anchor"))),
       Scalar("Second occurrence"),
-      Alias("anchor"),
+      Alias(Anchor("anchor")),
       Scalar("Override anchor"),
-      Scalar("Bar", anchor = Some("anchor")),
+      Scalar("Bar", metadata = NodeEventMetadata(Anchor("anchor"))),
       Scalar("Reuse anchor"),
-      Alias("anchor"),
-      MappingEnd(),
+      Alias(Anchor("anchor")),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    yaml.debugTokens
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   // need improvement in tokenizer
@@ -44,16 +46,16 @@ class AnchorSpec extends BaseParseSuite:
       StreamStart,
       DocumentStart(),
       MappingStart(),
-      Scalar("a", anchor = Some("a")),
-      Scalar("b", anchor = Some("b")),
-      Alias("a"),
-      Alias("b"),
-      MappingEnd(),
+      Scalar("a", metadata = NodeEventMetadata(Anchor("a"))),
+      Scalar("b", metadata = NodeEventMetadata(Anchor("b"))),
+      Alias(Anchor("a")),
+      Alias(Anchor("b")),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
     yaml.debugTokens
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("in sequence") {
@@ -68,15 +70,15 @@ class AnchorSpec extends BaseParseSuite:
       StreamStart,
       DocumentStart(),
       SequenceStart(),
-      Scalar("a", anchor = Some("a")),
-      Scalar("b", anchor = Some("b")),
-      Alias("a"),
-      Alias("b"),
-      SequenceEnd(),
+      Scalar("a", metadata = NodeEventMetadata(Anchor("a"))),
+      Scalar("b", metadata = NodeEventMetadata(Anchor("b"))),
+      Alias(Anchor("a")),
+      Alias(Anchor("b")),
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("as empty values") {
@@ -90,14 +92,14 @@ class AnchorSpec extends BaseParseSuite:
       DocumentStart(explicit = true),
       MappingStart(),
       Scalar("a"),
-      Scalar("", anchor = Some("anchor")),
+      Scalar("", metadata = NodeEventMetadata(Anchor("anchor"))),
       Scalar("b"),
-      Alias("anchor"),
-      MappingEnd(),
+      Alias(Anchor("anchor")),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("anchor in flow collections".ignore) {
@@ -111,19 +113,19 @@ class AnchorSpec extends BaseParseSuite:
       StreamStart,
       DocumentStart(),
       FlowMappingStart(),
-      Scalar("a", anchor = Some("a")),
-      Scalar("b", anchor = Some("b")),
+      Scalar("a", metadata = NodeEventMetadata(Anchor("a"))),
+      Scalar("b", metadata = NodeEventMetadata(Anchor("b"))),
       Scalar("seq"),
       SequenceStart(),
-      Alias("a"),
-      Alias("b"),
-      SequenceEnd(),
-      FlowMappingEnd(),
+      Alias(Anchor("a")),
+      Alias(Anchor("b")),
+      SequenceEnd,
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
     yaml.debugTokens
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("anchor & alias".ignore) {
@@ -139,7 +141,7 @@ class AnchorSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("anchor & alias".ignore) {
@@ -160,5 +162,5 @@ class AnchorSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }

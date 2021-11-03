@@ -1,10 +1,11 @@
-package org.virtuslab.yaml.parser
+package org.virtuslab.yaml
+package parser
 
-import org.virtuslab.yaml.internal.load.parse.Event._
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class ScalarSpec extends BaseParseSuite:
+class ScalarSpec extends BaseYamlSuite:
 
   test("plain value") {
     val yaml =
@@ -18,7 +19,7 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("single quote") {
@@ -33,7 +34,7 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("double quote") {
@@ -48,7 +49,7 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("unescaped colon") {
@@ -65,11 +66,11 @@ class ScalarSpec extends BaseParseSuite:
       Scalar("10.0.2.15:3260:1221:1221"),
       Scalar("iqn"),
       Scalar("iqn.2001-04.com.example.storage:kube.sys1.xyz"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("with new lines") {
@@ -90,12 +91,12 @@ class ScalarSpec extends BaseParseSuite:
       ),
       Scalar("properties", ScalarStyle.Plain),
       Scalar("object", ScalarStyle.Plain),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("plain multiline") {
@@ -114,11 +115,11 @@ class ScalarSpec extends BaseParseSuite:
       Scalar("multiline plain scalar", ScalarStyle.Plain),
       Scalar("type", ScalarStyle.Plain),
       Scalar("string", ScalarStyle.Plain),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("single quote multiline") {
@@ -137,12 +138,12 @@ class ScalarSpec extends BaseParseSuite:
       Scalar("multiline plain scalar", ScalarStyle.SingleQuoted),
       Scalar("type", ScalarStyle.Plain),
       Scalar("string", ScalarStyle.Plain),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("single quote multiline 2") {
@@ -157,11 +158,11 @@ class ScalarSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("description"),
       Scalar("Quote multiline.", ScalarStyle.SingleQuoted),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("dont escape in double quotes") {
@@ -174,7 +175,7 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("double quote special characters") {
@@ -189,7 +190,7 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("double quote escape \"character") {
@@ -202,7 +203,7 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("multiline folded") {
@@ -226,12 +227,12 @@ class ScalarSpec extends BaseParseSuite:
       SequenceStart(),
       Scalar("bash"),
       Scalar("set -e\\n\\ntest\\nyaml", ScalarStyle.Folded),
-      SequenceEnd(),
-      MappingEnd(),
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("multiline folded skip lines") {
@@ -249,7 +250,7 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("folded indent scalar") {
@@ -267,7 +268,7 @@ class ScalarSpec extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("multiline literal 1") {
@@ -288,12 +289,12 @@ class ScalarSpec extends BaseParseSuite:
       SequenceStart(),
       Scalar("bash"),
       Scalar("# The \\nCRARG\\n# We\\n", ScalarStyle.Literal),
-      SequenceEnd(),
-      MappingEnd(),
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("multiline literal 2") {
@@ -317,11 +318,11 @@ class ScalarSpec extends BaseParseSuite:
       ),
       Scalar("kind", ScalarStyle.Plain),
       Scalar("v1", ScalarStyle.Plain),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("multiline literal 3 keep lines") {
@@ -347,11 +348,11 @@ class ScalarSpec extends BaseParseSuite:
       ),
       Scalar("kind", ScalarStyle.Plain),
       Scalar("v1", ScalarStyle.Plain),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("multiline literal 4") {
@@ -372,15 +373,15 @@ class ScalarSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("content"),
       Scalar("[Unit]\\n", ScalarStyle.Literal),
-      MappingEnd(),
+      MappingEnd,
       MappingStart(),
       Scalar("content"),
       Scalar("set -x\\n", ScalarStyle.Literal),
-      MappingEnd(),
-      SequenceEnd(),
-      MappingEnd(),
+      MappingEnd,
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }

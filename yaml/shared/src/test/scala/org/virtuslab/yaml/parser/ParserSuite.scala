@@ -1,11 +1,12 @@
-package org.virtuslab.yaml.parser
+package org.virtuslab.yaml
+package parser
 
 import org.virtuslab.yaml.internal.load.parse._
-import org.virtuslab.yaml.internal.load.parse.Event._
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class ParserSuite extends BaseParseSuite:
+class ParserSuite extends BaseYamlSuite:
 
   test("kubernetes config") {
     val yaml = s"""apiVersion: v1
@@ -41,7 +42,7 @@ class ParserSuite extends BaseParseSuite:
       MappingStart(),
       Scalar("name"),
       Scalar("iscsipd"),
-      MappingEnd(),
+      MappingEnd,
       Scalar("spec"),
       MappingStart(),
       Scalar("containers"),
@@ -58,10 +59,10 @@ class ParserSuite extends BaseParseSuite:
       Scalar("/mnt/iscsipd", ScalarStyle.DoubleQuoted),
       Scalar("name"),
       Scalar("iscsipd-rw"),
-      MappingEnd(),
-      SequenceEnd(),
-      MappingEnd(),
-      SequenceEnd(),
+      MappingEnd,
+      SequenceEnd,
+      MappingEnd,
+      SequenceEnd,
       Scalar("volumes"),
       SequenceStart(),
       MappingStart(),
@@ -79,14 +80,14 @@ class ParserSuite extends BaseParseSuite:
       Scalar("ext4"),
       Scalar("readOnly"),
       Scalar("true"),
-      MappingEnd(),
-      MappingEnd(),
-      SequenceEnd(),
-      MappingEnd(),
-      MappingEnd(),
+      MappingEnd,
+      MappingEnd,
+      SequenceEnd,
+      MappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }

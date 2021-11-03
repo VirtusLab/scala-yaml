@@ -1,10 +1,11 @@
-package org.virtuslab.yaml.parser
+package org.virtuslab.yaml
+package parser
 
-import org.virtuslab.yaml.internal.load.parse.Event._
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class MappingSuite extends BaseParseSuite:
+class MappingSuite extends BaseYamlSuite:
 
   test("basic mapping") {
     val yaml =
@@ -22,12 +23,12 @@ class MappingSuite extends BaseParseSuite:
       Scalar("0.278"),
       Scalar("rbi"),
       Scalar("147"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("nested mapping") {
@@ -46,18 +47,18 @@ class MappingSuite extends BaseParseSuite:
       MappingStart(),
       Scalar("nestedKey1"),
       Scalar("value1"),
-      MappingEnd(),
+      MappingEnd,
       Scalar("key2"),
       MappingStart(),
       Scalar("nestedKey2"),
       Scalar("value2"),
-      MappingEnd(),
-      MappingEnd(),
+      MappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("mapping of sequence") {
@@ -75,12 +76,12 @@ class MappingSuite extends BaseParseSuite:
       SequenceStart(),
       Scalar("/bin/sh"),
       Scalar("-c"),
-      SequenceEnd(),
-      MappingEnd(),
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("mappings of sequence") {
@@ -103,19 +104,19 @@ class MappingSuite extends BaseParseSuite:
       Scalar("Boston Red Sox"),
       Scalar("Detroit Tigers"),
       Scalar("New York Yankees"),
-      SequenceEnd(),
+      SequenceEnd,
       Scalar("national"),
       SequenceStart(),
       Scalar("New York Mets"),
       Scalar("Chicago Cubs"),
       Scalar("Atlanta Braves"),
-      SequenceEnd(),
-      MappingEnd(),
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("mapping quoted key") {
@@ -132,12 +133,12 @@ class MappingSuite extends BaseParseSuite:
       MappingStart(),
       Scalar("19", ScalarStyle.DoubleQuoted),
       Scalar("xw=="),
-      MappingEnd(),
-      MappingEnd(),
+      MappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("mapping empty value") {
@@ -154,11 +155,11 @@ class MappingSuite extends BaseParseSuite:
       Scalar(""),
       Scalar("key2"),
       Scalar("value"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("mapping empty value and comment") {
@@ -175,11 +176,11 @@ class MappingSuite extends BaseParseSuite:
       Scalar(""),
       Scalar("period"),
       Scalar("10"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("flow mapping") {
@@ -195,13 +196,13 @@ class MappingSuite extends BaseParseSuite:
       Scalar("1.0"),
       Scalar("double2"),
       Scalar("2.0"),
-      FlowMappingEnd(),
-      MappingEnd(),
+      FlowMappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("mapping with braces in value") {
@@ -213,11 +214,11 @@ class MappingSuite extends BaseParseSuite:
       MappingStart(),
       Scalar("name"),
       Scalar("etcd-{{cell}}"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("template value".ignore) {
@@ -232,14 +233,14 @@ class MappingSuite extends BaseParseSuite:
       FlowMappingStart(),
       Scalar("replicas"),
       Scalar(""),
-      FlowMappingEnd(),
+      FlowMappingEnd,
       Scalar(""),
-      FlowMappingEnd(),
-      MappingEnd(),
+      FlowMappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("empty flow mapping") {
@@ -249,11 +250,11 @@ class MappingSuite extends BaseParseSuite:
       StreamStart,
       DocumentStart(),
       FlowMappingStart(),
-      FlowMappingEnd(),
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("nested empty flow mapping") {
@@ -264,12 +265,12 @@ class MappingSuite extends BaseParseSuite:
       DocumentStart(),
       FlowMappingStart(),
       FlowMappingStart(),
-      FlowMappingEnd(),
-      FlowMappingEnd(),
+      FlowMappingEnd,
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("flow mapping with empty flow seq") {
@@ -280,12 +281,12 @@ class MappingSuite extends BaseParseSuite:
       DocumentStart(),
       FlowMappingStart(),
       SequenceStart(),
-      SequenceEnd(),
-      FlowMappingEnd(),
+      SequenceEnd,
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("mapping with scalar as value") {
@@ -298,12 +299,12 @@ class MappingSuite extends BaseParseSuite:
       FlowMappingStart(),
       Scalar("key"),
       Scalar("value"),
-      FlowMappingEnd(),
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, events)
+    assertEquals(yaml.events, Right(events))
   }
 
   test("mapping with flow mapping as value") {
@@ -319,13 +320,13 @@ class MappingSuite extends BaseParseSuite:
       FlowMappingStart(),
       Scalar("double"),
       Scalar("1.0"),
-      FlowMappingEnd(),
-      FlowMappingEnd(),
+      FlowMappingEnd,
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, events)
+    assertEquals(yaml.events, Right(events))
   }
 
   test("flow mapping with flow seq as value") {
@@ -342,13 +343,13 @@ class MappingSuite extends BaseParseSuite:
       SequenceStart(),
       Scalar("v1"),
       Scalar("v2"),
-      SequenceEnd(),
-      FlowMappingEnd(),
+      SequenceEnd,
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, events)
+    assertEquals(yaml.events, Right(events))
   }
 
   test("flow mapping with scalar kv pairs") {
@@ -366,12 +367,12 @@ class MappingSuite extends BaseParseSuite:
       Scalar("v1"),
       Scalar("k2"),
       Scalar("v2"),
-      FlowMappingEnd(),
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, events)
+    assertEquals(yaml.events, Right(events))
   }
 
   test("implicit block key in sequence flow") {
@@ -389,14 +390,14 @@ class MappingSuite extends BaseParseSuite:
       MappingStart(),
       Scalar("implicit flow key", style = ScalarStyle.DoubleQuoted),
       Scalar("value"),
-      MappingEnd(),
-      SequenceEnd(),
-      MappingEnd(),
+      MappingEnd,
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, events)
+    assertEquals(yaml.events, Right(events))
   }
 
   test("mapping scalar with empty lines") {
@@ -416,12 +417,12 @@ class MappingSuite extends BaseParseSuite:
       MappingStart(),
       Scalar("plain"),
       Scalar("a b\\nc"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("double flow mapping") {
@@ -440,19 +441,19 @@ class MappingSuite extends BaseParseSuite:
       Scalar(""),
       Scalar("a"),
       Scalar("b"),
-      FlowMappingEnd(),
+      FlowMappingEnd,
       FlowMappingStart(),
       Scalar("multi line", ScalarStyle.DoubleQuoted),
       Scalar(""),
       Scalar("a"),
       Scalar("b"),
-      FlowMappingEnd(),
-      SequenceEnd(),
+      FlowMappingEnd,
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("skip comment in flom mapping") {
@@ -467,10 +468,10 @@ class MappingSuite extends BaseParseSuite:
       FlowMappingStart(),
       Scalar("foo", ScalarStyle.DoubleQuoted),
       Scalar("bar"),
-      FlowMappingEnd(),
+      FlowMappingEnd,
       DocumentEnd(),
       StreamEnd
     )
 
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }

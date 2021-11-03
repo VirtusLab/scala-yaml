@@ -1,9 +1,8 @@
 package org.virtuslab.yaml.internal.load.parse
 
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
+import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Position
-import org.virtuslab.yaml.internal.load.parse.Event.StreamStart
-import org.virtuslab.yaml.internal.load.parse.Event.Node
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 /** 
  * 
@@ -14,41 +13,50 @@ import org.virtuslab.yaml.internal.load.parse.Event.Node
  * sequence ::= SEQUENCE-START node* SEQUENCE-END
  * mapping ::= MAPPING-START (node node)* MAPPING-END
  */
-sealed trait Event:
-  def pos: Option[Position]
+final case class Event(kind: EventKind, pos: Option[Position])
 object Event:
-  sealed trait Stream                           extends Event
-  case class StreamStart(pos: Option[Position]) extends Stream
-  object StreamStart                            extends StreamStart(None)
-  case class StreamEnd(pos: Option[Position])   extends Stream
-  object StreamEnd                              extends StreamEnd(None)
+  import EventKind.*
 
-  sealed trait Document extends Event
-  final case class DocumentStart(pos: Option[Position] = None, explicit: Boolean = false)
-      extends Document
-  final case class DocumentEnd(pos: Option[Position] = None, explicit: Boolean = false)
-      extends Document
+  val streamStart = Event(StreamStart, None)
+  val streamEnd   = Event(StreamEnd, None)
 
-  sealed trait Node extends Event
+  def apply(kind: EventKind, pos: Position): Event = Event(kind, Some(pos))
 
-  final case class Alias(id: String, pos: Option[Position] = None) extends Event
+enum EventKind:
+  case StreamStart
+  case StreamEnd
+  case DocumentStart(explicit: Boolean = false)
+  case DocumentEnd(explicit: Boolean = false)
 
-  final case class Scalar(
+  case Alias(id: Anchor)
+  case Scalar(
       value: String,
       style: ScalarStyle = ScalarStyle.Plain,
-      pos: Option[Position] = None,
-      anchor: Option[String] = None
-  ) extends Node
+      metadata: NodeEventMetadata = NodeEventMetadata.empty
+  )
 
-  sealed trait Sequence extends Node
-  case class SequenceStart(pos: Option[Position] = None, anchor: Option[String] = None)
-      extends Sequence
-  case class SequenceEnd(pos: Option[Position] = None) extends Sequence
+  case SequenceStart(metadata: NodeEventMetadata = NodeEventMetadata.empty)
+  case SequenceEnd
 
-  sealed trait Mapping extends Node
-  case class MappingStart(pos: Option[Position] = None, anchor: Option[String] = None)
-      extends Mapping
-  case class MappingEnd(pos: Option[Position] = None) extends Mapping
-  case class FlowMappingStart(pos: Option[Position] = None, anchor: Option[String] = None)
-      extends Mapping
-  case class FlowMappingEnd(pos: Option[Position] = None) extends Mapping
+  case MappingStart(metadata: NodeEventMetadata = NodeEventMetadata.empty)
+  case MappingEnd
+
+  case FlowMappingStart(metadata: NodeEventMetadata = NodeEventMetadata.empty)
+  case FlowMappingEnd
+
+/**
+ * Carries additional information about event which represents YAML node (scalar, start of mapping or sequence).
+ * This could be:
+ * - anchor
+ * - tags (not yet supported)
+ */
+final case class NodeEventMetadata(
+    anchor: Option[Anchor]
+)
+object NodeEventMetadata:
+  val empty                                    = NodeEventMetadata(None)
+  def apply(anchor: Anchor): NodeEventMetadata = NodeEventMetadata(Some(anchor))
+
+opaque type Anchor = String
+object Anchor:
+  def apply(anchor: String): Anchor = anchor

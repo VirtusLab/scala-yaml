@@ -1,11 +1,11 @@
-package org.virtuslab.yaml.parser
+package org.virtuslab.yaml
+package parser
 
 import org.virtuslab.yaml.internal.load.reader.Scanner
-import org.virtuslab.yaml.internal.load.parse.Event
-import org.virtuslab.yaml.internal.load.parse.Event._
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class SequenceSuite extends BaseParseSuite:
+class SequenceSuite extends BaseYamlSuite:
 
   test("basic sequence") {
     val yaml =
@@ -19,11 +19,11 @@ class SequenceSuite extends BaseParseSuite:
       SequenceStart(),
       Scalar("v1"),
       Scalar("v2"),
-      SequenceEnd(),
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("sequence of sequences") {
@@ -43,16 +43,16 @@ class SequenceSuite extends BaseParseSuite:
       SequenceStart(),
       Scalar("v1"),
       Scalar("v2"),
-      SequenceEnd(),
+      SequenceEnd,
       SequenceStart(),
       Scalar("v3"),
       Scalar("v4"),
-      SequenceEnd(),
-      SequenceEnd(),
+      SequenceEnd,
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("sequence-of-mappings") {
@@ -65,26 +65,26 @@ class SequenceSuite extends BaseParseSuite:
                    |""".stripMargin
 
     val expectedEvents = List(
-      Event.StreamStart,
-      Event.DocumentStart(),
-      Event.SequenceStart(),
-      Event.MappingStart(),
-      Event.Scalar("name"),
-      Event.Scalar("Mark McGwire"),
-      Event.Scalar("hr"),
-      Event.Scalar("65"),
-      Event.MappingEnd(),
-      Event.MappingStart(),
-      Event.Scalar("name"),
-      Event.Scalar("Sammy Sosa"),
-      Event.Scalar("hr"),
-      Event.Scalar("63"),
-      Event.MappingEnd(),
-      Event.SequenceEnd(),
-      Event.DocumentEnd(),
-      Event.StreamEnd
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      MappingStart(),
+      Scalar("name"),
+      Scalar("Mark McGwire"),
+      Scalar("hr"),
+      Scalar("65"),
+      MappingEnd,
+      MappingStart(),
+      Scalar("name"),
+      Scalar("Sammy Sosa"),
+      Scalar("hr"),
+      Scalar("63"),
+      MappingEnd,
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("indentation sequence") {
@@ -101,12 +101,12 @@ class SequenceSuite extends BaseParseSuite:
       SequenceStart(),
       Scalar("name iscsipd1-rw"),
       Scalar("name iscsipd2-rw"),
-      SequenceEnd(),
-      MappingEnd(),
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("indentation less sequence") {
@@ -125,19 +125,19 @@ class SequenceSuite extends BaseParseSuite:
       SequenceStart(),
       Scalar("name iscsipd1-rw"),
       Scalar("name iscsipd2-rw"),
-      SequenceEnd(),
+      SequenceEnd,
       Scalar("volumes"),
       SequenceStart(),
       MappingStart(),
       Scalar("name"),
       Scalar("iscsipd3-rw"),
-      MappingEnd(),
-      SequenceEnd(),
-      MappingEnd(),
+      MappingEnd,
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("empty flow sequence") {
@@ -147,11 +147,11 @@ class SequenceSuite extends BaseParseSuite:
       StreamStart,
       DocumentStart(),
       SequenceStart(),
-      SequenceEnd(),
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("empty nested flow sequence") {
@@ -162,12 +162,12 @@ class SequenceSuite extends BaseParseSuite:
       DocumentStart(),
       SequenceStart(),
       SequenceStart(),
-      SequenceEnd(),
-      SequenceEnd(),
+      SequenceEnd,
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("empty flow sequence with empty flow mapping") {
@@ -178,12 +178,12 @@ class SequenceSuite extends BaseParseSuite:
       DocumentStart(),
       SequenceStart(),
       FlowMappingStart(),
-      FlowMappingEnd(),
-      SequenceEnd(),
+      FlowMappingEnd,
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("sequence of host:port") {
@@ -201,22 +201,22 @@ class SequenceSuite extends BaseParseSuite:
       SequenceStart(),
       Scalar("10.0.1.16:3260"),
       Scalar("10.0.1.17:3260"),
-      SequenceEnd(),
+      SequenceEnd,
       Scalar("portalsSingleQouta"),
       SequenceStart(),
       Scalar("10.0.2.16:3260", ScalarStyle.SingleQuoted),
       Scalar("10.0.2.17:3260", ScalarStyle.SingleQuoted),
-      SequenceEnd(),
+      SequenceEnd,
       Scalar("portalsDoubleQouta"),
       SequenceStart(),
       Scalar("10.0.3.16:3260", ScalarStyle.DoubleQuoted),
       Scalar("10.0.3.17:3260", ScalarStyle.DoubleQuoted),
-      SequenceEnd(),
-      MappingEnd(),
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("flow sequence with single pair") {
@@ -232,16 +232,16 @@ class SequenceSuite extends BaseParseSuite:
       SequenceStart(),
       SequenceStart(),
       Scalar("nested"),
-      SequenceEnd(),
+      SequenceEnd,
       MappingStart(),
       Scalar("single"),
       Scalar("pair"),
-      MappingEnd(),
-      SequenceEnd(),
+      MappingEnd,
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("spec flow sequence") {
@@ -255,11 +255,11 @@ class SequenceSuite extends BaseParseSuite:
       DocumentStart(),
       SequenceStart(),
       Scalar("double quoted", ScalarStyle.DoubleQuoted),
-      SequenceEnd(),
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("sequence with comma in value") {
@@ -273,9 +273,9 @@ class SequenceSuite extends BaseParseSuite:
       DocumentStart(),
       SequenceStart(),
       Scalar("Up, up, and away!"),
-      SequenceEnd(),
+      SequenceEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }

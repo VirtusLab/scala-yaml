@@ -1,9 +1,10 @@
-package org.virtuslab.yaml.parser
+package org.virtuslab.yaml
+package parser
 
-import org.virtuslab.yaml.internal.load.parse.Event._
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
 
-class CommentSpec extends BaseParseSuite:
+class CommentSpec extends BaseYamlSuite:
 
   test("ignore comment") {
     val yaml =
@@ -18,11 +19,11 @@ class CommentSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("apiVersion"),
       Scalar("apps/v1  app"),
-      MappingEnd(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("empty document") {
@@ -33,7 +34,7 @@ class CommentSpec extends BaseParseSuite:
       StreamStart,
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 
   test("comments in mapping") {
@@ -54,10 +55,10 @@ class CommentSpec extends BaseParseSuite:
       MappingStart(),
       Scalar("type"),
       Scalar("NodePort"),
-      MappingEnd(),
-      MappingEnd(),
+      MappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
-    assertEventsEquals(yaml.events, expectedEvents)
+    assertEquals(yaml.events, Right(expectedEvents))
   }
