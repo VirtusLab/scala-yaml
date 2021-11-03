@@ -200,7 +200,7 @@ class MappingSuite extends BaseParseSuite:
       DocumentEnd(),
       StreamEnd
     )
-    
+
     assertEventsEquals(yaml.events, expectedEvents)
   }
 

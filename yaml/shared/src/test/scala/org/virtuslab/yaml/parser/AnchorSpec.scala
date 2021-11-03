@@ -126,7 +126,6 @@ class AnchorSpec extends BaseParseSuite:
     assertEventsEquals(yaml.events, expectedEvents)
   }
 
-
   test("anchor & alias".ignore) {
     val yaml =
       s"""|---
@@ -137,7 +136,6 @@ class AnchorSpec extends BaseParseSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-
       DocumentEnd(),
       StreamEnd
     )
@@ -159,7 +157,6 @@ class AnchorSpec extends BaseParseSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-
       DocumentEnd(),
       StreamEnd
     )

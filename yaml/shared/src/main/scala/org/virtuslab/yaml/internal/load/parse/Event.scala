@@ -31,7 +31,6 @@ object Event:
 
   sealed trait Node extends Event
 
-
   final case class Alias(id: String, pos: Option[Position] = None) extends Event
 
   final case class Scalar(
@@ -41,12 +40,15 @@ object Event:
       anchor: Option[String] = None
   ) extends Node
 
-  sealed trait Sequence                                  extends Node
-  case class SequenceStart(pos: Option[Position] = None, anchor: Option[String] = None) extends Sequence
-  case class SequenceEnd(pos: Option[Position] = None)   extends Sequence
+  sealed trait Sequence extends Node
+  case class SequenceStart(pos: Option[Position] = None, anchor: Option[String] = None)
+      extends Sequence
+  case class SequenceEnd(pos: Option[Position] = None) extends Sequence
 
-  sealed trait Mapping                                      extends Node
-  case class MappingStart(pos: Option[Position] = None, anchor: Option[String] = None)     extends Mapping
-  case class MappingEnd(pos: Option[Position] = None)       extends Mapping
-  case class FlowMappingStart(pos: Option[Position] = None, anchor: Option[String] = None) extends Mapping
-  case class FlowMappingEnd(pos: Option[Position] = None)   extends Mapping
+  sealed trait Mapping extends Node
+  case class MappingStart(pos: Option[Position] = None, anchor: Option[String] = None)
+      extends Mapping
+  case class MappingEnd(pos: Option[Position] = None) extends Mapping
+  case class FlowMappingStart(pos: Option[Position] = None, anchor: Option[String] = None)
+      extends Mapping
+  case class FlowMappingEnd(pos: Option[Position] = None) extends Mapping

@@ -254,7 +254,9 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         productions.prependAll(ParseFlowNode :: Nil)
         getNextEventImpl()
       case TokenKind.Scalar(_, _) =>
-        productions.prependAll(ParseFlowNode :: ParseFlowMappingComma :: ParseFlowMappingEntry :: Nil)
+        productions.prependAll(
+          ParseFlowNode :: ParseFlowMappingComma :: ParseFlowMappingEntry :: Nil
+        )
         parseFlowNode()
       case _ =>
         getNextEventImpl()
@@ -341,8 +343,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
 
       nextToken.kind match
         case TokenKind.Alias(alias) =>
-          if anchor.isDefined then
-            Left(ParseError.from("Alias cannot have an anchor", nextToken))
+          if anchor.isDefined then Left(ParseError.from("Alias cannot have an anchor", nextToken))
           else
             in.popToken()
             Right(Event.Alias(alias))
