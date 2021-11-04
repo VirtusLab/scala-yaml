@@ -25,10 +25,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   override def popToken(): Token = ctx.tokens.removeHead()
 
   private def getToken(): Token =
-    ctx.tokens.append(getNextTokens())
+    ctx.tokens.appendAll(getNextTokens())
     ctx.tokens.head
 
-  private def getNextTokens(): Token =
+  private def getNextTokens(): List[Token] =
     skipUntilNextToken()
     ctx.checkIndents(in.column)
     val peeked = in.peek()
@@ -41,14 +41,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('{')                        => parseFlowMappingStart()
       case Some('}')                        => parseFlowMappingEnd()
       case Some('&')                        => parseAnchor()
-      case Some('*')                        => parseAlias()
       case Some(',') =>
         in.skipCharacter()
-        Token(Comma, in.pos)
+        List(Token(Comma, in.pos))
       case Some(_) => fetchValue()
       case None =>
         ctx.checkIndents(-1)
-        Token(StreamEnd, in.pos)
+        List(Token(StreamEnd, in.pos))
 
   private def isDocumentStart =
     in.peekN(3) == "---" && in.peek(3).exists(_.isWhitespace)
@@ -67,30 +66,30 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   private def parseFlowSequenceStart() =
     in.skipCharacter()
     ctx.enterFlowSequence
-    Token(FlowSequenceStart, in.pos)
+    List(Token(FlowSequenceStart, in.pos))
 
   private def parseFlowSequenceEnd() =
     in.skipCharacter()
     ctx.leaveFlowSequence
-    Token(FlowSequenceEnd, in.pos)
+    List(Token(FlowSequenceEnd, in.pos))
 
   private def parseFlowMappingStart() =
     in.skipCharacter()
     ctx.enterFlowMapping
-    Token(FlowMappingStart, in.pos)
+    List(Token(FlowMappingStart, in.pos))
 
   private def parseFlowMappingEnd() =
     in.skipCharacter()
     ctx.leaveFlowMapping
-    Token(FlowMappingEnd, in.pos)
+    List(Token(FlowMappingEnd, in.pos))
 
   private def parseBlockSequence() =
     if (!ctx.isInFlowCollection && ctx.indent < in.column) then
       ctx.addIndent(in.column)
-      Token(SequenceStart, in.pos)
+      List(Token(SequenceStart, in.pos))
     else
       in.skipCharacter()
-      Token(SequenceValue, in.pos)
+      List(Token(SequenceValue, in.pos))
 
   private def parseAnchorName(): (String, Position) =
     val invalidChars = Set('[', ']', '{', '}', ',')
@@ -109,9 +108,20 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val name = readAnchorName()
     (name, pos)
 
-  private def parseAnchor() =
-    val (name, pos) = parseAnchorName()
-    Token(Anchor(name), pos)
+  private def parseAnchor(): List[Token] =
+    val (name, anchorPos) = parseAnchorName()
+    val nexTokens         = getNextTokens()
+
+    val anchorToken = Token(Anchor(name), anchorPos)
+    nexTokens match {
+      case Token(_: MappingStart.type, _) :: Token(_: MappingKey.type, _) :: rest =>
+        ctx.removeLastIndent()
+        ctx.addIndent(anchorPos.column)
+        nexTokens.take(2) ::: anchorToken +: rest
+      case Token(_: MappingKey.type, _) :: rest if ctx.indent == anchorPos.column =>
+        nexTokens.take(1) ::: anchorToken +: rest
+      case _ => List(anchorToken) ::: nexTokens
+    }
 
   private def parseAlias() =
     val (name, pos) = parseAnchorName()
@@ -305,7 +315,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     Token(Scalar(scalar.trim, ScalarStyle.Plain), pos)
   }
 
-  private def fetchValue(): Token =
+  private def fetchValue(): List[Token] =
     skipUntilNextToken()
     val peeked = in.peek()
     val scalar: Token = peeked match
@@ -313,6 +323,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('\'') => parseSingleQuoteValue()
       case Some('>')  => parseFoldedValue()
       case Some('|')  => parseLiteral()
+      case Some('*')  => parseAlias()
       case _          => parseScalarValue()
 
     skipUntilNextToken()
@@ -320,18 +331,17 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     peeked2 match
       case Some(':') =>
         in.skipCharacter()
-        if (ctx.indent < scalar.pos.column && !ctx.isInFlowCollection) then
-          ctx.addIndent(scalar.pos.column)
-          ctx.tokens.appendAll(List(Token(MappingStart, scalar.pos)))
+        val maybeMappingStart =
+          if (ctx.indent < scalar.pos.column && !ctx.isInFlowCollection) then
+            ctx.addIndent(scalar.pos.column)
+            List(Token(MappingStart, scalar.pos))
+          else Nil
 
-        ctx.tokens.appendAll(
-          List(
-            Token(MappingKey, scalar.pos),
-            scalar
-          )
+        maybeMappingStart :+ Token(MappingKey, scalar.pos) :+ scalar :+ Token(
+          MappingValue,
+          scalar.pos
         )
-        Token(MappingValue, scalar.pos)
-      case _ => scalar
+      case _ => List(scalar)
 
   def skipUntilNextToken(): Unit =
     while (in.isWhitespace) do in.skipCharacter()

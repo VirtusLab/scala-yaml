@@ -35,8 +35,7 @@ class AnchorSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  // need improvement in tokenizer
-  test("in mapping but with keys aliased".ignore) {
+  test("in mapping but with keys aliased") {
     val yaml =
       s"""|&a a: &b b
           |*b : *a
@@ -48,8 +47,8 @@ class AnchorSpec extends BaseYamlSuite:
       MappingStart(),
       Scalar("a", metadata = NodeEventMetadata(Anchor("a"))),
       Scalar("b", metadata = NodeEventMetadata(Anchor("b"))),
-      Alias(Anchor("a")),
       Alias(Anchor("b")),
+      Alias(Anchor("a")),
       MappingEnd,
       DocumentEnd(),
       StreamEnd

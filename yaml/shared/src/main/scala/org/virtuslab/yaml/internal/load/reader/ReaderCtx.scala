@@ -18,6 +18,7 @@ case class ReaderCtx(reader: Reader) {
 
   def indent: Int                     = indentations.lastOption.getOrElse(-1)
   def addIndent(newIndent: Int): Unit = indentations.append(newIndent)
+  def removeLastIndent(): Unit        = indentations.removeLast()
 
   def checkIndents(current: Int): Unit =
     if current < indent then
@@ -40,13 +41,13 @@ case class ReaderCtx(reader: Reader) {
   def isInFlowSequence: Boolean   = flowSequenceLevel > 0
   def isInFlowCollection: Boolean = isInFlowMapping || isInFlowSequence
 
-  def parseDocumentStart(indent: Int): Token =
+  def parseDocumentStart(indent: Int): List[Token] =
     checkIndents(-1)
-    Token(DocumentStart, reader.pos)
+    List(Token(DocumentStart, reader.pos))
 
-  def parseDocumentEnd(): Token =
+  def parseDocumentEnd(): List[Token] =
     checkIndents(-1)
-    Token(DocumentEnd, reader.pos)
+    List(Token(DocumentEnd, reader.pos))
 }
 
 object ReaderCtx:

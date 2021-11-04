@@ -332,6 +332,11 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         case TokenKind.Scalar(value, style) =>
           in.popToken()
           Right(Event(EventKind.Scalar(value, style, NodeEventMetadata(anchor)), pos))
+        case TokenKind.Alias(alias) =>
+          if anchor.isDefined then Left(ParseError.from("Alias cannot have an anchor", nextToken))
+          else
+            in.popToken()
+            Right(Event(EventKind.Alias(Anchor(alias)), nextToken.pos))
         case _ =>
           Left(ParseError.from(TokenKind.Scalar.toString, token))
 
