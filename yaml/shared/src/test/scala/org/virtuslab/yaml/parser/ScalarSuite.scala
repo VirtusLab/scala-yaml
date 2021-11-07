@@ -52,6 +52,26 @@ class ScalarSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
+  test("folded value with clip indicator") {
+    val yaml =
+      s"""|- >
+          |  block
+          |- plain again
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("block\\n", ScalarStyle.Folded),
+      Scalar("plain again"),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
   test("unescaped colon") {
     val yaml =
       s"""|targetPortal: 10.0.2.15:3260:1221:1221

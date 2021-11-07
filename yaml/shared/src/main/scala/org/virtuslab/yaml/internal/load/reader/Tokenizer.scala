@@ -242,8 +242,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           } else {
             in.skipCharacter()
             skipUntilNextIndent(foldedIndent)
-            if (in.column != foldedIndent || in.peek() == None) then sb.result()
-            else
+            if (in.column != foldedIndent || in.peek() == None) then {
+              sb.append("\n")
+              sb.result()
+            } else
               sb.append(" ")
               readFolded()
           }
