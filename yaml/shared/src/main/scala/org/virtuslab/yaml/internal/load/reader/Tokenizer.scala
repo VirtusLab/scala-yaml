@@ -166,6 +166,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       in.skipCharacter()
     }
 
+    if (in.peek() == Some('#'))
+      skipComment()
+
     if in.isNewline then
       in.skipCharacter()
       parseBlockHeader()
