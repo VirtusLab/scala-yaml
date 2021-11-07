@@ -198,11 +198,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     in.skipCharacter() // skip |
     val indentationIndicator: Option[Int] = parseIndentationIndicator()
     val chompingIndicator                 = parseChompingIndicator()
+    val indentation =
+      if (indentationIndicator.isEmpty) parseIndentationIndicator() else indentationIndicator
 
     parseBlockHeader()
-    if (indentationIndicator.isEmpty) skipUntilNextChar()
+    if (indentation.isEmpty) skipUntilNextChar()
 
-    val foldedIndent = in.column
+    val foldedIndent = indentation.getOrElse(in.column)
     skipUntilNextIndent(foldedIndent)
 
     @tailrec
@@ -229,10 +231,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     in.skipCharacter() // skip >
     val indentationIndicator: Option[Int] = parseIndentationIndicator()
     val chompingIndicator                 = parseChompingIndicator()
+    val indentation =
+      if (indentationIndicator.isEmpty) parseIndentationIndicator() else indentationIndicator
 
     parseBlockHeader()
-    if (indentationIndicator.isEmpty) skipUntilNextChar()
-    val foldedIndent = indentationIndicator.getOrElse(in.column)
+    if (indentation.isEmpty) skipUntilNextChar()
+    val foldedIndent = indentation.getOrElse(in.column)
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =

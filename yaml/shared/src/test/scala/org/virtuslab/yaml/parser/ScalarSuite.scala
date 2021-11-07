@@ -89,6 +89,26 @@ class ScalarSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
+  test("indent literal") {
+    val yaml =
+      s"""|- |2-
+          |  explicit indent and chomp
+          |- |-2
+          |  chomp and explicit indent""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("explicit indent and chomp", ScalarStyle.Literal),
+      Scalar("chomp and explicit indent", ScalarStyle.Literal),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
   test("folded value with indentation indicator") {
     val yaml =
       s"""|- >1 # Indentation indicator↓
