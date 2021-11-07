@@ -101,11 +101,11 @@ class AnchorSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  test("anchor in flow collections".ignore) {
+  test("anchor in flow collections") {
     val yaml =
       s"""|{
-          |  a : &b b,
-          |  seq: [a, *b]
+          |  &a a : &b b,
+          |  seq: [*a, *b]
           |}""".stripMargin
 
     val expectedEvents = List(
@@ -127,23 +127,7 @@ class AnchorSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  test("anchor & alias".ignore) {
-    val yaml =
-      s"""|---
-          |a: &anchor
-          |b: *anchor
-          |""".stripMargin
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEquals(yaml.events, Right(expectedEvents))
-  }
-
-  test("anchor & alias".ignore) {
+  test("anchor & alias") {
     val yaml =
       s"""|---
           |hr:
@@ -157,7 +141,19 @@ class AnchorSpec extends BaseYamlSuite:
 
     val expectedEvents = List(
       StreamStart,
-      DocumentStart(),
+      DocumentStart(explicit = true),
+      MappingStart(),
+      Scalar("hr"),
+      SequenceStart(),
+      Scalar("Mark McGwire"),
+      Scalar("Sammy Sosa", metadata = NodeEventMetadata(Anchor("SS"))),
+      SequenceEnd,
+      Scalar("rbi"),
+      SequenceStart(),
+      Alias(Anchor("SS")),
+      Scalar("Ken Griffey"),
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )

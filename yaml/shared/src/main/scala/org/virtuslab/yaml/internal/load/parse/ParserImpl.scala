@@ -252,7 +252,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case TokenKind.FlowSequenceStart =>
         productions.prependAll(ParseFlowNode :: Nil)
         getNextEventImpl()
-      case TokenKind.Scalar(_, _) =>
+      case TokenKind.Scalar(_, _) | _: TokenKind.Anchor =>
         productions.prependAll(
           ParseFlowNode :: ParseFlowMappingComma :: ParseFlowMappingEntry :: Nil
         )
@@ -292,7 +292,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
 
     def parseFlowSeqEntryOpt() = token.kind match
       case TokenKind.FlowMappingStart | TokenKind.FlowSequenceStart | _: TokenKind.Scalar |
-          TokenKind.MappingKey =>
+          _: TokenKind.Alias | TokenKind.MappingKey =>
         productions.prependAll(ParseFlowSeqEntry :: Nil)
         getNextEventImpl()
       case _ =>

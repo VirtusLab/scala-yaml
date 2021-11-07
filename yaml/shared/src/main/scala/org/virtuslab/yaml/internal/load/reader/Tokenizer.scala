@@ -114,11 +114,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
     val anchorToken = Token(Anchor(name), anchorPos)
     nexTokens match {
-      case Token(_: MappingStart.type, _) :: Token(_: MappingKey.type, _) :: rest =>
+      case (Token(_: MappingStart.type, _) |
+          Token(_: FlowMappingStart.type, _)) :: Token(_: MappingKey.type, _) :: rest =>
         ctx.removeLastIndent()
         ctx.addIndent(anchorPos.column)
         nexTokens.take(2) ::: anchorToken +: rest
-      case Token(_: MappingKey.type, _) :: rest if ctx.indent == anchorPos.column =>
+      case Token(_: MappingKey.type, _) :: rest
+          if (ctx.indent == anchorPos.column || ctx.isInFlowCollection) =>
         nexTokens.take(1) ::: anchorToken +: rest
       case _ => List(anchorToken) ::: nexTokens
     }
