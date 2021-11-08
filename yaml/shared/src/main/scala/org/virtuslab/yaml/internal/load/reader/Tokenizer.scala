@@ -30,9 +30,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def getNextTokens(): List[Token] =
     skipUntilNextToken()
-    ctx.checkIndents(in.column)
-    val peeked = in.peek()
-    peeked match
+    val closedTokens = ctx.checkIndents(in.column)
+    val peeked       = in.peek()
+    val tokens = peeked match
       case Some('-') if isDocumentStart     => parseDocumentStart()
       case Some('-') if in.isNextWhitespace => parseBlockSequence()
       case Some('.') if isDocumentEnd       => parseDocumentEnd()
@@ -46,8 +46,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         List(Token(Comma, in.pos))
       case Some(_) => fetchValue()
       case None =>
-        ctx.checkIndents(-1)
-        List(Token(StreamEnd, in.pos))
+        ctx.checkIndents(-1) ++ List(Token(StreamEnd, in.pos))
+
+    closedTokens ++ tokens
 
   private def isDocumentStart =
     in.peekN(3) == "---" && in.peek(3).exists(_.isWhitespace)
@@ -339,9 +340,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
             List(Token(MappingStart, scalar.pos))
           else Nil
 
-        maybeMappingStart :+ Token(MappingKey, scalar.pos) :+ scalar :+ Token(
-          MappingValue,
-          scalar.pos
+        maybeMappingStart ++ List(
+          Token(MappingKey, scalar.pos),
+          scalar,
+          Token(
+            MappingValue,
+            scalar.pos
+          )
         )
       case _ => List(scalar)
 

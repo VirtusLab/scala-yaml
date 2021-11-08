@@ -132,10 +132,10 @@ class AnchorSpec extends BaseYamlSuite:
       s"""|---
           |hr:
           |  - Mark McGwire
-          |  # Following node labeled SS
-          |  - &SS Sammy Sosa
+          |  # Following node labeled anchor
+          |  - &anchor Sammy Sosa
           |rbi:
-          |  - *SS # Subsequent occurrence
+          |  - *anchor # Subsequent occurrence
           |  - Ken Griffey
           |""".stripMargin
 
@@ -146,11 +146,11 @@ class AnchorSpec extends BaseYamlSuite:
       Scalar("hr"),
       SequenceStart(),
       Scalar("Mark McGwire"),
-      Scalar("Sammy Sosa", metadata = NodeEventMetadata(Anchor("SS"))),
+      Scalar("Sammy Sosa", metadata = NodeEventMetadata(Anchor("anchor"))),
       SequenceEnd,
       Scalar("rbi"),
       SequenceStart(),
-      Alias(Anchor("SS")),
+      Alias(Anchor("anchor")),
       Scalar("Ken Griffey"),
       SequenceEnd,
       MappingEnd,
