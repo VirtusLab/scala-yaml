@@ -35,8 +35,7 @@ class AnchorSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  // need improvement in tokenizer
-  test("in mapping but with keys aliased".ignore) {
+  test("in mapping but with keys aliased") {
     val yaml =
       s"""|&a a: &b b
           |*b : *a
@@ -48,8 +47,8 @@ class AnchorSpec extends BaseYamlSuite:
       MappingStart(),
       Scalar("a", metadata = NodeEventMetadata(Anchor("a"))),
       Scalar("b", metadata = NodeEventMetadata(Anchor("b"))),
-      Alias(Anchor("a")),
       Alias(Anchor("b")),
+      Alias(Anchor("a")),
       MappingEnd,
       DocumentEnd(),
       StreamEnd
@@ -102,11 +101,11 @@ class AnchorSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  test("anchor in flow collections".ignore) {
+  test("anchor in flow collections") {
     val yaml =
       s"""|{
-          |  a : &b b,
-          |  seq: [a, *b]
+          |  &a a : &b b,
+          |  seq: [*a, *b]
           |}""".stripMargin
 
     val expectedEvents = List(
@@ -128,37 +127,33 @@ class AnchorSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  test("anchor & alias".ignore) {
-    val yaml =
-      s"""|---
-          |a: &anchor
-          |b: *anchor
-          |""".stripMargin
-
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEquals(yaml.events, Right(expectedEvents))
-  }
-
-  test("anchor & alias".ignore) {
+  test("anchor & alias") {
     val yaml =
       s"""|---
           |hr:
           |  - Mark McGwire
-          |  # Following node labeled SS
-          |  - &SS Sammy Sosa
+          |  # Following node labeled anchor
+          |  - &anchor Sammy Sosa
           |rbi:
-          |  - *SS # Subsequent occurrence
+          |  - *anchor # Subsequent occurrence
           |  - Ken Griffey
           |""".stripMargin
 
     val expectedEvents = List(
       StreamStart,
-      DocumentStart(),
+      DocumentStart(explicit = true),
+      MappingStart(),
+      Scalar("hr"),
+      SequenceStart(),
+      Scalar("Mark McGwire"),
+      Scalar("Sammy Sosa", metadata = NodeEventMetadata(Anchor("anchor"))),
+      SequenceEnd,
+      Scalar("rbi"),
+      SequenceStart(),
+      Alias(Anchor("anchor")),
+      Scalar("Ken Griffey"),
+      SequenceEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )

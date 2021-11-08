@@ -252,7 +252,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       case TokenKind.FlowSequenceStart =>
         productions.prependAll(ParseFlowNode :: Nil)
         getNextEventImpl()
-      case TokenKind.Scalar(_, _) =>
+      case TokenKind.Scalar(_, _) | _: TokenKind.Anchor =>
         productions.prependAll(
           ParseFlowNode :: ParseFlowMappingComma :: ParseFlowMappingEntry :: Nil
         )
@@ -292,7 +292,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
 
     def parseFlowSeqEntryOpt() = token.kind match
       case TokenKind.FlowMappingStart | TokenKind.FlowSequenceStart | _: TokenKind.Scalar |
-          TokenKind.MappingKey =>
+          _: TokenKind.Alias | TokenKind.MappingKey =>
         productions.prependAll(ParseFlowSeqEntry :: Nil)
         getNextEventImpl()
       case _ =>
@@ -332,6 +332,11 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         case TokenKind.Scalar(value, style) =>
           in.popToken()
           Right(Event(EventKind.Scalar(value, style, NodeEventMetadata(anchor)), pos))
+        case TokenKind.Alias(alias) =>
+          if anchor.isDefined then Left(ParseError.from("Alias cannot have an anchor", nextToken))
+          else
+            in.popToken()
+            Right(Event(EventKind.Alias(Anchor(alias)), nextToken.pos))
         case _ =>
           Left(ParseError.from(TokenKind.Scalar.toString, token))
 
