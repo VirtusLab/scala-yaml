@@ -166,9 +166,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       in.skipCharacter()
     }
 
-    if in.isNewline then
-      in.skipCharacter()
-      parseBlockHeader()
+    if (in.peek() == Some('#'))
+      skipComment()
+
+    if in.isNewline then in.skipCharacter()
 
   /**
    * final break interpretation - https://yaml.org/spec/1.2/#b-chomped-last(t)
@@ -183,16 +184,27 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         BlockChompingIndicator.Keep
       case _ => BlockChompingIndicator.Clip
 
+  private def parseIndentationIndicator(): Option[Int] =
+    in.peek() match
+      case Some(number) if number.isDigit =>
+        in.skipCharacter()
+        Some(number.asDigit)
+      case _ => None
+
   private def parseLiteral(): Token =
     val sb = new StringBuilder
 
     val pos = in.pos
     in.skipCharacter() // skip |
-    val chompingIndicator = parseChompingIndicator()
+    val indentationIndicator: Option[Int] = parseIndentationIndicator()
+    val chompingIndicator                 = parseChompingIndicator()
+    val indentation =
+      if (indentationIndicator.isEmpty) parseIndentationIndicator() else indentationIndicator
 
     parseBlockHeader()
+    if (indentation.isEmpty) skipUntilNextChar()
 
-    val foldedIndent = in.column
+    val foldedIndent = indentation.getOrElse(in.column)
     skipUntilNextIndent(foldedIndent)
 
     @tailrec
@@ -217,10 +229,14 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
     val pos = in.pos
     in.skipCharacter() // skip >
-    val chompingIndicator = parseChompingIndicator()
+    val indentationIndicator: Option[Int] = parseIndentationIndicator()
+    val chompingIndicator                 = parseChompingIndicator()
+    val indentation =
+      if (indentationIndicator.isEmpty) parseIndentationIndicator() else indentationIndicator
 
     parseBlockHeader()
-    val foldedIndent = in.column
+    if (indentation.isEmpty) skipUntilNextChar()
+    val foldedIndent = indentation.getOrElse(in.column)
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
@@ -242,8 +258,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           } else {
             in.skipCharacter()
             skipUntilNextIndent(foldedIndent)
-            if (in.column != foldedIndent || in.peek() == None) then sb.result()
-            else
+            if (in.column != foldedIndent || in.peek() == None) then {
+              sb.append("\n")
+              sb.result()
+            } else
               sb.append(" ")
               readFolded()
           }

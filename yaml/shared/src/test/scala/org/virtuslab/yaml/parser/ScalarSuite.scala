@@ -52,6 +52,80 @@ class ScalarSpec extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
+  test("folded value with clip indicator") {
+    val yaml =
+      s"""|- >
+          |  block
+          |- plain again
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("block\\n", ScalarStyle.Folded),
+      Scalar("plain again"),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("folded value comment") {
+    val yaml =
+      s"""|- | # Empty header↓
+          | literal""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("literal", ScalarStyle.Literal),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("indent literal") {
+    val yaml =
+      s"""|- |2-
+          |  explicit indent and chomp
+          |- |-2
+          |  chomp and explicit indent""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("explicit indent and chomp", ScalarStyle.Literal),
+      Scalar("chomp and explicit indent", ScalarStyle.Literal),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("folded value with indentation indicator") {
+    val yaml =
+      s"""|- >1 # Indentation indicator↓
+          |  folded""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar(" folded", ScalarStyle.Folded),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
   test("unescaped colon") {
     val yaml =
       s"""|targetPortal: 10.0.2.15:3260:1221:1221
