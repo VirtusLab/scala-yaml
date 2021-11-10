@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.Node
-import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 /** 
@@ -13,14 +13,14 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
  * sequence ::= SEQUENCE-START node* SEQUENCE-END
  * mapping ::= MAPPING-START (node node)* MAPPING-END
  */
-final case class Event(kind: EventKind, pos: Option[Position])
+final case class Event(kind: EventKind, pos: Option[Range])
 object Event:
   import EventKind.*
 
   val streamStart = Event(StreamStart, None)
   val streamEnd   = Event(StreamEnd, None)
 
-  def apply(kind: EventKind, pos: Position): Event = Event(kind, Some(pos))
+  def apply(kind: EventKind, pos: Range): Event = Event(kind, Some(pos))
 
 enum EventKind:
   case StreamStart

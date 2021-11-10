@@ -6,7 +6,18 @@ import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 
+import scala.util.{Failure, Success, Try}
+
 trait BaseYamlSuite extends munit.FunSuite {
+
+  def assertTokenEquals(
+      obtainedTokens: Either[YamlError, List[TokenKind]],
+      expectedTokens: List[TokenKind]
+  ) =
+    obtainedTokens match {
+      case Left(value)   => fail(value.msg)
+      case Right(tokens) => assertEquals(tokens, expectedTokens)
+    }
 
   extension (yaml: String)
     def events: Either[YamlError, List[EventKind]] = {
@@ -14,16 +25,15 @@ trait BaseYamlSuite extends munit.FunSuite {
       ParserImpl(reader).getEvents().map(_.map(_.kind))
     }
 
-    def tokens: List[TokenKind] =
+    def tokens: Either[YamlError, List[TokenKind]] =
       val reader = Scanner(yaml)
-      val tokens = scala.collection.mutable.ArrayDeque[TokenKind]()
-      def loop(): List[TokenKind] =
-        val t = reader.peekToken().kind
-        if t == TokenKind.StreamEnd then tokens.toList
-        else
-          tokens.append(reader.popToken().kind)
-          loop()
-      loop()
+      def loop(tokens: List[TokenKind]): Either[YamlError, List[TokenKind]] =
+        reader.peekToken().flatMap { t =>
+          if t.kind == TokenKind.StreamEnd then Right(tokens.toList)
+          else loop(tokens :+ reader.popToken().kind)
+        }
+
+      loop(Nil)
 
     def debugTokens: Unit = pprint.pprintln(tokens)
 

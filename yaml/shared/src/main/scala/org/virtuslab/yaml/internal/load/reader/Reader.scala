@@ -4,6 +4,7 @@ import scala.annotation.tailrec
 import scala.util.Try
 
 import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.Range
 
 trait Reader:
   def read(): Char
@@ -22,6 +23,7 @@ trait Reader:
   def column: Int
   def offset: Int
   def pos: Position
+  def range: Range
 
 private[yaml] class StringReader(in: String) extends Reader:
   var line: Int   = 0
@@ -29,7 +31,8 @@ private[yaml] class StringReader(in: String) extends Reader:
   var offset: Int = 0
   val lines       = in.split("\n", -1).toVector
 
-  override def pos = Position(offset, line, column, lines)
+  override def pos   = Position(offset, line, column)
+  override def range = Range(pos, lines)
 
   override def peek(n: Int = 0): Option[Char] =
     if offset + n < in.length then Some(in.charAt(offset + n))

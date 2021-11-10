@@ -3,7 +3,9 @@ package org.virtuslab.yaml.internal.load.reader
 import scala.annotation.tailrec
 import scala.util.Try
 
-import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.Range
+import org.virtuslab.yaml.ScannerError
+import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator
 import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator.*
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
@@ -11,7 +13,7 @@ import org.virtuslab.yaml.internal.load.reader.token.Token
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
 
 trait Tokenizer:
-  def peekToken(): Token
+  def peekToken(): Either[YamlError, Token]
   def popToken(): Token
 
 private[yaml] class Scanner(str: String) extends Tokenizer {
@@ -19,9 +21,14 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   private val ctx = ReaderCtx(str)
   private val in  = ctx.reader
 
-  override def peekToken(): Token = ctx.tokens.headOption match
-    case Some(token) => token
-    case None        => getToken()
+  override def peekToken(): Either[YamlError, Token] = ctx.tokens.headOption match
+    case Some(token) => Right(token)
+    case None =>
+      try {
+        Right(getToken())
+      } catch {
+        case e: ScannerError => Left(e)
+      }
 
   override def popToken(): Token = ctx.tokens.removeHead()
 
@@ -44,10 +51,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('&')                        => parseAnchor()
       case Some(',') =>
         in.skipCharacter()
-        List(Token(Comma, in.pos))
+        List(Token(Comma, in.range))
       case Some(_) => fetchValue()
       case None =>
-        ctx.checkIndents(-1) ++ List(Token(StreamEnd, in.pos))
+        ctx.checkIndents(-1) ++ List(Token(StreamEnd, in.range))
 
     closedTokens ++ tokens
 
@@ -68,32 +75,32 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   private def parseFlowSequenceStart() =
     in.skipCharacter()
     ctx.enterFlowSequence
-    List(Token(FlowSequenceStart, in.pos))
+    List(Token(FlowSequenceStart, in.range))
 
   private def parseFlowSequenceEnd() =
     in.skipCharacter()
     ctx.leaveFlowSequence
-    List(Token(FlowSequenceEnd, in.pos))
+    List(Token(FlowSequenceEnd, in.range))
 
   private def parseFlowMappingStart() =
     in.skipCharacter()
     ctx.enterFlowMapping
-    List(Token(FlowMappingStart, in.pos))
+    List(Token(FlowMappingStart, in.range))
 
   private def parseFlowMappingEnd() =
     in.skipCharacter()
     ctx.leaveFlowMapping
-    List(Token(FlowMappingEnd, in.pos))
+    List(Token(FlowMappingEnd, in.range))
 
   private def parseBlockSequence() =
     if (!ctx.isInFlowCollection && ctx.indent < in.column) then
       ctx.addIndent(in.column)
-      List(Token(SequenceStart, in.pos))
+      List(Token(SequenceStart, in.range))
     else
       in.skipCharacter()
-      List(Token(SequenceValue, in.pos))
+      List(Token(SequenceValue, in.range))
 
-  private def parseAnchorName(): (String, Position) =
+  private def parseAnchorName(): (String, Range) =
     val invalidChars = Set('[', ']', '{', '}', ',')
     val sb           = new StringBuilder
 
@@ -105,10 +112,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readAnchorName()
         case _ => sb.result()
 
-    val pos = in.pos
+    val range = in.range
     in.skipCharacter()
     val name = readAnchorName()
-    (name, pos)
+    (name, range)
 
   private def parseAnchor(): List[Token] =
     val (name, anchorPos) = parseAnchorName()
@@ -119,10 +126,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case (Token(_: MappingStart.type, _) |
           Token(_: FlowMappingStart.type, _)) :: Token(_: MappingKey.type, _) :: rest =>
         ctx.removeLastIndent()
-        ctx.addIndent(anchorPos.column)
+        ctx.addIndent(anchorPos.start.column)
         nexTokens.take(2) ::: anchorToken +: rest
       case Token(_: MappingKey.type, _) :: rest
-          if (ctx.indent == anchorPos.column || ctx.isInFlowCollection) =>
+          if (ctx.indent == anchorPos.start.column || ctx.isInFlowCollection) =>
         nexTokens.take(1) ::: anchorToken +: rest
       case _ => List(anchorToken) ::: nexTokens
     }
@@ -154,10 +161,11 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case None =>
           sb.result()
 
-    val pos = in.pos
+    val range = in.range
     in.skipCharacter() // skip double quote
-    val scalar = readScalar()
-    Token(Scalar(scalar, ScalarStyle.DoubleQuoted), pos)
+    val scalar   = readScalar()
+    val endRange = range.withEndPos(in.pos)
+    Token(Scalar(scalar, ScalarStyle.DoubleQuoted), endRange)
 
   /**
    * This header is followed by a non-content line break with an optional comment.
@@ -195,7 +203,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   private def parseLiteral(): Token =
     val sb = new StringBuilder
 
-    val pos = in.pos
+    val range = in.range
     in.skipCharacter() // skip |
     val indentationIndicator: Option[Int] = parseIndentationIndicator()
     val chompingIndicator                 = parseChompingIndicator()
@@ -223,12 +231,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
     val scalar        = readLiteral()
     val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Token(Scalar(chompedScalar, ScalarStyle.Literal), pos)
+    Token(Scalar(chompedScalar, ScalarStyle.Literal), range)
 
   private def parseFoldedValue(): Token =
     val sb = new StringBuilder
 
-    val pos = in.pos
+    val range = in.range
     in.skipCharacter() // skip >
     val indentationIndicator: Option[Int] = parseIndentationIndicator()
     val chompingIndicator                 = parseChompingIndicator()
@@ -273,7 +281,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
     val scalar        = readFolded()
     val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)
-    Token(Scalar(chompedScalar, ScalarStyle.Folded), pos)
+    Token(Scalar(chompedScalar, ScalarStyle.Folded), range)
 
   private def parseSingleQuoteValue(): Token = {
     val sb = new StringBuilder
@@ -297,10 +305,11 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readScalar()
         case None => sb.result()
 
-    val pos = in.pos
+    val range = in.range
     in.skipCharacter() // skip single quote
-    val scalar = readScalar()
-    Token(Scalar(scalar, ScalarStyle.SingleQuoted), pos)
+    val scalar   = readScalar()
+    val endRange = range.withEndPos(in.pos)
+    Token(Scalar(scalar, ScalarStyle.SingleQuoted), endRange)
   }
 
   private def parseScalarValue(): Token = {
@@ -332,9 +341,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readScalar()
         case Some(_) | None => sb.result()
 
-    val pos    = in.pos
-    val scalar = readScalar()
-    Token(Scalar(scalar.trim, ScalarStyle.Plain), pos)
+    val range    = in.range
+    val scalar   = readScalar()
+    val endRange = range.withEndPos(in.pos)
+    Token(Scalar(scalar.trim, ScalarStyle.Plain), endRange)
   }
 
   private def fetchValue(): List[Token] =
@@ -354,19 +364,21 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some(':') =>
         in.skipCharacter()
         val maybeMappingStart =
-          if (ctx.indent < scalar.pos.column && !ctx.isInFlowCollection) then
-            ctx.addIndent(scalar.pos.column)
-            List(Token(MappingStart, scalar.pos))
+          if (ctx.indent < scalar.range.start.column && !ctx.isInFlowCollection) then
+            ctx.addIndent(scalar.range.start.column)
+            List(Token(MappingStart, scalar.range))
           else Nil
 
-        maybeMappingStart ++ List(
-          Token(MappingKey, scalar.pos),
-          scalar,
-          Token(
-            MappingValue,
-            scalar.pos
+        val mappingValueToken = Token(MappingValue, scalar.range)
+
+        if (scalar.range.end.exists(_.line > scalar.range.start.line) && !ctx.isInFlowCollection) {
+          throw ScannerError.from("Not alowed here a mapping value", mappingValueToken)
+        } else
+          maybeMappingStart ++ List(
+            Token(MappingKey, scalar.range),
+            scalar,
+            mappingValueToken
           )
-        )
       case _ => List(scalar)
 
   def skipUntilNextToken(): Unit =

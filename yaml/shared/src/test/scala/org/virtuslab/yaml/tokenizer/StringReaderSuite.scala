@@ -14,14 +14,14 @@ class StringReaderSuite extends munit.FunSuite:
 
     val lines  = input.split("\n", -1).toVector
     val reader = StringReader(input)
-    assertEquals(reader.pos, Position(0, 0, 0, lines))
+    assertEquals(reader.range, Range(Position(0, 0, 0), lines))
     assertEquals(reader.read(), 'a')
-    assertEquals(reader.pos, Position(1, 0, 1, lines))
+    assertEquals(reader.range, Range(Position(1, 0, 1), lines))
     reader.skipCharacter()
-    assertEquals(reader.pos, Position(2, 1, 0, lines))
+    assertEquals(reader.range, Range(Position(2, 1, 0), lines))
     assertEquals(reader.read(), 'b')
     reader.skipCharacter()
-    assertEquals(reader.pos, Position(5, 2, 0, lines))
+    assertEquals(reader.range, Range(Position(5, 2, 0), lines))
     assertEquals(reader.read(), 'c')
   }
 
@@ -33,9 +33,9 @@ class StringReaderSuite extends munit.FunSuite:
 
     val lines  = input.split("\n", -1).toVector
     val reader = StringReader(input)
-    assertEquals(reader.pos, Position(0, 0, 0, lines))
+    assertEquals(reader.range, Range(Position(0, 0, 0), lines))
     assertEquals(reader.read(), 'a')
-    assertEquals(reader.pos, Position(1, 0, 1, lines))
+    assertEquals(reader.range, Range(Position(1, 0, 1), lines))
     assertEquals(reader.read(), '\n')
-    assertEquals(reader.pos.errorMsg, "\n^")
+    assertEquals(reader.range.errorMsg, "\n^")
   }

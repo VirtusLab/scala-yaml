@@ -5,6 +5,7 @@ import scala.annotation.tailrec
 import org.virtuslab.yaml.ComposerError
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind
@@ -23,7 +24,7 @@ object ComposerImpl extends Composer:
   private case class Result[+T](node: T, remaining: List[Event])
   private type ComposeResult[+T] = Either[YamlError, Result[T]]
   // WithPos is used in inner tailrec methods because they also return position of first child
-  private type ComposeResultWithPos[T] = Either[YamlError, (Result[T], Option[Position])]
+  private type ComposeResultWithPos[T] = Either[YamlError, (Result[T], Option[Range])]
 
   override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match
     case Nil => Left(ComposerError("No events available"))
@@ -48,7 +49,7 @@ object ComposerImpl extends Composer:
     def parseChildren(
         events: List[Event],
         children: List[Node],
-        firstChildPos: Option[Position] = None
+        firstChildPos: Option[Range] = None
     ): ComposeResultWithPos[List[Node]] = events match
       case Nil => Left(ComposerError("Not found SequenceEnd event for sequence"))
       case (Event(EventKind.SequenceEnd, _)) :: tail =>
@@ -68,7 +69,7 @@ object ComposerImpl extends Composer:
     def parseMappings(
         events: List[Event],
         mappings: List[Node.KeyValueNode],
-        firstChildPos: Option[Position] = None
+        firstChildPos: Option[Range] = None
     ): ComposeResultWithPos[List[Node.KeyValueNode]] = {
       events match
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
