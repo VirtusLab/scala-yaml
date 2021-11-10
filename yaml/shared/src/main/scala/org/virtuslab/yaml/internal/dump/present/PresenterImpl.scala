@@ -1,11 +1,11 @@
 package org.virtuslab.yaml.internal.dump.present
 
-import org.virtuslab.yaml.internal.load.parse.EventKind
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
-import org.virtuslab.yaml.Position
-
 import scala.annotation.tailrec
 import scala.collection.mutable
+
+import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.internal.load.parse.EventKind
+import org.virtuslab.yaml.internal.load.parse.EventKind.*
 
 object PresenterImpl extends Presenter:
   override def asString(events: Seq[EventKind]): String = {

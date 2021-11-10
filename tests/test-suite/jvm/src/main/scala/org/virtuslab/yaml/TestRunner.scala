@@ -1,20 +1,20 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.internal.load.parse.ParserImpl
-
-import scala.util.{Failure, Success, Try}
+import scala.annotation.tailrec
+import scala.collection.mutable
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 import org.virtuslab.yaml
-import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.Anchor
+import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle._
 import org.virtuslab.yaml.internal.load.reader.token.Token._
-import scala.annotation.tailrec
-import scala.collection.mutable
 
 trait TestRunner():
   def inYaml: String

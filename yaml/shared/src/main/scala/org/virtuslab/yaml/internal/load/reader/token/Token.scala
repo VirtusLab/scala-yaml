@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.reader.token
 
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 final case class Token(kind: TokenKind, pos: Position)
 

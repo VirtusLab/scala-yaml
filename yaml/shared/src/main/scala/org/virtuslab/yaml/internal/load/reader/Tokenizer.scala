@@ -1,13 +1,14 @@
 package org.virtuslab.yaml.internal.load.reader
 
-import org.virtuslab.yaml.internal.load.reader.token.{BlockChompingIndicator, ScalarStyle, Token}
+import scala.annotation.tailrec
+import scala.util.Try
+
+import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator
+import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator.*
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
-import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator.*
-
-import scala.util.Try
-import scala.annotation.tailrec
-import org.virtuslab.yaml.Position
 
 trait Tokenizer:
   def peekToken(): Token

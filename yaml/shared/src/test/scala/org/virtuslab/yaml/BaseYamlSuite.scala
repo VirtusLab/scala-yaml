@@ -2,8 +2,8 @@ package org.virtuslab.yaml
 
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.EventKind
-import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
+import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 
 trait BaseYamlSuite extends munit.FunSuite {

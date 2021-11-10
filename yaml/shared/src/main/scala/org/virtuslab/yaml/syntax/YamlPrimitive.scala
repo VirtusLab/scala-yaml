@@ -1,9 +1,9 @@
 package org.virtuslab.yaml.syntax
 
+import scala.language.implicitConversions
+
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Node.ScalarNode
-
-import scala.language.implicitConversions
 
 final case class YamlPrimitive(node: Node)
 object YamlPrimitive:

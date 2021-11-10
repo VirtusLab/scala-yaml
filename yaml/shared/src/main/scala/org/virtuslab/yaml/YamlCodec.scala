@@ -1,9 +1,9 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.*
-
 import scala.compiletime._
 import scala.deriving._
+
+import org.virtuslab.yaml.*
 
 /**
  * A type class that provides both-way conversion between [[Node]] and [[T]]

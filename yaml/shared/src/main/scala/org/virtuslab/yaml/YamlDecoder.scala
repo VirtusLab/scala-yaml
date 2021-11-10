@@ -1,12 +1,12 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.Node
-import org.virtuslab.yaml.Node.*
-
 import scala.compiletime.*
 import scala.deriving.*
-import scala.util.Try
 import scala.reflect.ClassTag
+import scala.util.Try
+
+import org.virtuslab.yaml.Node
+import org.virtuslab.yaml.Node.*
 
 /**
  * A type class that provides a conversion from a [[Node]] into given type [[T]]

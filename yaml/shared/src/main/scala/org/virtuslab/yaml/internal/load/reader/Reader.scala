@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.reader
 
-import scala.util.Try
 import scala.annotation.tailrec
+import scala.util.Try
 
 import org.virtuslab.yaml.Position
 
