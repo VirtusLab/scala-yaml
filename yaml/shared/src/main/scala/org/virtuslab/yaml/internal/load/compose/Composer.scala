@@ -1,15 +1,15 @@
 package org.virtuslab.yaml.internal.load.compose
 
+import scala.annotation.tailrec
+
 import org.virtuslab.yaml.ComposerError
 import org.virtuslab.yaml.Node
+import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
-import org.virtuslab.yaml.Position
-
-import scala.annotation.tailrec
 
 /**
  * Composing takes a series of serialization events and produces a representation graph. 

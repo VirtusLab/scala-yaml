@@ -1,14 +1,14 @@
 package org.virtuslab.yaml.internal.load.reader
 
+import scala.annotation.tailrec
+import scala.collection.mutable
+import scala.collection.mutable.ArrayDeque
+
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.internal.load.reader.Reader
 import org.virtuslab.yaml.internal.load.reader.StringReader
-
-import scala.annotation.tailrec
-import scala.collection.mutable
-import token.Token
-import token.TokenKind.*
-import scala.collection.mutable.ArrayDeque
+import org.virtuslab.yaml.internal.load.reader.token.Token
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind._
 
 case class ReaderCtx(reader: Reader) {
   val tokens                    = mutable.ArrayDeque.empty[Token]

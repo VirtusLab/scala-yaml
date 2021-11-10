@@ -1,9 +1,9 @@
 package org.virtuslab.yaml.decoder
 
-import org.virtuslab.yaml.*
-import org.virtuslab.yaml.YamlError
-import org.virtuslab.yaml.Node.SequenceNode
 import org.virtuslab.yaml.Node.ScalarNode
+import org.virtuslab.yaml.Node.SequenceNode
+import org.virtuslab.yaml.YamlError
+import org.virtuslab.yaml.*
 
 class DecoderErrorsSuite extends BaseDecoderErrorSuite:
 

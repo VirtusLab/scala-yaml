@@ -1,9 +1,10 @@
 package org.virtuslab.yaml
 
-import org.virtuslab.yaml.*
-import org.virtuslab.yaml.Node.*
-import org.virtuslab.yaml.syntax.YamlPrimitive
 import scala.language.implicitConversions
+
+import org.virtuslab.yaml.Node.*
+import org.virtuslab.yaml.*
+import org.virtuslab.yaml.syntax.YamlPrimitive
 
 class NodeCreationSuite extends munit.FunSuite:
 

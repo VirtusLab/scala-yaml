@@ -1,13 +1,13 @@
 package org.virtuslab.yaml
 
+import scala.deriving.Mirror
+
 import org.virtuslab.yaml.internal.dump.present.PresenterImpl
 import org.virtuslab.yaml.internal.dump.serialize.SerializerImpl
 import org.virtuslab.yaml.internal.load.compose.ComposerImpl
+import org.virtuslab.yaml.internal.load.parse.Parser
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
-
-import scala.deriving.Mirror
-import org.virtuslab.yaml.internal.load.parse.Parser
 
 inline def deriveYamlEncoder[T](using m: Mirror.Of[T]): YamlEncoder[T] = YamlEncoder.derived[T]
 inline def deriveYamlDecoder[T](using m: Mirror.Of[T]): YamlDecoder[T] = YamlDecoder.derived[T]

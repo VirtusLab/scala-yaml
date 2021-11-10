@@ -1,8 +1,9 @@
 package org.virtuslab.yaml
 
+import scala.language.implicitConversions
+
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.syntax.YamlPrimitive
-import scala.language.implicitConversions
 
 class ConstructSuite extends munit.FunSuite:
   import Node.*

@@ -1,5 +1,8 @@
 package org.virtuslab.yaml.internal.load.parse
 
+import scala.annotation.tailrec
+import scala.collection.mutable
+
 import org.virtuslab.yaml.ParseError
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.YamlError
@@ -7,9 +10,6 @@ import org.virtuslab.yaml.internal.load.reader.Tokenizer
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
-
-import scala.annotation.tailrec
-import scala.collection.mutable
 
 private enum Production:
   case ParseStreamStart
