@@ -27,14 +27,15 @@ inThisBuild(
   )
 )
 
+ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
+
 lazy val scalaYamlCore = crossProject(JSPlatform, JVMPlatform)
   .in(file("yaml"))
   .settings(
     name              := projectName,
     scalaVersion      := scala3Version,
-    semanticdbVersion := scalafixSemanticdb.revision,
     semanticdbEnabled := true,
-    libraryDependencies ++= Seq(Deps.pprint % Test)
+    libraryDependencies ++= Seq(Deps.pprint % Test),
   )
   .settings(docsSettings)
   .settings(munit)
@@ -45,7 +46,8 @@ lazy val scalaYamlTestSuite = crossProject(JSPlatform, JVMPlatform)
   .settings(
     Defaults.itSettings,
     name         := "testSuite",
-    scalaVersion := scala3Version
+    scalaVersion := scala3Version,
+    semanticdbEnabled := true,
   )
   .settings(testSettings)
   .dependsOn(scalaYamlCore)
