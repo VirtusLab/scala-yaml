@@ -12,6 +12,12 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
 
+import org.virtuslab.yaml.internal.load.TagHandle
+import org.virtuslab.yaml.internal.load.TagPrefix
+import org.virtuslab.yaml.internal.load.TagValue
+import org.virtuslab.yaml.internal.load.TagSuffix
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind
+
 trait Tokenizer:
   def peekToken(): Either[YamlError, Token]
   def popToken(): Token
@@ -40,7 +46,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     skipUntilNextToken()
     val closedTokens = ctx.checkIndents(in.column)
     val peeked       = in.peek()
-    val tokens = peeked match
+    val tokens: List[Token] = peeked match
       case Some('-') if isDocumentStart     => parseDocumentStart()
       case Some('-') if in.isNextWhitespace => parseBlockSequence()
       case Some('.') if isDocumentEnd       => parseDocumentEnd()
@@ -49,6 +55,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('{')                        => parseFlowMappingStart()
       case Some('}')                        => parseFlowMappingEnd()
       case Some('&')                        => parseAnchor()
+      case Some('!')                        => parseTag()
+      case Some('%')                        => parseDirective()
       case Some(',') =>
         in.skipCharacter()
         List(Token(Comma, in.range))
@@ -99,6 +107,116 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     else
       in.skipCharacter()
       List(Token(SequenceValue, in.range))
+
+  private def parseDirective(): List[Token] = {
+    val range = in.range
+    in.skipCharacter() // skip %
+
+    def parseYamlDirective() = { ??? }
+
+    def parseTagDirective() = {
+      def parseTagHandle() = {
+        val next = in.peekNext()
+        in.peek() match
+          case Some('!') if next.contains(' ') =>
+            in.skipCharacter() // skip exclamation mark
+            TagHandle.Primary
+          case Some('!') if next.contains('!') =>
+            in.skipN(2) // skip both exclamation marks
+            TagHandle.Secondary
+          case Some('!') =>
+            val sb = new StringBuilder
+            sb.append(in.read())
+            while (in.peek().exists(c => !c.isWhitespace && c != '!')) do sb.append(in.read())
+            sb.append(in.read())
+            TagHandle.Named(sb.result())
+          case _ => ???
+      }
+
+      def parseTagPrefix() = {
+        skipSpaces()
+        in.peek() match
+          case Some('!') =>
+            val sb = new StringBuilder
+            while (in.peek().exists(c => !c.isWhitespace)) do sb.append(in.read())
+            TagPrefix.Local(sb.result())
+          case Some(char) if char != '!' && char != ',' =>
+            val sb = new StringBuilder
+            while (in.peek().exists(c => !c.isWhitespace)) do sb.append(in.read())
+            TagPrefix.Global(sb.result())
+          case _ => ???
+      }
+
+      skipSpaces()
+      in.peek() match
+        case Some('!') =>
+          val handle = parseTagHandle()
+          val prefix = parseTagPrefix()
+          List(Token(TokenKind.TagDirective(handle, prefix), range))
+        case _ => ???
+    }
+
+    in.peek() match
+      case Some('Y') if in.peekN(4) == "YAML" =>
+        in.skipN(4)
+        parseYamlDirective()
+      case Some('T') if in.peekN(3) == "TAG" =>
+        in.skipN(3)
+        parseTagDirective()
+      case _ => ???
+  }
+
+  private def parseTag() =
+    val range        = in.range
+    val invalidChars = Set('[', ']', '{', '}')
+
+    def parseVerbatimTag(): String =
+      val sb = new StringBuilder
+      sb.append('!')
+      while (in.peek().exists(c => c != '>' && !c.isWhitespace)) do sb.append(in.read())
+      in.peek() match
+        case Some('>') =>
+          sb.append(in.read())
+          sb.result()
+        case _ => ??? // error
+
+    def parseTagSuffix(): String =
+      val sb = new StringBuilder
+      while (in.peek().exists(c => !invalidChars(c) && !c.isWhitespace)) do sb.append(in.read())
+      sb.result()
+
+    def parseShorthandTag(second: Char): TagValue =
+      second match
+        case '!' => // tag handle starts with '!!'
+          in.skipCharacter()
+          TagValue.Shorthand(TagHandle.Secondary, parseTagSuffix())
+        case _ => // tag handle starts with '!<char>' where char isn't space
+          val sb = new StringBuilder
+
+          while (in.peek().exists(c => !c.isWhitespace && c != '!')) do sb.append(in.read())
+          in.peek() match
+            case Some('!') =>
+              sb.insert(0, '!')    // prepend already skipped exclamation mark
+              sb.append(in.read()) // append ending exclamation mark
+              TagValue.Shorthand(TagHandle.Named(sb.result()), parseTagSuffix())
+            case Some(' ') =>
+              TagValue.Shorthand(TagHandle.Primary, sb.result())
+            case _ => ???
+
+    in.skipCharacter() // skip first '!'
+    val peeked = in.peek()
+    val tag: Tag = peeked match
+      case Some('<') =>
+        val tag = parseVerbatimTag()
+        Tag(TagValue.Verbatim(tag))
+      case Some(' ') =>
+        Tag(TagValue.NonSpecific)
+      case Some(char) =>
+        val tagValue = parseShorthandTag(char)
+        Tag(tagValue)
+      case None => ??? // error
+
+    List(Token(tag, range))
 
   private def parseAnchorName(): (String, Range) =
     val invalidChars = Set('[', ']', '{', '}', ',')
@@ -390,6 +508,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       in.skipCharacter()
       skipUntilNextToken()
     }
+
+  def skipSpaces(): Unit =
+    while (in.peek().contains(' ')) do in.skipCharacter()
 
   def skipUntilNextIndent(indentBlock: Int): Unit =
     while (in.peek() == Some(' ') && in.column < indentBlock) do in.skipCharacter()

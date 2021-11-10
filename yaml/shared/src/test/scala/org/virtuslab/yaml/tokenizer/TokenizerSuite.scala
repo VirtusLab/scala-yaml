@@ -1,6 +1,6 @@
-package org.virtuslab.yaml.tokenizer
+package org.virtuslab.yaml
+package tokenizer
 
-import org.virtuslab.yaml.BaseYamlSuite
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
