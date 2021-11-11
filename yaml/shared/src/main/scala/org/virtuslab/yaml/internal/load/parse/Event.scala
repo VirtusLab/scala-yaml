@@ -56,6 +56,7 @@ final case class NodeEventMetadata(
 ):
   def withAnchor(anchor: Anchor) = this.copy(anchor = Some(anchor))
   def withTag(tag: Tag)          = this.copy(tag = Some(tag))
+end NodeEventMetadata
 
 object NodeEventMetadata:
   final val empty                              = NodeEventMetadata(None, None)

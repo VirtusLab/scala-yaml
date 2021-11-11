@@ -103,7 +103,8 @@ private enum Production:
 final class ParserImpl private (in: Tokenizer) extends Parser:
   import Production.*
 
-  private val productions       = mutable.ArrayDeque(ParseStreamStart)
+  private val productions = mutable.ArrayDeque(ParseStreamStart)
+  // Primary ('!') and secondary ('!!') tags, if not overwritten by tag directive, have some predefined defaults
   private val defaultDirectives = Map("!" -> "!", "!!" -> "tag:yaml.org,2002:")
   private val directives        = defaultDirectives.to(mutable.Map)
 
@@ -141,10 +142,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
 
   private def parseDocumentStartOpt(token: Token) = token.kind match
     case TokenKind.TagDirective(handle, prefix) =>
-      handle match
-        case TagHandle.Primary     => directives.update("!", prefix.tag)
-        case TagHandle.Secondary   => directives.update("!!", prefix.tag)
-        case TagHandle.Named(name) => directives.update(name, prefix.tag)
+      directives.update(handle.value, prefix.value)
       in.popToken()
       productions.prepend(ParseDocumentStartOpt) // call self once again
       getNextEventImpl()
@@ -412,10 +410,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
             case TagValue.Verbatim(value) =>
               parseNodeAttributes(in.peekToken(), metadata.withTag(Tag(value)))
             case TagValue.Shorthand(handle, suffix) =>
-              val handleKey = handle match
-                case TagHandle.Primary     => "!"
-                case TagHandle.Secondary   => "!!"
-                case TagHandle.Named(name) => name
+              val handleKey = handle.value
               directives.get(handleKey) match
                 case Some(prefix) =>
                   parseNodeAttributes(in.peekToken(), metadata.withTag(Tag(s"$prefix$suffix")))

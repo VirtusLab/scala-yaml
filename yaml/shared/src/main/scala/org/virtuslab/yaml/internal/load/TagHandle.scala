@@ -5,9 +5,20 @@ enum TagHandle:
   case Secondary
   case Named(name: String)
 
-enum TagPrefix(val tag: String):
-  case Local(override val tag: String) extends TagPrefix(tag)
-  case Global(override val tag: String) extends TagPrefix(tag)
+  def value: String = this match
+    case Primary     => "!"
+    case Secondary   => "!!"
+    case Named(name) => name
+end TagHandle
+
+enum TagPrefix:
+  case Local(prefix: String)
+  case Global(prefix: String)
+
+  def value: String = this match
+    case Local(prefix)  => prefix
+    case Global(prefix) => prefix
+end TagPrefix
 
 enum TagValue:
   case NonSpecific
