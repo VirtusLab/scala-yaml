@@ -3,7 +3,7 @@ package org.virtuslab.yaml.internal.dump.present
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
 

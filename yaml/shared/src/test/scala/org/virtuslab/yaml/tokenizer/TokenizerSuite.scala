@@ -16,7 +16,7 @@ class TokenizerSuite extends BaseYamlSuite:
       Scalar("aezakmi", ScalarStyle.Plain)
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("block mapping") {
@@ -31,7 +31,7 @@ class TokenizerSuite extends BaseYamlSuite:
       BlockEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("block-sequence") {
@@ -48,7 +48,7 @@ class TokenizerSuite extends BaseYamlSuite:
       BlockEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("flow mapping") {
@@ -65,7 +65,7 @@ class TokenizerSuite extends BaseYamlSuite:
       FlowMappingEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("flow mapping implicit values") {
@@ -95,7 +95,7 @@ class TokenizerSuite extends BaseYamlSuite:
       FlowMappingEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("flow mapping implicit key") {
@@ -113,7 +113,7 @@ class TokenizerSuite extends BaseYamlSuite:
       FlowMappingEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("flow sequence") {
@@ -129,7 +129,7 @@ class TokenizerSuite extends BaseYamlSuite:
       FlowSequenceEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("flow sequence mapping") {
@@ -146,7 +146,7 @@ class TokenizerSuite extends BaseYamlSuite:
       FlowSequenceEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("flow sequence mapping") {
@@ -169,7 +169,7 @@ class TokenizerSuite extends BaseYamlSuite:
       FlowSequenceEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("flow sequence mapping nested") {
@@ -189,7 +189,7 @@ class TokenizerSuite extends BaseYamlSuite:
       FlowSequenceEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("anchor & alias in mapping") {
@@ -222,7 +222,7 @@ class TokenizerSuite extends BaseYamlSuite:
       BlockEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   test("anchor & alias in sequence") {
@@ -261,5 +261,5 @@ class TokenizerSuite extends BaseYamlSuite:
       BlockEnd
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }

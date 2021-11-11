@@ -4,7 +4,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ArrayDeque
 
-import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.internal.load.reader.Reader
 import org.virtuslab.yaml.internal.load.reader.StringReader
 import org.virtuslab.yaml.internal.load.reader.token.Token
@@ -23,7 +23,7 @@ case class ReaderCtx(reader: Reader) {
   def checkIndents(current: Int): List[Token] =
     if current < indent then
       indentations.removeLast()
-      Token(BlockEnd, reader.pos) +: checkIndents(current)
+      Token(BlockEnd, reader.range) +: checkIndents(current)
     else Nil
 
   def enterFlowSequence: Unit = flowSequenceLevel += 1
@@ -42,10 +42,10 @@ case class ReaderCtx(reader: Reader) {
   def isInFlowCollection: Boolean = isInFlowMapping || isInFlowSequence
 
   def parseDocumentStart(indent: Int): List[Token] =
-    checkIndents(-1) ++ List(Token(DocumentStart, reader.pos))
+    checkIndents(-1) ++ List(Token(DocumentStart, reader.range))
 
   def parseDocumentEnd(): List[Token] =
-    checkIndents(-1) ++ List(Token(DocumentEnd, reader.pos))
+    checkIndents(-1) ++ List(Token(DocumentEnd, reader.range))
 }
 
 object ReaderCtx:

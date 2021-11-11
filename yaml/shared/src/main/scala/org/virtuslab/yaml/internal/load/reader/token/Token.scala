@@ -1,9 +1,9 @@
 package org.virtuslab.yaml.internal.load.reader.token
 
-import org.virtuslab.yaml.Position
+import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-final case class Token(kind: TokenKind, pos: Position)
+final case class Token(kind: TokenKind, range: Range)
 
 enum TokenKind:
   case StreamStart
