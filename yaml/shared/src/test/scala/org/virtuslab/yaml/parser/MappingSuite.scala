@@ -2,7 +2,6 @@ package org.virtuslab.yaml
 package parser
 
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
-import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class MappingSuite extends BaseYamlSuite:

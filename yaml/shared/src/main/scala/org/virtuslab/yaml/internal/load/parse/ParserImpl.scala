@@ -152,7 +152,8 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: Nil)
       getNextEventImpl()
     case TokenKind.MappingStart | TokenKind.Scalar(_, _) | TokenKind.SequenceStart |
-        TokenKind.FlowMappingStart | TokenKind.FlowSequenceStart | _: TokenKind.Anchor =>
+        TokenKind.FlowMappingStart | TokenKind.FlowSequenceStart | _: TokenKind.Anchor |
+        _: TokenKind.Tag =>
       productions.prependAll(ParseDocumentStart :: ParseDocumentStartOpt :: Nil)
       getNextEventImpl()
     case _ =>
@@ -204,14 +205,6 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
       getNextEventImpl()
     case _ =>
       getNextEventImpl()
-
-  private def parseSequenceStart(token: Token) = token.kind match
-    case TokenKind.SequenceStart =>
-      in.popToken()
-      productions.prependAll(ParseSequenceEntry :: ParseSequenceEnd :: Nil)
-      Right(Event(EventKind.SequenceStart(), token.range))
-    case _ =>
-      Left(ParseError.from(TokenKind.SequenceStart, token))
 
   private def parseSequenceEnd(token: Token) = token.kind match
     case TokenKind.BlockEnd =>
@@ -379,15 +372,17 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
           productions.prependAll(ParseMappingEntry :: ParseMappingEnd :: Nil)
           Right(Event(EventKind.MappingStart(metadata), nextToken.range))
         case TokenKind.SequenceStart if couldParseBlockCollection =>
-          parseSequenceStart(token)
+          in.popToken()
+          productions.prependAll(ParseSequenceEntry :: ParseSequenceEnd :: Nil)
+          Right(Event(EventKind.SequenceStart(metadata), nextToken.range))
         case TokenKind.FlowMappingStart =>
           in.popToken()
           productions.prependAll(ParseFlowMappingEntryOpt :: ParseFlowMappingEnd :: Nil)
-          Right(Event(EventKind.FlowMappingStart(), nextToken.range))
+          Right(Event(EventKind.FlowMappingStart(metadata), nextToken.range))
         case TokenKind.FlowSequenceStart =>
           in.popToken()
           productions.prependAll(ParseFlowSeqEntryOpt :: ParseFlowSeqEnd :: Nil)
-          Right(Event(EventKind.SequenceStart(), nextToken.range))
+          Right(Event(EventKind.SequenceStart(metadata), nextToken.range))
         case TokenKind.Scalar(value, style) =>
           in.popToken()
           Right(Event(EventKind.Scalar(value, style, metadata), nextToken.range))

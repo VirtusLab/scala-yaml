@@ -119,12 +119,12 @@ class TagSuite extends BaseYamlSuite:
     assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("named shorthand tag") {
+  test("named shorthand tag, url decoding") {
     val yaml = """|!e!tag%21 baz
                   |""".stripMargin
 
     val tokens = List(
-      Tag(TagValue.Shorthand(TagHandle.Named("!e!"), "tag%21")),
+      Tag(TagValue.Shorthand(TagHandle.Named("!e!"), "tag!")),
       Scalar("baz")
     )
 

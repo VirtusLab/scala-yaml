@@ -1,5 +1,8 @@
 package org.virtuslab.yaml.internal.load.reader
 
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
+
 import scala.annotation.tailrec
 import scala.util.Try
 
@@ -111,7 +114,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val range = in.range
     in.skipCharacter() // skip %
 
-    def parseYamlDirective() = { throw new ScannerError("YAML directives are not supported yet.") }
+    def parseYamlDirective() = { throw ScannerError("YAML directives are not supported yet.") }
 
     def parseTagDirective() = {
       def parseTagHandle() = {
@@ -141,7 +144,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
             val sb = new StringBuilder
             while (in.peek().exists(c => !c.isWhitespace)) do sb.append(in.read())
             TagPrefix.Global(sb.result())
-          case _ => throw new ScannerError("Invalid tag prefix in TAG directive")
+          case _ => throw ScannerError("Invalid tag prefix in TAG directive")
       }
 
       skipSpaces()
@@ -150,7 +153,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           val handle = parseTagHandle()
           val prefix = parseTagPrefix()
           List(Token(TokenKind.TagDirective(handle, prefix), range))
-        case _ => throw new ScannerError("Tag handle in TAG directive should start with '!'")
+        case _ => throw ScannerError("Tag handle in TAG directive should start with '!'")
     }
 
     in.peek() match
@@ -160,7 +163,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('T') if in.peekN(3) == "TAG" =>
         in.skipN(3)
         parseTagDirective()
-      case _ => throw new ScannerError("Unknown directive, expected YAML or TAG")
+      case _ => throw ScannerError("Unknown directive, expected YAML or TAG")
   }
 
   private def parseTag() =
@@ -175,12 +178,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case Some('>') =>
           sb.append(in.read())
           sb.result()
-        case _ => throw new ScannerError("Lacks '>' which closes verbatim tag attribute")
+        case _ => throw ScannerError("Lacks '>' which closes verbatim tag attribute")
 
     def parseTagSuffix(): String =
       val sb = new StringBuilder
       while (in.peek().exists(c => !invalidChars(c) && !c.isWhitespace)) do sb.append(in.read())
-      sb.result()
+      if in.peek().exists(c => invalidChars(c)) then throw ScannerError("Invalid character in tag")
+      URLDecoder.decode(sb.result(), StandardCharsets.UTF_8)
 
     def parseShorthandTag(second: Char): TagValue =
       second match
@@ -190,7 +194,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case _ => // tag handle starts with '!<char>' where char isn't space
           val sb = new StringBuilder
 
-          while (in.peek().exists(c => !c.isWhitespace && c != '!')) do sb.append(in.read())
+          while (in.peek().exists(c => !invalidChars(c) && !c.isWhitespace && c != '!')) do
+            sb.append(in.read())
+          if in.peek().exists(c => invalidChars(c)) then
+            throw ScannerError("Invalid character in tag")
           in.peek() match
             case Some('!') =>
               sb.insert(0, '!')    // prepend already skipped exclamation mark
@@ -198,7 +205,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
               TagValue.Shorthand(TagHandle.Named(sb.result()), parseTagSuffix())
             case Some(' ') =>
               TagValue.Shorthand(TagHandle.Primary, sb.result())
-            case _ => throw new ScannerError("Invalid tag handle")
+            case _ => throw ScannerError("Invalid tag handle")
 
     in.skipCharacter() // skip first '!'
     val peeked = in.peek()
@@ -211,7 +218,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some(char) =>
         val tagValue = parseShorthandTag(char)
         Tag(tagValue)
-      case None => throw new ScannerError("Input stream ended unexpectedly")
+      case None => throw ScannerError("Input stream ended unexpectedly")
 
     List(Token(tag, range))
 

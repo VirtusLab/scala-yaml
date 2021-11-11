@@ -60,6 +60,8 @@ final case class NodeEventMetadata(
 object NodeEventMetadata:
   final val empty                              = NodeEventMetadata(None, None)
   def apply(anchor: Anchor): NodeEventMetadata = NodeEventMetadata(Some(anchor), None)
+  @scala.annotation.targetName("applyForTag")
+  def apply(tag: Tag): NodeEventMetadata = NodeEventMetadata(None, Some(tag))
 
 opaque type Anchor = String
 object Anchor:
