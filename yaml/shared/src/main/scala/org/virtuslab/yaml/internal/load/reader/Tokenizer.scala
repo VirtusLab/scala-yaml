@@ -6,17 +6,16 @@ import scala.util.Try
 import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.ScannerError
 import org.virtuslab.yaml.YamlError
+import org.virtuslab.yaml.internal.load.TagHandle
+import org.virtuslab.yaml.internal.load.TagPrefix
+import org.virtuslab.yaml.internal.load.TagSuffix
+import org.virtuslab.yaml.internal.load.TagValue
 import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator
 import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator.*
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
-import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
-
-import org.virtuslab.yaml.internal.load.TagHandle
-import org.virtuslab.yaml.internal.load.TagPrefix
-import org.virtuslab.yaml.internal.load.TagValue
-import org.virtuslab.yaml.internal.load.TagSuffix
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
 
 trait Tokenizer:
   def peekToken(): Either[YamlError, Token]
