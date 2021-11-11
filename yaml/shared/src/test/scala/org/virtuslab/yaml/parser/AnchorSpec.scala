@@ -53,7 +53,6 @@ class AnchorSpec extends BaseYamlSuite:
       DocumentEnd(),
       StreamEnd
     )
-    yaml.debugTokens
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
@@ -123,7 +122,6 @@ class AnchorSpec extends BaseYamlSuite:
       DocumentEnd(),
       StreamEnd
     )
-    yaml.debugTokens
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
