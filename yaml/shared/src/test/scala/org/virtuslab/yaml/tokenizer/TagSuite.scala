@@ -2,17 +2,17 @@ package org.virtuslab.yaml
 package tokenizer
 
 import org.virtuslab.yaml.*
+import org.virtuslab.yaml.internal.load.TagHandle
+import org.virtuslab.yaml.internal.load.TagPrefix
+import org.virtuslab.yaml.internal.load.TagValue
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
-import org.virtuslab.yaml.internal.load.TagHandle
-import org.virtuslab.yaml.internal.load.TagValue
-import org.virtuslab.yaml.internal.load.TagPrefix
 
 class TagSuite extends BaseYamlSuite:
 
-  test("tag directive: primary tag handle".only) {
+  test("tag directive: primary tag handle") {
     val yaml = """|%TAG ! tag:example.com,2000:app/
                   |---
                   |a
@@ -24,10 +24,10 @@ class TagSuite extends BaseYamlSuite:
       Scalar("a")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("tag directive: secondary tag handle".only) {
+  test("tag directive: secondary tag handle") {
     val yaml = """|%TAG !! tag:example.com,2000:app/
                   |---
                   |a
@@ -39,10 +39,10 @@ class TagSuite extends BaseYamlSuite:
       Scalar("a")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("tag directive: named tag handle & global tag handle".only) {
+  test("tag directive: named tag handle & global tag handle") {
     val yaml = """|%TAG !e! tag:example.com,2000:app/
                   |---
                   |a
@@ -54,10 +54,10 @@ class TagSuite extends BaseYamlSuite:
       Scalar("a")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("tag directive: local tag".only) {
+  test("tag directive: local tag") {
     val yaml = """|%TAG !m! !my-
                   |---
                   |a
@@ -69,11 +69,11 @@ class TagSuite extends BaseYamlSuite:
       Scalar("a")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
   // todo Tag token should be placed after MappingKey
-  test("verbatim tag".only) {
+  test("verbatim tag") {
     val yaml = """|---
                   |!<tag:yaml.org,2002:str> foo :
                   |  !<!bar> baz""".stripMargin
@@ -92,46 +92,46 @@ class TagSuite extends BaseYamlSuite:
       //should be BlockEnd,
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("primary shorthand tag".only) {
+  test("primary shorthand tag") {
     val yaml = """|!local baz
                   |""".stripMargin
 
     val tokens = List(
       Tag(TagValue.Shorthand(TagHandle.Primary, "local")),
-      Scalar("baz"),
+      Scalar("baz")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("secondary shorthand tag".only) {
+  test("secondary shorthand tag") {
     val yaml = """|!!str baz
                   |""".stripMargin
 
     val tokens = List(
       Tag(TagValue.Shorthand(TagHandle.Secondary, "str")),
-      Scalar("baz"),
+      Scalar("baz")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("named shorthand tag".only) {
+  test("named shorthand tag") {
     val yaml = """|!e!tag%21 baz
                   |""".stripMargin
 
     val tokens = List(
       Tag(TagValue.Shorthand(TagHandle.Named("!e!"), "tag%21")),
-      Scalar("baz"),
+      Scalar("baz")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("non specific tag".only) {
+  test("non specific tag") {
     val yaml = """|---
                   |! a""".stripMargin
 
@@ -141,10 +141,10 @@ class TagSuite extends BaseYamlSuite:
       Scalar("a")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("plain scalar".only) {
+  test("plain scalar") {
     val yaml = """|%TAG !! tag:example.com,2000:app/
                   |---
                   |!!int 1 - 3 # Interval, not integer
@@ -157,100 +157,99 @@ class TagSuite extends BaseYamlSuite:
       Scalar("1 - 3")
     )
 
-    assertEquals(yaml.tokens, tokens)
+    assertTokenEquals(yaml.tokens, tokens)
   }
 
-// test("tag in flow sequence nested in mapping".ignore) {
-//   val yaml = """|!!map {
-//                     |  k: !!seq
-//                     |  [ a, !!str b]
-//                     |}
-//                     |""".stripMargin
+  test("tagged mapping values") {
+    val yaml = """|c: !int 42
+                  |e: !!str f
+                  |g: !e!suffix h
+                  |""".stripMargin
 
-//   val tokens = List(
-//     Tag("!!map"),
-//     FlowMappingStart,
-//     MappingKey,
-//     Scalar("k"),
-//     MappingValue,
-//     Tag("!!seq"),
-//     FlowSequenceStart,
-//     Scalar("a"),
-//     Comma,
-//     Tag("!!str"),
-//     Scalar("b"),
-//     FlowSequenceEnd,
-//     FlowMappingEnd
-//   )
+    val tokens = List(
+      MappingStart,
+      MappingKey,
+      Scalar("c"),
+      MappingValue,
+      Tag(TagValue.Shorthand(TagHandle.Primary, "int")),
+      Scalar("42"),
+      MappingKey,
+      Scalar("e"),
+      MappingValue,
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "str")),
+      Scalar("f"),
+      MappingKey,
+      Scalar("g"),
+      MappingValue,
+      Tag(TagValue.Shorthand(TagHandle.Named("!e!"), "suffix")),
+      Scalar("h"),
+      BlockEnd
+    )
 
-//   assertEquals(yaml.tokens, tokens)
-// }
+    assertTokenEquals(yaml.tokens, tokens)
+  }
 
-// test("flow sequence mapping nested".ignore.ignore) {
-//   val yaml = """|- !!str
-//                     |-
-//                     |  !!null : a
-//                     |  b: !!str
-//                     |- !!str : !!null
-//                     |""".stripMargin
+  test("tagged sequence values") {
+    val yaml = """|- !str abcd
+                  |- !!int 42
+                  |- !named!foo bar""".stripMargin
 
-//   val tokens = List(
-//   )
+    val tokens = List(
+      SequenceStart,
+      SequenceValue,
+      Tag(TagValue.Shorthand(TagHandle.Primary, "str")),
+      Scalar("abcd"),
+      SequenceValue,
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "int")),
+      Scalar("42"),
+      SequenceValue,
+      Tag(TagValue.Shorthand(TagHandle.Named("!named!"), "foo")),
+      Scalar("bar"),
+      BlockEnd
+    )
 
-//   assertEquals(yaml.tokens, tokens)
-// }
+    assertTokenEquals(yaml.tokens, tokens)
+  }
 
-// test("tag in mapping".ignore.ignore) {
-//   val yaml = """|!<tag:yaml.org,2002:str> foo :
-//                     |  !<!bar> baz
-//                     |""".stripMargin
+  test("tagged flow sequence") {
+    val yaml = """|!!map {
+                  |  k: !!seq
+                  |  [ a, b]
+                  |}
+                  |""".stripMargin
 
-//   val tokens = List(
-//     Tag("!<tag:yaml.org,2002:str>"),
-//     MappingStart,
-//     MappingKey,
-//     Scalar("foo"),
-//     MappingValue,
-//     Tag("!<!bar>"),
-//     Scalar("baz"),
-//     BlockEnd
-//   )
+    val tokens = List(
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "map")),
+      FlowMappingStart,
+      MappingKey,
+      Scalar("k"),
+      MappingValue,
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "seq")),
+      FlowSequenceStart,
+      Scalar("a"),
+      Comma,
+      Scalar("b"),
+      FlowSequenceEnd,
+      FlowMappingEnd
+    )
 
-//   assertEquals(yaml.tokens, tokens)
-// }
+    assertTokenEquals(yaml.tokens, tokens)
+  }
 
-// test("flow sequence mapping nested".ignore.ignore) {
-//   val yaml = """|!!str a: b
-//                     |c: !!int 42
-//                     |e: !!str f
-//                     |g: h
-//                     |!!str 23: !!bool false
-//                     |""".stripMargin
+  test("tagged flow sequence") {
+    val yaml = """|!!seq [ !!str a, !!int 5]
+                  |""".stripMargin
 
-//   val tokens = List(
-//   )
+    val tokens = List(
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "seq")),
+      FlowSequenceStart,
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "str")),
+      Scalar("a"),
+      Comma,
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "int")),
+      Scalar("5"),
+      FlowSequenceEnd
+    )
 
-//   assertEquals(yaml.tokens, tokens)
-// }
-
-// test("flow sequence mapping nested".ignore.ignore) {
-//   val yaml = """|anchored: !local &anchor value
-//                     |alias: *anchor
-//                     |""".stripMargin
-
-//   val tokens = List(
-//   )
-
-//   assertEquals(yaml.tokens, tokens)
-// }
-
-// test("flow sequence mapping nested".ignore.ignore) {
-//   val yaml = """|%TAG !e! tag:example.com,2000:app/
-//                     |---
-//                     |!e!foo "bar"""".stripMargin
-
-//   val tokens = List(
-//   )
-
-//   assertEquals(yaml.tokens, tokens)
-// }
+    assertTokenEquals(yaml.tokens, tokens)
+  }
