@@ -112,25 +112,23 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val range = in.range
     in.skipCharacter() // skip %
 
-    def parseYamlDirective() = { ??? }
+    def parseYamlDirective() = { throw new ScannerError("YAML directives are not supported yet.") }
 
     def parseTagDirective() = {
       def parseTagHandle() = {
-        val next = in.peekNext()
-        in.peek() match
-          case Some('!') if next.contains(' ') =>
+        in.peekNext() match // peeking next char!! current char is exclamation mark
+          case Some(' ') =>
             in.skipCharacter() // skip exclamation mark
             TagHandle.Primary
-          case Some('!') if next.contains('!') =>
+          case Some('!') =>
             in.skipN(2) // skip both exclamation marks
             TagHandle.Secondary
-          case Some('!') =>
+          case _ =>
             val sb = new StringBuilder
             sb.append(in.read())
             while (in.peek().exists(c => !c.isWhitespace && c != '!')) do sb.append(in.read())
             sb.append(in.read())
             TagHandle.Named(sb.result())
-          case _ => ???
       }
 
       def parseTagPrefix() = {
@@ -144,7 +142,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
             val sb = new StringBuilder
             while (in.peek().exists(c => !c.isWhitespace)) do sb.append(in.read())
             TagPrefix.Global(sb.result())
-          case _ => ???
+          case _ => throw new ScannerError("Invalid tag prefix in TAG directive") 
       }
 
       skipSpaces()
@@ -153,7 +151,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           val handle = parseTagHandle()
           val prefix = parseTagPrefix()
           List(Token(TokenKind.TagDirective(handle, prefix), range))
-        case _ => ???
+        case _ => throw new ScannerError("Tag handle in TAG directive should start with '!'") 
     }
 
     in.peek() match
@@ -163,7 +161,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('T') if in.peekN(3) == "TAG" =>
         in.skipN(3)
         parseTagDirective()
-      case _ => ???
+      case _ => throw new ScannerError("Unknown directive, expected YAML or TAG") 
   }
 
   private def parseTag() =
@@ -178,7 +176,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case Some('>') =>
           sb.append(in.read())
           sb.result()
-        case _ => ??? // error
+        case _ => throw new ScannerError("Lacks '>' which closes verbatim tag attribute") 
 
     def parseTagSuffix(): String =
       val sb = new StringBuilder
@@ -201,7 +199,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
               TagValue.Shorthand(TagHandle.Named(sb.result()), parseTagSuffix())
             case Some(' ') =>
               TagValue.Shorthand(TagHandle.Primary, sb.result())
-            case _ => ???
+            case _ => throw new ScannerError("Invalid tag handle") 
 
     in.skipCharacter() // skip first '!'
     val peeked = in.peek()
@@ -214,7 +212,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some(char) =>
         val tagValue = parseShorthandTag(char)
         Tag(tagValue)
-      case None => ??? // error
+      case None => throw new ScannerError("Input stream ended unexpectedly")
 
     List(Token(tag, range))
 
