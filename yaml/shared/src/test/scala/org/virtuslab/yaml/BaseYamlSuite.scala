@@ -1,12 +1,14 @@
 package org.virtuslab.yaml
 
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
-
-import scala.util.{Failure, Success, Try}
 
 trait BaseYamlSuite extends munit.FunSuite {
 

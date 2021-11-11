@@ -36,5 +36,5 @@ object TokenKind:
       val escapedScalar = ScalarStyle.escapeSpecialCharacter(scalar, scalarStyle)
       new Scalar(escapedScalar, scalarStyle)
   end Scalar
-  
+
 end TokenKind
