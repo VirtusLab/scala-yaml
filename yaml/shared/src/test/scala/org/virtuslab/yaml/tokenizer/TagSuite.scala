@@ -73,7 +73,7 @@ class TagSuite extends BaseYamlSuite:
   }
 
   // todo Tag token should be placed after MappingKey
-  test("verbatim tag".ignore) {
+  test("verbatim tag") {
     val yaml = """|---
                   |!<tag:yaml.org,2002:str> foo :
                   |  !<!bar> baz""".stripMargin

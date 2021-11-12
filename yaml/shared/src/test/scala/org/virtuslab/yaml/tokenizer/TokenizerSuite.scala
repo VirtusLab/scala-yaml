@@ -98,24 +98,6 @@ class TokenizerSuite extends BaseYamlSuite:
     assertTokenEquals(yaml.tokens, tokens)
   }
 
-  test("flow mapping implicit key") {
-    val yaml = """|{ 
-                  |: v1 
-                  |}
-                  |""".stripMargin
-
-    val tokens = List(
-      FlowMappingStart,
-      MappingKey,
-      Scalar("", ScalarStyle.Plain),
-      MappingValue,
-      Scalar("v1", ScalarStyle.Plain),
-      FlowMappingEnd
-    )
-
-    assertTokenEquals(yaml.tokens, tokens)
-  }
-
   test("flow sequence") {
     val yaml = """|[ v1, v2, ]
                   |""".stripMargin
@@ -166,26 +148,6 @@ class TokenizerSuite extends BaseYamlSuite:
       Scalar("single", ScalarStyle.Plain),
       MappingValue,
       Scalar("pair", ScalarStyle.Plain),
-      FlowSequenceEnd
-    )
-
-    assertTokenEquals(yaml.tokens, tokens)
-  }
-
-  test("flow sequence mapping nested") {
-    val yaml = """|[ k1: k2: plain
-                  |    text ]
-                  |""".stripMargin
-
-    val tokens = List(
-      FlowSequenceStart,
-      MappingKey,
-      Scalar("k1", ScalarStyle.Plain),
-      MappingValue,
-      MappingKey,
-      Scalar("k2", ScalarStyle.Plain),
-      MappingValue,
-      Scalar("plain text", ScalarStyle.Plain),
       FlowSequenceEnd
     )
 

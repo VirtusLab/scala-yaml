@@ -9,7 +9,7 @@ abstract class YamlRunnerSpec extends munit.FunSuite {
 
   val verbose                       = false
   val predicate: os.Path => Boolean = _ => true
-  
+
   val yamlDirPath              = getClass.getResource(resourcePath)
   val yamlDir                  = new File(yamlDirPath.getPath)
   val yamlPaths: List[os.Path] = yamlDir.listFiles().map(os.Path(_)).filter(predicate).toList
