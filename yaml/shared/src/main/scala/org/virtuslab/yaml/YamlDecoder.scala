@@ -81,7 +81,7 @@ object YamlDecoder:
 
     constructed.partitionMap(identity) match
       case (Nil, rights) => Right(rights)
-      case (lefts, _)    => Left(lefts.head)
+      case (lefts)       => ??? //Left(lefts.head)
 
   given [T](using c: YamlDecoder[T]): YamlDecoder[List[T]] = YamlDecoder {
     case SequenceNode(nodes, _) =>
@@ -104,8 +104,8 @@ object YamlDecoder:
   ): YamlDecoder[Map[K, V]] = YamlDecoder { case MappingNode(mappings, _) =>
     val decoded: Seq[
       Either[ConstructError, (K, V)]
-    ] = mappings
-      .map { case KeyValueNode(key, value, _) =>
+    ] = mappings.toSeq
+      .map { (key, value) =>
         (keyDecoder.construct(key) -> valueDecoder.construct(value))
       }
       .map { case (key, value) =>
@@ -116,8 +116,8 @@ object YamlDecoder:
       }
 
     decoded.partitionMap(identity) match
-      case (Nil, rights) => Right(rights.toMap)
-      case (lefts, _)    => Left(lefts.head)
+      case (lefts, _) if lefts.nonEmpty => Left(lefts.head)
+      case (_, rights)                  => Right(rights.toMap)
   }
 
   given YamlDecoder[String] = YamlDecoder { case ScalarNode(value, _) =>
@@ -129,18 +129,16 @@ object YamlDecoder:
     case s: Mirror.SumOf[T]     => sumOf(s)
 
   private def extractKeyValues(
-      mappings: Seq[KeyValueNode]
+      mappings: Map[Node, Node]
   ): Either[ConstructError, Map[String, Node]] = {
-    val (error, valuesSeq) = mappings
-      .map { mapping =>
-        val key = mapping.key match {
-          case ScalarNode(k, _) => Right(k)
+    val keyValueMap = mappings
+      .map { (k, v) =>
+        k match {
+          case ScalarNode(scalarKey, _) => Right((scalarKey, v))
           case _ => Left(ConstructError(s"Parameter of a class must be a scalar value"))
         }
-        val value = mapping.value
-        key.map(k => k -> value)
       }
-      .partitionMap(identity)
+    val (error, valuesSeq) = keyValueMap.partitionMap(identity)
 
     if (error.nonEmpty) Left(error.head)
     else Right(valuesSeq.toMap)
@@ -170,9 +168,10 @@ object YamlDecoder:
         node match
           case Node.MappingNode(mappings, _) =>
             for {
-              valuesMap        <- extractKeyValues(mappings)
-              construcedValues <- constructValues(elemLabels, instances, valuesMap, p)
-            } yield (construcedValues)
+              valuesMap <- extractKeyValues(mappings)
+
+              constructedValues <- constructValues(elemLabels, instances, valuesMap, p)
+            } yield (constructedValues)
           case _ =>
             Left(ConstructError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
     }

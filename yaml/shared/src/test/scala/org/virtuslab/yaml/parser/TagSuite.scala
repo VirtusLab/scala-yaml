@@ -1,11 +1,11 @@
 package org.virtuslab.yaml
 package parser
 
+import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
-import org.virtuslab.yaml.internal.load.parse.Tag
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class TagSuite extends BaseYamlSuite:

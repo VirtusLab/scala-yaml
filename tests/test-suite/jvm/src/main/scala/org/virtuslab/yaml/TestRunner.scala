@@ -6,13 +6,12 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-import org.virtuslab.yaml
+import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
-import org.virtuslab.yaml.internal.load.parse.Tag
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 

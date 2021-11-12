@@ -34,7 +34,7 @@ class ComposerSuite extends munit.FunSuite:
     assertEquals(ComposerImpl.fromEvents(events), expected)
   }
 
-  test("mapping of scalars") {
+  test("mapping of scalars".only) {
     val events = List(
       StreamStart,
       DocumentStart(),
@@ -52,9 +52,9 @@ class ComposerSuite extends munit.FunSuite:
 
     val expected = Right(
       MappingNode(
-        KeyValueNode(ScalarNode("hr"), ScalarNode("65")),
-        KeyValueNode(ScalarNode("avg"), ScalarNode("0.278")),
-        KeyValueNode(ScalarNode("rbi"), ScalarNode("147"))
+        ScalarNode("hr")  -> ScalarNode("65"),
+        ScalarNode("avg") -> ScalarNode("0.278"),
+        ScalarNode("rbi") -> ScalarNode("147")
       )
     )
 
@@ -85,23 +85,19 @@ class ComposerSuite extends munit.FunSuite:
 
     val expected = Right(
       MappingNode(
-        List(
-          KeyValueNode(
-            ScalarNode("american"),
+        Map(
+          ScalarNode("american") ->
             SequenceNode(
               ScalarNode("Boston Red Sox"),
               ScalarNode("Detroit Tigers"),
               ScalarNode("New York Yankees")
-            )
-          ),
-          KeyValueNode(
-            ScalarNode("national"),
+            ),
+          ScalarNode("national") ->
             SequenceNode(
               ScalarNode("New York Mets"),
               ScalarNode("Chicago Cubs"),
               ScalarNode("Atlanta Braves")
             )
-          )
         )
       )
     )
@@ -138,14 +134,14 @@ class ComposerSuite extends munit.FunSuite:
     val expected = Right(
       SequenceNode(
         MappingNode(
-          KeyValueNode(ScalarNode("name"), ScalarNode("Mark McGwire")),
-          KeyValueNode(ScalarNode("hr"), ScalarNode("65")),
-          KeyValueNode(ScalarNode("avg"), ScalarNode("0.278"))
+          ScalarNode("name") -> ScalarNode("Mark McGwire"),
+          ScalarNode("hr")   -> ScalarNode("65"),
+          ScalarNode("avg")  -> ScalarNode("0.278")
         ),
         MappingNode(
-          KeyValueNode(ScalarNode("name"), ScalarNode("Sammy Sosa")),
-          KeyValueNode(ScalarNode("hr"), ScalarNode("63")),
-          KeyValueNode(ScalarNode("avg"), ScalarNode("0.288"))
+          ScalarNode("name") -> ScalarNode("Sammy Sosa"),
+          ScalarNode("hr")   -> ScalarNode("63"),
+          ScalarNode("avg")  -> ScalarNode("0.288")
         )
       )
     )

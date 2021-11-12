@@ -1,7 +1,6 @@
 package org.virtuslab.yaml
 package tokenizer
 
-import org.virtuslab.yaml.*
 import org.virtuslab.yaml.internal.load.TagHandle
 import org.virtuslab.yaml.internal.load.TagPrefix
 import org.virtuslab.yaml.internal.load.TagValue

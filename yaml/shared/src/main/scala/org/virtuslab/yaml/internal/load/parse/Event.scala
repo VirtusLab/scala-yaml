@@ -2,6 +2,7 @@ package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Range
+import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 /** 
@@ -67,7 +68,3 @@ object NodeEventMetadata:
 opaque type Anchor = String
 object Anchor:
   def apply(anchor: String): Anchor = anchor
-
-opaque type Tag = String
-object Tag:
-  def apply(tag: String): Tag = tag

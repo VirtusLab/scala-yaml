@@ -8,6 +8,7 @@ import scala.util.Try
 
 import org.virtuslab.yaml.ParseError
 import org.virtuslab.yaml.Range
+import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.TagHandle
 import org.virtuslab.yaml.internal.load.TagValue
