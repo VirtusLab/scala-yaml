@@ -73,23 +73,21 @@ class TagSuite extends BaseYamlSuite:
   }
 
   // todo Tag token should be placed after MappingKey
-  test("verbatim tag") {
+  test("verbatim tag".ignore) {
     val yaml = """|---
                   |!<tag:yaml.org,2002:str> foo :
                   |  !<!bar> baz""".stripMargin
 
     val tokens = List(
       DocumentStart,
-      /*fix this*/ Tag(TagValue.Verbatim("!<tag:yaml.org,2002:str>")),
       MappingStart,
       MappingKey,
-      //should be Tag(TagValue.Verbatim("!<tag:yaml.org,2002:str>")),
+      Tag(TagValue.Verbatim("!<tag:yaml.org,2002:str>")),
       Scalar("foo"),
       MappingValue,
-      /*fix this*/ BlockEnd,
       Tag(TagValue.Verbatim("!<!bar>")),
-      Scalar("baz")
-      //should be BlockEnd,
+      Scalar("baz"),
+      BlockEnd
     )
 
     assertTokenEquals(yaml.tokens, tokens)
