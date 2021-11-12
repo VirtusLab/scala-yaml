@@ -10,11 +10,11 @@ import org.virtuslab.yaml
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
+import org.virtuslab.yaml.internal.load.parse.Tag
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle._
-import org.virtuslab.yaml.internal.load.reader.token.Token._
 
 trait TestRunner():
   def inYaml: String
@@ -42,7 +42,15 @@ end TestRunner
 
 object TestRunnerUtils:
 
-  extension (anchor: Option[Anchor]) def asString: String = anchor.map(a => s" &$a").getOrElse("")
+  extension (anchor: Option[Anchor])
+    def anchorAsString: String                         = anchor.map(a => s" &$a").getOrElse("")
+  extension (tag: Option[Tag]) def tagAsString: String = tag.map(a => s" <$a>").getOrElse("")
+  extension (metadata: NodeEventMetadata)
+    def asString: String =
+      List(
+        metadata.anchor.anchorAsString,
+        metadata.tag.tagAsString
+      ).mkString
 
   def convertEventToYamlTestSuiteFormat(events: Seq[EventKind]): String =
     events
@@ -51,19 +59,19 @@ object TestRunnerUtils:
         case StreamEnd                   => "-STR"
         case DocumentStart(explicit)     => if (explicit) "+DOC ---" else "+DOC"
         case DocumentEnd(explicit)       => if (explicit) "-DOC ..." else "-DOC"
-        case SequenceStart(data)         => s"+SEQ${data.anchor.asString}"
+        case SequenceStart(data)         => s"+SEQ${data.asString}"
         case SequenceEnd                 => "-SEQ"
-        case MappingStart(data)          => s"+MAP${data.anchor.asString}"
-        case FlowMappingStart(data)      => s"+MAP${data.anchor.asString}"
+        case MappingStart(data)          => s"+MAP${data.asString}"
+        case FlowMappingStart(data)      => s"+MAP${data.asString}"
         case MappingEnd | FlowMappingEnd => "-MAP"
         case Alias(alias)                => s"=ALI *$alias"
         case Scalar(value, style, data) =>
           style match {
-            case ScalarStyle.Plain        => s"=VAL${data.anchor.asString} :$value"
-            case ScalarStyle.DoubleQuoted => s"""=VAL${data.anchor.asString} "$value"""
-            case ScalarStyle.SingleQuoted => s"=VAL${data.anchor.asString} '$value"
-            case ScalarStyle.Folded       => s"=VAL${data.anchor.asString} >$value"
-            case ScalarStyle.Literal      => s"=VAL${data.anchor.asString} |$value"
+            case ScalarStyle.Plain        => s"=VAL${data.asString} :$value"
+            case ScalarStyle.DoubleQuoted => s"""=VAL${data.asString} "$value"""
+            case ScalarStyle.SingleQuoted => s"=VAL${data.asString} '$value"
+            case ScalarStyle.Folded       => s"=VAL${data.asString} >$value"
+            case ScalarStyle.Literal      => s"=VAL${data.asString} |$value"
           }
       }
       .mkString("\n")

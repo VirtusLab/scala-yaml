@@ -4,7 +4,6 @@ package parser
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
-import org.virtuslab.yaml.internal.load.reader.Scanner
 
 class AnchorSpec extends BaseYamlSuite:
 
@@ -53,7 +52,6 @@ class AnchorSpec extends BaseYamlSuite:
       DocumentEnd(),
       StreamEnd
     )
-    yaml.debugTokens
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
@@ -123,7 +121,6 @@ class AnchorSpec extends BaseYamlSuite:
       DocumentEnd(),
       StreamEnd
     )
-    yaml.debugTokens
     assertEquals(yaml.events, Right(expectedEvents))
   }
 

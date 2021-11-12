@@ -51,12 +51,23 @@ enum EventKind:
  * - tags (not yet supported)
  */
 final case class NodeEventMetadata(
-    anchor: Option[Anchor]
-)
+    anchor: Option[Anchor] = None,
+    tag: Option[Tag] = None
+):
+  def withAnchor(anchor: Anchor) = this.copy(anchor = Some(anchor))
+  def withTag(tag: Tag)          = this.copy(tag = Some(tag))
+end NodeEventMetadata
+
 object NodeEventMetadata:
-  val empty                                    = NodeEventMetadata(None)
-  def apply(anchor: Anchor): NodeEventMetadata = NodeEventMetadata(Some(anchor))
+  final val empty                              = NodeEventMetadata()
+  def apply(anchor: Anchor): NodeEventMetadata = NodeEventMetadata(anchor = Some(anchor))
+  @scala.annotation.targetName("applyForTag")
+  def apply(tag: Tag): NodeEventMetadata = NodeEventMetadata(tag = Some(tag))
 
 opaque type Anchor = String
 object Anchor:
   def apply(anchor: String): Anchor = anchor
+
+opaque type Tag = String
+object Tag:
+  def apply(tag: String): Tag = tag
