@@ -16,7 +16,9 @@ object YamlCodec:
       val decoder = YamlDecoder.derived[T]
       val encoder = YamlEncoder.derived[T]
 
-      def construct(node: Node): Either[ConstructError, T] = decoder.construct(node)
-      def asNode(obj: T): Node                             = encoder.asNode(obj)
+      def construct(node: Node)(using
+          settings: LoadSettings = LoadSettings.empty
+      ): Either[ConstructError, T] = decoder.construct(node)
+      def asNode(obj: T): Node     = encoder.asNode(obj)
 
 end YamlCodec

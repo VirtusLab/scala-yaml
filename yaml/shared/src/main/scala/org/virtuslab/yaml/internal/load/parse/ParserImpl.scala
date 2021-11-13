@@ -6,8 +6,11 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import org.virtuslab.yaml.CoreSchemaTag
+import org.virtuslab.yaml.CustomTag
 import org.virtuslab.yaml.ParseError
 import org.virtuslab.yaml.Range
+import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.TagHandle
 import org.virtuslab.yaml.internal.load.TagValue
@@ -387,7 +390,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         case _ =>
           Right(
             Event(
-              EventKind.Scalar("", ScalarStyle.Plain, metadata),
+              EventKind.Scalar("", ScalarStyle.Plain, metadata.withTag(Tag.nullTag)),
               nextToken.range
             )
           )
@@ -406,14 +409,18 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
           in.popToken()
           value match
             case TagValue.NonSpecific =>
-              parseNodeAttributes(in.peekToken(), metadata.withTag(Tag("!")))
+              parseNodeAttributes(in.peekToken(), metadata)
             case TagValue.Verbatim(value) =>
-              parseNodeAttributes(in.peekToken(), metadata.withTag(Tag(value)))
+              parseNodeAttributes(in.peekToken(), metadata.withTag(CustomTag(value)))
             case TagValue.Shorthand(handle, suffix) =>
               val handleKey = handle.value
               directives.get(handleKey) match
                 case Some(prefix) =>
-                  parseNodeAttributes(in.peekToken(), metadata.withTag(Tag(s"$prefix$suffix")))
+                  val tagValue = s"$prefix$suffix"
+                  val tag =
+                    if Tag.coreSchemaValues.contains(tagValue) then CoreSchemaTag(tagValue)
+                    else CustomTag(tagValue)
+                  parseNodeAttributes(in.peekToken(), metadata.withTag(tag))
                 case None =>
                   Left(ParseError(s"There is no registered tag directive for handle $handleKey"))
         case _ => Right(metadata, token)

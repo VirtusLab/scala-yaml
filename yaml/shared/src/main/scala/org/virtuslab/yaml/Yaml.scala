@@ -13,8 +13,6 @@ inline def deriveYamlEncoder[T](using m: Mirror.Of[T]): YamlEncoder[T] = YamlEnc
 inline def deriveYamlDecoder[T](using m: Mirror.Of[T]): YamlDecoder[T] = YamlDecoder.derived[T]
 inline def deriveYamlCodec[T](using m: Mirror.Of[T]): YamlCodec[T]     = YamlCodec.derived[T]
 
-extension (node: Node) def as[T](using c: YamlDecoder[T]): Either[YamlError, T] = c.construct(node)
-
 extension (str: String)
   /**
    * Parse YAML from the given [[String]], returning either [[YamlError]] or [[T]].
@@ -24,7 +22,10 @@ extension (str: String)
    * - then [[Composer]] produces a representation graph from events
    * - finally [[YamlDecoder]] (construct phase from the YAML spec) constructs data type [[T]] from the YAML representation. 
    */
-  def as[T](using c: YamlDecoder[T]): Either[YamlError, T] =
+  def as[T](using
+      c: YamlDecoder[T],
+      settings: LoadSettings = LoadSettings.empty
+  ): Either[YamlError, T] =
     for
       events <- {
         val parser = ParserImpl(Scanner(str))

@@ -2,6 +2,7 @@ package org.virtuslab.yaml
 package parser
 
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class MappingSuite extends BaseYamlSuite:
@@ -169,7 +170,7 @@ class MappingSuite extends BaseYamlSuite:
       DocumentStart(),
       MappingStart(),
       Scalar("key"),
-      Scalar(""),
+      Scalar("", metadata = NodeEventMetadata(Tag.nullTag)),
       Scalar("key2"),
       Scalar("value"),
       MappingEnd,
@@ -190,7 +191,7 @@ class MappingSuite extends BaseYamlSuite:
       DocumentStart(),
       MappingStart(),
       Scalar("key"),
-      Scalar(""),
+      Scalar("", metadata = NodeEventMetadata(Tag.nullTag)),
       Scalar("period"),
       Scalar("10"),
       MappingEnd,
@@ -455,13 +456,13 @@ class MappingSuite extends BaseYamlSuite:
       SequenceStart(),
       FlowMappingStart(),
       Scalar("single line", ScalarStyle.DoubleQuoted),
-      Scalar(""),
+      Scalar("", metadata = NodeEventMetadata(Tag.nullTag)),
       Scalar("a"),
       Scalar("b"),
       FlowMappingEnd,
       FlowMappingStart(),
       Scalar("multi line", ScalarStyle.DoubleQuoted),
-      Scalar(""),
+      Scalar("", metadata = NodeEventMetadata(Tag.nullTag)),
       Scalar("a"),
       Scalar("b"),
       FlowMappingEnd,

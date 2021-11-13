@@ -2,6 +2,7 @@ package org.virtuslab.yaml.internal.load.parse
 
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Range
+import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 /** 
@@ -61,13 +62,10 @@ end NodeEventMetadata
 object NodeEventMetadata:
   final val empty                              = NodeEventMetadata()
   def apply(anchor: Anchor): NodeEventMetadata = NodeEventMetadata(anchor = Some(anchor))
-  @scala.annotation.targetName("applyForTag")
+  def apply(anchor: Anchor, tag: Tag): NodeEventMetadata =
+    NodeEventMetadata(anchor = Some(anchor), tag = Some(tag))
   def apply(tag: Tag): NodeEventMetadata = NodeEventMetadata(tag = Some(tag))
 
 opaque type Anchor = String
 object Anchor:
   def apply(anchor: String): Anchor = anchor
-
-opaque type Tag = String
-object Tag:
-  def apply(tag: String): Tag = tag

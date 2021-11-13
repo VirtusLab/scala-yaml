@@ -5,7 +5,6 @@ import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
-import org.virtuslab.yaml.internal.load.parse.Tag
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class TagSuite extends BaseYamlSuite:
@@ -22,13 +21,13 @@ class TagSuite extends BaseYamlSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("bar", ScalarStyle.DoubleQuoted, NodeEventMetadata(Tag("!foo"))),
+      Scalar("bar", ScalarStyle.DoubleQuoted, NodeEventMetadata(CustomTag("!foo"))),
       DocumentEnd(explicit = true),
       DocumentStart(explicit = true),
       Scalar(
         "bar",
         ScalarStyle.DoubleQuoted,
-        NodeEventMetadata(Tag("tag:example.com,2000:app/foo"))
+        NodeEventMetadata(CustomTag("tag:example.com,2000:app/foo"))
       ),
       DocumentEnd(),
       StreamEnd
@@ -46,13 +45,13 @@ class TagSuite extends BaseYamlSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("bar", ScalarStyle.DoubleQuoted, NodeEventMetadata(Tag("!foo"))),
+      Scalar("bar", ScalarStyle.DoubleQuoted, NodeEventMetadata(CustomTag("!foo"))),
       DocumentEnd(),
       DocumentStart(explicit = true),
       Scalar(
         "bar",
         ScalarStyle.DoubleQuoted,
-        NodeEventMetadata(Tag("tag:example.com,2000:app/foo"))
+        NodeEventMetadata(CustomTag("tag:example.com,2000:app/foo"))
       ),
       DocumentEnd(),
       StreamEnd
@@ -72,9 +71,9 @@ class TagSuite extends BaseYamlSuite:
       StreamStart,
       DocumentStart(explicit = true),
       SequenceStart(),
-      Scalar("foo", metadata = NodeEventMetadata(Tag("!local"))),
-      Scalar("bar", metadata = NodeEventMetadata(Tag("tag:yaml.org,2002:str"))),
-      Scalar("baz", metadata = NodeEventMetadata(Tag("tag:example.com,2000:app/tag!"))),
+      Scalar("foo", metadata = NodeEventMetadata(CustomTag("!local"))),
+      Scalar("bar", metadata = NodeEventMetadata(CoreSchemaTag("tag:yaml.org,2002:str"))),
+      Scalar("baz", metadata = NodeEventMetadata(CustomTag("tag:example.com,2000:app/tag!"))),
       SequenceEnd,
       DocumentEnd(),
       StreamEnd
@@ -89,7 +88,7 @@ class TagSuite extends BaseYamlSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("a", metadata = NodeEventMetadata(Tag("!"))),
+      Scalar("a"),
       DocumentEnd(),
       StreamEnd
     )
@@ -106,7 +105,7 @@ class TagSuite extends BaseYamlSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(explicit = true),
-      SequenceStart(NodeEventMetadata(Tag("tag:yaml.org,2002:omap"))),
+      SequenceStart(NodeEventMetadata(CustomTag("tag:yaml.org,2002:omap"))),
       MappingStart(),
       Scalar("Mark McGwire"),
       Scalar("65"),
@@ -139,7 +138,7 @@ class TagSuite extends BaseYamlSuite:
       Scalar(
         "bar",
         ScalarStyle.DoubleQuoted,
-        NodeEventMetadata(Tag("tag:example.com,2000:app/foo"))
+        NodeEventMetadata(CustomTag("tag:example.com,2000:app/foo"))
       ),
       SequenceEnd,
       DocumentEnd(),

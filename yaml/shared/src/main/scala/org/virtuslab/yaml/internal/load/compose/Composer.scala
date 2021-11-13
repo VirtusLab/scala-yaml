@@ -6,6 +6,7 @@ import org.virtuslab.yaml.ComposerError
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.Range
+import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind
@@ -37,7 +38,8 @@ object ComposerImpl extends Composer:
         case _: EventKind.SequenceStart                                => composeSequenceNode(tail)
         case _: EventKind.MappingStart | _: EventKind.FlowMappingStart => composeMappingNode(tail)
         case s: EventKind.Scalar =>
-          Right(Result(Node.ScalarNode(s.value, head.pos), tail))
+          val tag: Tag = s.metadata.tag.getOrElse(Tag.resolveTag(s.value))
+          Right(Result(Node.ScalarNode(s.value, tag, head.pos), tail))
         // todo #88
         case _: EventKind.Alias => Left(ComposerError(s"Aliases aren't currently supported"))
         case event              => Left(ComposerError(s"Expected YAML node, but found: $event"))
@@ -60,7 +62,7 @@ object ComposerImpl extends Composer:
           case Left(err)         => Left(err)
 
     parseChildren(events, Nil).map { case (Result(nodes, rest), pos) =>
-      Result(Node.SequenceNode(nodes, pos), rest)
+      Result(Node.SequenceNode(nodes, Tag.seq, pos), rest)
     }
   }
 
@@ -68,9 +70,9 @@ object ComposerImpl extends Composer:
     @tailrec
     def parseMappings(
         events: List[Event],
-        mappings: List[Node.KeyValueNode],
+        mappings: List[(Node, Node)],
         firstChildPos: Option[Range] = None
-    ): ComposeResultWithPos[List[Node.KeyValueNode]] = {
+    ): ComposeResultWithPos[List[(Node, Node)]] = {
       events match
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
         case Event(EventKind.MappingEnd | EventKind.FlowMappingEnd, _) :: tail =>
@@ -86,14 +88,16 @@ object ComposerImpl extends Composer:
             for
               key <- composeNode(events)
               v   <- composeNode(key.remaining)
-            yield Result(Node.KeyValueNode(key.node, v.node, key.node.pos), v.remaining)
-
+            yield Result((key.node, v.node), v.remaining)
           mapping match
-            case Right(node, rest) => parseMappings(rest, mappings :+ node, node.pos)
-            case Left(err)         => Left(err)
+            case Right(node @ (key, value), rest) => parseMappings(rest, mappings :+ node, key.pos)
+            case Left(err)                        => Left(err)
     }
 
     parseMappings(events, Nil).map { case (Result(nodes, rest), pos) =>
-      Result(Node.MappingNode(nodes, pos), rest)
+      Result(
+        Node.MappingNode(nodes.toMap, Tag.map, pos),
+        rest
+      )
     }
   }

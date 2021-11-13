@@ -21,21 +21,19 @@ object YamlEncoder:
   given YamlEncoder[String]  = v => Node.ScalarNode(v)
 
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[Set[T]] = (nodes) =>
-    Node.SequenceNode(nodes.map(encoder.asNode(_)).toSeq)
+    Node.SequenceNode(nodes.map(encoder.asNode(_)).toSeq, Tag.seq)
 
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[Seq[T]] = (nodes) =>
-    Node.SequenceNode(nodes.map(encoder.asNode(_)))
+    Node.SequenceNode(nodes.map(encoder.asNode(_)), Tag.seq)
 
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[List[T]] = (nodes) =>
-    Node.SequenceNode(nodes.map(encoder.asNode(_)))
+    Node.SequenceNode(nodes.map(encoder.asNode(_)), Tag.seq)
 
   // todo support arbitrary node as key in KeyValueNode
-  given [V](using valueCodec: YamlEncoder[V]): YamlEncoder[Map[String, V]] =
+  given [K, V](using keyCodec: YamlEncoder[K], valueCodec: YamlEncoder[V]): YamlEncoder[Map[K, V]] =
     (nodes) =>
-      val pairs = nodes.toList.map((key, value) =>
-        Node.KeyValueNode(Node.ScalarNode(key), valueCodec.asNode(value))
-      )
-      Node.MappingNode(pairs)
+      val mappings = nodes.map((key, value) => (keyCodec.asNode(key) -> valueCodec.asNode(value)))
+      Node.MappingNode(mappings)
 
   inline def derived[T](using m: Mirror.Of[T]): YamlEncoder[T] = inline m match
     case p: Mirror.ProductOf[T] => deriveProduct(p)
@@ -48,11 +46,15 @@ object YamlEncoder:
       override def asNode(obj: T): Node =
         val products = obj.asInstanceOf[Product].productIterator
         val nodes =
-          elemLabels.zip(products).zip(yamlEncoders).map { case ((label, element), encoder) =>
-            val key   = Node.ScalarNode(label)
-            val value = encoder.asInstanceOf[YamlEncoder[Any]].asNode(element)
-            Node.KeyValueNode(key, value)
-          }
+          elemLabels
+            .zip(products)
+            .zip(yamlEncoders)
+            .map { case ((label, element), encoder) =>
+              val key: Node = Node.ScalarNode(label)
+              val value     = encoder.asInstanceOf[YamlEncoder[Any]].asNode(element)
+              (key, value)
+            }
+            .toMap
         Node.MappingNode(nodes)
     }
 

@@ -89,7 +89,7 @@ class AnchorSpec extends BaseYamlSuite:
       DocumentStart(explicit = true),
       MappingStart(),
       Scalar("a"),
-      Scalar("", metadata = NodeEventMetadata(Anchor("anchor"))),
+      Scalar("", metadata = NodeEventMetadata(Anchor("anchor"), Tag.nullTag)),
       Scalar("b"),
       Alias(Anchor("anchor")),
       MappingEnd,
