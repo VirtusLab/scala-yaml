@@ -140,6 +140,24 @@ class MappingSuite extends BaseYamlSuite:
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
+  test("mapping single quoted key") {
+    val yaml =
+      s"""|'key': value
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("key", style = ScalarStyle.SingleQuoted),
+      Scalar("value"),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
   test("mapping empty value") {
     val yaml =
       s"""key: 
@@ -468,6 +486,31 @@ class MappingSuite extends BaseYamlSuite:
       Scalar("foo", ScalarStyle.DoubleQuoted),
       Scalar("bar"),
       FlowMappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("mapping with folded value") {
+    val yaml =
+      s"""
+         |key: >
+         |  value
+         |key2: >
+         |  value2
+         |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("key"),
+      Scalar("value\\n", style = ScalarStyle.Folded),
+      Scalar("key2"),
+      Scalar("value2\\n", style = ScalarStyle.Folded),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )

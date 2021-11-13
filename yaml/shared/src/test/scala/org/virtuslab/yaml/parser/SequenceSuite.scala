@@ -278,3 +278,54 @@ class SequenceSuite extends BaseYamlSuite:
     )
     assertEquals(yaml.events, Right(expectedEvents))
   }
+
+  test("sequence with double :: in value") {
+    val yaml =
+      """ - ::value"""
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("::value"),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("flow mapping scalar") {
+    val yaml =
+      """- { "key"::value } """
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      FlowMappingStart(),
+      Scalar("key", style = ScalarStyle.DoubleQuoted),
+      Scalar(":value"),
+      FlowMappingEnd,
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("colon followed by comma") {
+    val yaml =
+      """- :,"""
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar(":,"),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }

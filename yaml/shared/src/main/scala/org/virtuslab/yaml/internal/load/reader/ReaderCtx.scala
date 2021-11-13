@@ -11,14 +11,24 @@ import org.virtuslab.yaml.internal.load.reader.token.Token
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind._
 
 case class ReaderCtx(reader: Reader) {
-  val tokens                    = mutable.ArrayDeque.empty[Token]
-  private val indentations      = mutable.ArrayDeque.empty[Int]
-  private var flowSequenceLevel = 0
-  private var flowMappingLevel  = 0
+  val tokens                     = mutable.ArrayDeque.empty[Token]
+  val potentialKeys              = mutable.ArrayDeque.empty[Token]
+  var isPlainKeyAllowed: Boolean = true
+  private val indentations       = mutable.ArrayDeque.empty[Int]
+  private var flowSequenceLevel  = 0
+  private var flowMappingLevel   = 0
 
   def indent: Int                     = indentations.lastOption.getOrElse(-1)
   def addIndent(newIndent: Int): Unit = indentations.append(newIndent)
   def removeLastIndent(): Unit        = if (indentations.nonEmpty) indentations.removeLast()
+
+  def popPotentialKeys(): List[Token] =
+    val plainKeys = potentialKeys.toList
+    potentialKeys.removeAll()
+    plainKeys
+
+  def needMoreTokens(): Boolean =
+    tokens.isEmpty || potentialKeys.nonEmpty
 
   def checkIndents(current: Int): List[Token] =
     if current < indent then
@@ -45,7 +55,7 @@ case class ReaderCtx(reader: Reader) {
     checkIndents(-1) ++ List(Token(DocumentStart, reader.range))
 
   def parseDocumentEnd(): List[Token] =
-    checkIndents(-1) ++ List(Token(DocumentEnd, reader.range))
+    popPotentialKeys() ++ checkIndents(-1) ++ List(Token(DocumentEnd, reader.range))
 }
 
 object ReaderCtx:
