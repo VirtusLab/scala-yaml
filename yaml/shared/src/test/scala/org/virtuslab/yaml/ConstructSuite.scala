@@ -45,3 +45,19 @@ class ConstructSuite extends munit.FunSuite:
       Left(ConstructError(s"Parameter of a class must be a scalar value"))
     assertEquals(node.as[DummyClass], expectedConstructError)
   }
+
+  test("decode as Any".only) {
+
+    val node = MappingNode(
+      SequenceNode(1, 2) -> ScalarNode("seq")
+    )
+
+    val expected = Map[Any, Any](
+      Seq(1, 2) -> "seq"
+    )
+
+    println(SequenceNode(1, 2))
+    println(node.as[Any])
+
+    assertEquals(node.as[Any], Right(expected))
+  }

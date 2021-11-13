@@ -12,64 +12,96 @@ import org.virtuslab.yaml.Node.*
  * A type class that provides a conversion from a [[Node]] into given type [[T]]
  */
 trait YamlDecoder[T]:
-  def construct(node: Node): Either[ConstructError, T]
+  def construct(node: Node)(using
+      settings: LoadSettings = LoadSettings.empty
+  ): Either[ConstructError, T]
 
 object YamlDecoder:
   def apply[T](
-      pf: PartialFunction[Node, Either[ConstructError | Throwable, T]]
-  )(implicit tag: ClassTag[T]): YamlDecoder[T] =
+      pf: PartialFunction[Node, Either[ConstructError, T]]
+  )(using classTag: ClassTag[T]): YamlDecoder[T] =
     new YamlDecoder[T] {
-      override def construct(node: Node): Either[ConstructError, T] =
-        if pf.isDefinedAt(node) then
-          pf(node) match {
-            case Left(e: Throwable) =>
-              val msg = node.pos match {
-                case Some(pos) =>
-                  s"""|${e.getMessage}
-                      |at ${pos.start.line}:${pos.start.column}, expected $tag
-                      |${pos.errorMsg} """.stripMargin
-                case None =>
-                  "Cannot decode: ${e.getMessage}"
-              }
-              Left(ConstructError(msg))
-            case Left(e: ConstructError) => Left(e)
-            case Right(v)                => Right(v)
-          }
-        else Left(ConstructError(s"Could't create Construct instance for $node"))
+      override def construct(
+          node: Node
+      )(using settings: LoadSettings = LoadSettings.empty): Either[ConstructError, T] =
+        if pf.isDefinedAt(node) then pf(node)
+        else Left(ConstructError(s"Could't construct ${classTag.runtimeClass.getName} from $node"))
     }
 
-  given YamlDecoder[Int] = YamlDecoder { case ScalarNode(value, _) =>
-    Try(value.toInt).toEither
+  private inline def cannotParse(value: Any, tpe: String, node: Node) = ConstructError.from(
+    s"Cannot parse $value as $tpe",
+    node,
+    tpe
+  )
+
+  given YamlDecoder[Int] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    value.toIntOption.toRight(cannotParse(value, "Int", s))
   }
 
-  given YamlDecoder[Long] = YamlDecoder { case ScalarNode(value, _) =>
-    Try(value.toLong).toEither
+  given YamlDecoder[Long] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    value.toLongOption.toRight(cannotParse(value, "Long", s))
   }
 
-  given YamlDecoder[Double] = YamlDecoder { case ScalarNode(value, _) =>
-    Try(value.toDouble).toEither
+  given YamlDecoder[Double] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    value.toDoubleOption.toRight(cannotParse(value, "Double", s))
   }
 
-  given YamlDecoder[Float] = YamlDecoder { case ScalarNode(value, _) =>
-    Try(value.toFloat).toEither
+  given YamlDecoder[Float] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    value.toFloatOption.toRight(cannotParse(value, "Float", s))
   }
 
-  given YamlDecoder[Short] = YamlDecoder { case ScalarNode(value, _) =>
-    Try(value.toShort).toEither
+  given YamlDecoder[Short] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    value.toShortOption.toRight(cannotParse(value, "Short", s))
   }
 
-  given YamlDecoder[Byte] = YamlDecoder { case ScalarNode(value, _) =>
-    Try(value.toByte).toEither
+  given YamlDecoder[Byte] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    value.toByteOption.toRight(cannotParse(value, "Byte", s))
   }
 
-  given YamlDecoder[Boolean] = YamlDecoder { case ScalarNode(value, _) =>
-    Try(value.toBoolean).toEither
+  given YamlDecoder[Boolean] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    value.toBooleanOption.toRight(cannotParse(value, "Boolean", s))
+  }
+
+  given YamlDecoder[Any] = new YamlDecoder {
+    def construct(node: Node)(using settings: LoadSettings = LoadSettings.empty) = {
+      node match {
+        case ScalarNode(value, tag) if Tag.primitives.contains(tag) =>
+          tag match {
+            case Tag.nullTag => Right(None)
+            case Tag.boolean => value.toBooleanOption.toRight(cannotParse(value, "Boolean", node))
+            case Tag.int =>
+              if value.startsWith("0b") then
+                Try(Integer.parseInt(value.drop(2), 8)).toEither.swap
+                  .map(t => ConstructError.from(t, "Int", node))
+                  .swap
+              else if value.startsWith("0x") then
+                Try(Integer.parseInt(value.drop(2), 8)).toEither.swap
+                  .map(t => ConstructError.from(t, "Int", node))
+                  .swap
+              else value.toIntOption.toRight(cannotParse(value, "Int", node))
+            case Tag.float =>
+              value.toDoubleOption.toRight(cannotParse(value, "Double", node))
+            case Tag.str => Right(value)
+          }
+        case MappingNode(mappings, Tag.map) =>
+          val decoder = summon[YamlDecoder[Map[Any, Any]]]
+          decoder.construct(node)
+        case SequenceNode(seq, Tag.seq) =>
+          val decoder = summon[YamlDecoder[Seq[Any]]]
+          decoder.construct(node)
+        case _ =>
+          settings.constructors.get(node.tag) match {
+            case Some(decoder) => decoder.construct(node)
+            case None => Left(ConstructError(s"Could't create construct instance for ${node.tag}"))
+          }
+      }
+    }
   }
 
   given [T](using c: YamlDecoder[T]): YamlDecoder[Option[T]] = YamlDecoder {
-    case ScalarNode(value, _) =>
+    case ScalarNode(value, tag) =>
       value match
-        case "null" | "" => Right(None)
+        case _ if tag == Tag.nullTag => Right(None)
         case _ =>
           c.construct(ScalarNode(value)).map(Option(_))
   }
@@ -81,7 +113,7 @@ object YamlDecoder:
 
     constructed.partitionMap(identity) match
       case (Nil, rights) => Right(rights)
-      case (lefts)       => ??? //Left(lefts.head)
+      case (lefts, _)    => Left(lefts.head)
 
   given [T](using c: YamlDecoder[T]): YamlDecoder[List[T]] = YamlDecoder {
     case SequenceNode(nodes, _) =>
@@ -164,12 +196,13 @@ object YamlDecoder:
     val instances  = summonAll[p.MirroredElemTypes]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
     new YamlDecoder[T] {
-      override def construct(node: Node): Either[ConstructError, T] =
+      override def construct(node: Node)(using
+          constructor: LoadSettings = LoadSettings.empty
+      ): Either[ConstructError, T] =
         node match
           case Node.MappingNode(mappings, _) =>
             for {
-              valuesMap <- extractKeyValues(mappings)
-
+              valuesMap         <- extractKeyValues(mappings)
               constructedValues <- constructValues(elemLabels, instances, valuesMap, p)
             } yield (constructedValues)
           case _ =>
@@ -179,7 +212,9 @@ object YamlDecoder:
   private inline def sumOf[T](s: Mirror.SumOf[T]) =
     val instances = summonSumOf[s.MirroredElemTypes].asInstanceOf[List[YamlDecoder[T]]]
     new YamlDecoder[T]:
-      override def construct(node: Node): Either[ConstructError, T] = LazyList
+      override def construct(
+          node: Node
+      )(using constructor: LoadSettings = LoadSettings.empty): Either[ConstructError, T] = LazyList
         .from(instances)
         .map(c => c.construct(node))
         .collectFirst { case r @ Right(_) => r }

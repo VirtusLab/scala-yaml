@@ -21,13 +21,13 @@ object YamlEncoder:
   given YamlEncoder[String]  = v => Node.ScalarNode(v)
 
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[Set[T]] = (nodes) =>
-    Node.SequenceNode(nodes.map(encoder.asNode(_)).toSeq, Tag(""))
+    Node.SequenceNode(nodes.map(encoder.asNode(_)).toSeq, Tag.seq)
 
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[Seq[T]] = (nodes) =>
-    Node.SequenceNode(nodes.map(encoder.asNode(_)), Tag(""))
+    Node.SequenceNode(nodes.map(encoder.asNode(_)), Tag.seq)
 
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[List[T]] = (nodes) =>
-    Node.SequenceNode(nodes.map(encoder.asNode(_)), Tag(""))
+    Node.SequenceNode(nodes.map(encoder.asNode(_)), Tag.seq)
 
   // todo support arbitrary node as key in KeyValueNode
   given [K, V](using keyCodec: YamlEncoder[K], valueCodec: YamlEncoder[V]): YamlEncoder[Map[K, V]] =

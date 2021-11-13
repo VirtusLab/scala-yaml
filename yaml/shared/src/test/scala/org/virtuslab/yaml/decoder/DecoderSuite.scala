@@ -1,8 +1,9 @@
 package org.virtuslab.yaml.decoder
 
+import org.virtuslab.yaml.Node.ScalarNode
 import org.virtuslab.yaml.*
 
-class PrimitiveDecoderSuite extends munit.FunSuite:
+class DecoderSuite extends munit.FunSuite:
 
   test("numbers") {
 
@@ -183,4 +184,50 @@ class PrimitiveDecoderSuite extends munit.FunSuite:
     )
 
     assertEquals(yaml.as[Spec], Right(expectedSpec))
+  }
+
+  test("decode into Map[Any, Any]") {
+
+    val yaml =
+      s"""|123: 321
+          |string: aezakmi
+          |true: false
+          |5.5: 55.55
+          |""".stripMargin
+
+    val expected = Map[Any, Any](
+      123      -> 321,
+      "string" -> "aezakmi",
+      true     -> false,
+      5.5      -> 55.55
+    )
+
+    assertEquals(yaml.as[Map[Any, Any]], Right(expected))
+  }
+
+  test("decode using custom tag".only) {
+    case class Custom(x: Int, doubledX: Int)
+
+    val yaml =
+      s"""|!Custom 5
+          |""".stripMargin
+
+    val expected = Custom(5, 10)
+
+    val decoder = new YamlDecoder[Custom] {
+      override def construct(node: Node)(using
+          settings: LoadSettings = LoadSettings.empty
+      ): Either[ConstructError, Custom] = node match {
+        case ScalarNode(value, _) =>
+          val int = value.toInt
+          Right(Custom(int, int * 2))
+        case _ => ???
+      }
+    }.asInstanceOf[YamlDecoder[Any]]
+
+    given settings: LoadSettings = LoadSettings(
+      Map(Tag("!Custom") -> decoder)
+    )
+
+    assertEquals(yaml.as[Any], Right(expected))
   }

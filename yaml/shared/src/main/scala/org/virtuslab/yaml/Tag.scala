@@ -16,6 +16,8 @@ object Tag:
   val seq: Tag        = Tag(s"${default}seq")
   val map: Tag        = Tag(s"${default}map")
 
+  val primitives = Set(nullTag, boolean, int, float, str)
+
   private val nullPattern    = "null|Null|NULL|~".r
   private val booleanPattern = "true|True|TRUE|false|False|FALSE".r
   private val int10Pattern   = "[-+]?[0-9]+".r
