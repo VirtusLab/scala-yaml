@@ -313,3 +313,19 @@ class SequenceSuite extends BaseYamlSuite:
     )
     assertEquals(yaml.events, Right(expectedEvents))
   }
+
+  test("colon followed by comma") {
+    val yaml =
+      """- :,"""
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar(":,"),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }

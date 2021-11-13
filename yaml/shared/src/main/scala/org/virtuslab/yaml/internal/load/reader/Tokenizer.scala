@@ -476,11 +476,11 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     def readScalar(): String =
       val peeked = in.peek()
       peeked match
-        case Some(':') if in.isNextWhitespace                   => sb.result()
-        case Some(':') if in.peekNext().exists(_ == ',')        => sb.result()
-        case Some(char) if !ctx.isAllowedSpecialCharacter(char) => sb.result()
-        case _ if isDocumentEnd || isDocumentStart              => sb.result()
-        case Some(' ') if in.peekNext() == Some('#')            => sb.result()
+        case Some(':') if in.isNextWhitespace                                      => sb.result()
+        case Some(':') if in.peekNext().exists(_ == ',') && ctx.isInFlowCollection => sb.result()
+        case Some(char) if !ctx.isAllowedSpecialCharacter(char)                    => sb.result()
+        case _ if isDocumentEnd || isDocumentStart                                 => sb.result()
+        case Some(' ') if in.peekNext() == Some('#')                               => sb.result()
         case _ if in.isNewline =>
           ctx.isPlainKeyAllowed = true
           if (in.isNextNewline) then chompedEmptyLines()
