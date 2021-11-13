@@ -72,7 +72,6 @@ class TagSuite extends BaseYamlSuite:
     assertTokenEquals(yaml.tokens, tokens)
   }
 
-  // todo Tag token should be placed after MappingKey
   test("verbatim tag") {
     val yaml = """|---
                   |!<tag:yaml.org,2002:str> foo :
@@ -279,7 +278,7 @@ class TagSuite extends BaseYamlSuite:
 
   test("secondary tag with alias") {
     val yaml = """|&anchor !!int 5 : !!str &anchor2 value
-                    |""".stripMargin
+                  |""".stripMargin
 
     val tokens = List(
       MappingStart,

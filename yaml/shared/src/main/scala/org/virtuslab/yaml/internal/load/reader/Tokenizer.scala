@@ -57,7 +57,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val closedBlockTokens = ctx.checkIndents(in.column)
     val closedTokens =
       if (closedBlockTokens.nonEmpty || shouldPopPlainKeys) then
-        ctx.popPossibleKeys() ++ closedBlockTokens
+        ctx.popPotentialKeys() ++ closedBlockTokens
       else closedBlockTokens
     val peeked = in.peek()
     val tokens: List[Token] = peeked match
@@ -79,13 +79,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some(',') =>
         in.skipCharacter()
         ctx.isPlainKeyAllowed = true
-        ctx.popPossibleKeys() ++ List(Token(Comma, in.range))
+        ctx.popPotentialKeys() ++ List(Token(Comma, in.range))
       case Some(':')
           if (in.isNextWhitespace || (ctx.isInFlowCollection && ctx.isPlainKeyAllowed)) =>
         fetchValue()
       case Some(_) => parsePlainScalar()
       case None =>
-        ctx.popPossibleKeys() ++ ctx.checkIndents(-1) ++ List(Token(StreamEnd, in.range))
+        ctx.popPotentialKeys() ++ ctx.checkIndents(-1) ++ List(Token(StreamEnd, in.range))
 
     closedTokens ++ tokens
 
@@ -106,23 +106,23 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   private def parseFlowSequenceStart() =
     in.skipCharacter()
     ctx.enterFlowSequence
-    ctx.popPossibleKeys() ++ List(Token(FlowSequenceStart, in.range))
+    ctx.popPotentialKeys() ++ List(Token(FlowSequenceStart, in.range))
 
   private def parseFlowSequenceEnd() =
     in.skipCharacter()
     ctx.leaveFlowSequence
-    ctx.popPossibleKeys() ++ List(Token(FlowSequenceEnd, in.range))
+    ctx.popPotentialKeys() ++ List(Token(FlowSequenceEnd, in.range))
 
   private def parseFlowMappingStart() =
     in.skipCharacter()
     ctx.enterFlowMapping
     ctx.isPlainKeyAllowed = true
-    ctx.popPossibleKeys() ++ List(Token(FlowMappingStart, in.range))
+    ctx.popPotentialKeys() ++ List(Token(FlowMappingStart, in.range))
 
   private def parseFlowMappingEnd() =
     in.skipCharacter()
     ctx.leaveFlowMapping
-    ctx.popPossibleKeys() ++ List(Token(FlowMappingEnd, in.range))
+    ctx.popPotentialKeys() ++ List(Token(FlowMappingEnd, in.range))
 
   private def parseBlockSequence() =
     if (!ctx.isInFlowCollection && ctx.indent < in.column) then
@@ -130,7 +130,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       List(Token(SequenceStart, in.range))
     else
       in.skipCharacter()
-      ctx.popPossibleKeys() ++ List(Token(SequenceValue, in.range))
+      ctx.popPotentialKeys() ++ List(Token(SequenceValue, in.range))
 
   private def parseDirective(): List[Token] = {
     val range = in.range
@@ -519,7 +519,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         List(Token(MappingStart, firstSimpleKey.range))
       else Nil
 
-    val potentialKeys = ctx.popPossibleKeys()
+    val potentialKeys = ctx.popPotentialKeys()
     ctx.isPlainKeyAllowed = false
 
     if (

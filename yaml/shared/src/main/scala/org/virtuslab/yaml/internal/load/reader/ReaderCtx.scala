@@ -22,7 +22,7 @@ case class ReaderCtx(reader: Reader) {
   def addIndent(newIndent: Int): Unit = indentations.append(newIndent)
   def removeLastIndent(): Unit        = if (indentations.nonEmpty) indentations.removeLast()
 
-  def popPossibleKeys(): List[Token] =
+  def popPotentialKeys(): List[Token] =
     val plainKeys = potentialKeys.toList
     potentialKeys.removeAll()
     plainKeys
@@ -55,7 +55,7 @@ case class ReaderCtx(reader: Reader) {
     checkIndents(-1) ++ List(Token(DocumentStart, reader.range))
 
   def parseDocumentEnd(): List[Token] =
-    popPossibleKeys() ++ checkIndents(-1) ++ List(Token(DocumentEnd, reader.range))
+    popPotentialKeys() ++ checkIndents(-1) ++ List(Token(DocumentEnd, reader.range))
 }
 
 object ReaderCtx:
