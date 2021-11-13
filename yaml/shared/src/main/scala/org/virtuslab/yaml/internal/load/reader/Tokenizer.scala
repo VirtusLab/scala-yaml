@@ -41,20 +41,22 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   override def popToken(): Token = ctx.tokens.removeHead()
 
   private def getToken(): Token =
-    while (ctx.needMoreToken()) {
+    while (ctx.needMoreTokens())
       ctx.tokens.appendAll(getNextTokens())
-    }
     ctx.tokens.head
 
-  private def shouldPopPlainKeysElseLine: Boolean =
-    !ctx.isInFlowCollection && ctx.possiblePlainKeys.headOption
+  /**
+  * Plain keys have to be resolved in the same line they were created, otherwise they cannot be keys, thus they are ordinary tokens
+  */
+  private def shouldPopPlainKeys: Boolean =
+    !ctx.isInFlowCollection && ctx.potentialKeys.headOption
       .exists(_.range.start.line != in.line)
 
   private def getNextTokens(): List[Token] =
     skipUntilNextToken()
     val closedBlockTokens = ctx.checkIndents(in.column)
     val closedTokens =
-      if (closedBlockTokens.nonEmpty || shouldPopPlainKeysElseLine) then
+      if (closedBlockTokens.nonEmpty || shouldPopPlainKeys) then
         ctx.popPossibleKeys() ++ closedBlockTokens
       else closedBlockTokens
     val peeked = in.peek()
@@ -76,9 +78,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('*')                        => parseAlias()
       case Some(',') =>
         in.skipCharacter()
-        ctx.allowPlainKeys = true
+        ctx.isPlainKeyAllowed = true
         ctx.popPossibleKeys() ++ List(Token(Comma, in.range))
-      case Some(':') if (in.isNextWhitespace || (ctx.isInFlowCollection && ctx.allowPlainKeys)) =>
+      case Some(':')
+          if (in.isNextWhitespace || (ctx.isInFlowCollection && ctx.isPlainKeyAllowed)) =>
         fetchValue()
       case Some(_) => parsePlainScalar()
       case None =>
@@ -113,7 +116,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   private def parseFlowMappingStart() =
     in.skipCharacter()
     ctx.enterFlowMapping
-    ctx.allowPlainKeys = true
+    ctx.isPlainKeyAllowed = true
     ctx.popPossibleKeys() ++ List(Token(FlowMappingStart, in.range))
 
   private def parseFlowMappingEnd() =
@@ -239,12 +242,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         Tag(tagValue)
       case None => throw ScannerError("Input stream ended unexpectedly")
 
-    if (ctx.allowPlainKeys) {
-      ctx.possiblePlainKeys.append(Token(tag, range))
+    if (ctx.isPlainKeyAllowed)
+      ctx.potentialKeys.append(Token(tag, range))
       Nil
-    } else {
-      List(Token(tag, range))
-    }
+    else List(Token(tag, range))
 
   private def parseAnchorName(): (String, Range) =
     val invalidChars = Set('[', ']', '{', '}', ',')
@@ -266,22 +267,18 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   private def parseAnchor(): List[Token] =
     val (name, range) = parseAnchorName()
     val anchorToken   = Token(Anchor(name), range)
-    if (ctx.allowPlainKeys) {
-      ctx.possiblePlainKeys.append(anchorToken)
+    if (ctx.isPlainKeyAllowed)
+      ctx.potentialKeys.append(anchorToken)
       Nil
-    } else {
-      List(anchorToken)
-    }
+    else List(anchorToken)
 
   private def parseAlias(): List[Token] =
     val (name, pos) = parseAnchorName()
     val aliasToken  = Token(Alias(name), pos)
-    if (ctx.allowPlainKeys) {
-      ctx.possiblePlainKeys.append(aliasToken)
+    if (ctx.isPlainKeyAllowed)
+      ctx.potentialKeys.append(aliasToken)
       Nil
-    } else {
-      List(aliasToken)
-    }
+    else List(aliasToken)
 
   private def parseDoubleQuoteValue(): List[Token] =
     val sb = new StringBuilder
@@ -306,26 +303,23 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case None =>
           sb.result()
 
-    val allowPlainKeys = ctx.allowPlainKeys
-    val range          = in.range
+    val isPlainKeyAllowed = ctx.isPlainKeyAllowed
+    val range             = in.range
     in.skipCharacter() // skip double quote
     val scalar      = readScalar()
     val endRange    = range.withEndPos(in.pos)
     val scalarToken = Token(Scalar(scalar, ScalarStyle.DoubleQuoted), endRange)
-    if (allowPlainKeys) {
-      ctx.possiblePlainKeys.append(scalarToken)
+    if (isPlainKeyAllowed)
+      ctx.potentialKeys.append(scalarToken)
       Nil
-    } else {
-      List(scalarToken)
-    }
+    else List(scalarToken)
 
   /**
    * This header is followed by a non-content line break with an optional comment.
    */
   private def parseBlockHeader(): Unit =
-    while (in.peek() == Some(' ')) {
+    while (in.peek() == Some(' '))
       in.skipCharacter()
-    }
 
     if (in.peek() == Some('#'))
       skipComment()
@@ -372,7 +366,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     def readLiteral(): String =
       in.peek() match
         case _ if in.isNewline =>
-          ctx.allowPlainKeys = true
+          ctx.isPlainKeyAllowed = true
           sb.append(in.read())
           skipUntilNextIndent(foldedIndent)
           if (!in.isWhitespace && in.column != foldedIndent) then sb.result()
@@ -402,16 +396,15 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     skipUntilNextIndent(foldedIndent)
 
     def chompedEmptyLines() =
-      while (in.isNextNewline) {
+      while (in.isNextNewline) do
         in.skipCharacter()
         sb.append("\n")
-      }
 
     @tailrec
     def readFolded(): String =
       in.peek() match
         case _ if in.isNewline =>
-          ctx.allowPlainKeys = true
+          ctx.isPlainKeyAllowed = true
           if (in.isNextNewline) {
             chompedEmptyLines()
             if (in.peek().isDefined) then
@@ -459,18 +452,16 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readScalar()
         case None => sb.result()
 
-    val allowPlainKeys = ctx.allowPlainKeys
-    val range          = in.range
+    val isPlainKeyAllowed = ctx.isPlainKeyAllowed
+    val range             = in.range
     in.skipCharacter() // skip single quote
     val scalar      = readScalar()
     val endRange    = range.withEndPos(in.pos)
     val scalarToken = Token(Scalar(scalar, ScalarStyle.SingleQuoted), endRange)
-    if (allowPlainKeys) {
-      ctx.possiblePlainKeys.append(scalarToken)
+    if (isPlainKeyAllowed)
+      ctx.potentialKeys.append(scalarToken)
       Nil
-    } else {
-      List(scalarToken)
-    }
+    else List(scalarToken)
   }
 
   private def parsePlainScalar(): List[Token] = {
@@ -478,10 +469,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val scalarIndent = in.column
 
     def chompedEmptyLines() =
-      while (in.isNextNewline) {
+      while (in.isNextNewline) do
         in.skipCharacter()
         sb.append("\n")
-      }
 
     def readScalar(): String =
       val peeked = in.peek()
@@ -492,7 +482,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case _ if isDocumentEnd || isDocumentStart              => sb.result()
         case Some(' ') if in.peekNext() == Some('#')            => sb.result()
         case _ if in.isNewline =>
-          ctx.allowPlainKeys = true
+          ctx.isPlainKeyAllowed = true
           if (in.isNextNewline) then chompedEmptyLines()
           else sb.append(' ')
           skipUntilNextToken()
@@ -504,24 +494,22 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           readScalar()
         case Some(_) | None => sb.result()
 
-    val allowPlainKeys = ctx.allowPlainKeys
-    val range          = in.range
-    val scalar         = readScalar()
-    val endRange       = range.withEndPos(in.pos)
-    val scalarToken    = Token(Scalar(scalar.trim, ScalarStyle.Plain), endRange)
-    if (allowPlainKeys) {
-      ctx.possiblePlainKeys.append(scalarToken)
+    val isPlainKeyAllowed = ctx.isPlainKeyAllowed
+    val range             = in.range
+    val scalar            = readScalar()
+    val endRange          = range.withEndPos(in.pos)
+    val scalarToken       = Token(Scalar(scalar.trim, ScalarStyle.Plain), endRange)
+    if (isPlainKeyAllowed)
+      ctx.potentialKeys.append(scalarToken)
       Nil
-    } else {
-      List(scalarToken)
-    }
+    else List(scalarToken)
   }
 
   private def fetchValue(): List[Token] =
     in.skipCharacter() // skip
     val mappingValueToken = Token(MappingValue, in.range)
 
-    lazy val firstSimpleKey = ctx.possiblePlainKeys.headOption.getOrElse(
+    lazy val firstSimpleKey = ctx.potentialKeys.headOption.getOrElse(
       throw ScannerError.from("Not found expected key for value", mappingValueToken)
     )
 
@@ -531,20 +519,19 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         List(Token(MappingStart, firstSimpleKey.range))
       else Nil
 
-    val simpleKeys = ctx.possiblePlainKeys.toList
-    ctx.possiblePlainKeys.removeAll()
-    ctx.allowPlainKeys = false
+    val potentialKeys = ctx.popPossibleKeys()
+    ctx.isPlainKeyAllowed = false
 
     if (
       !ctx.isInFlowCollection &&
       firstSimpleKey.range.end.exists(
         _.line > firstSimpleKey.range.start.line
       )
-    ) {
+    )
       throw ScannerError.from("Not alowed here a mapping value", mappingValueToken)
-    } else
+    else
       maybeMappingStart ++ List(Token(MappingKey, in.range))
-        ++ simpleKeys :+ mappingValueToken
+        ++ potentialKeys :+ mappingValueToken
 
   def skipUntilNextToken(): Unit =
     while (in.isWhitespace && !in.isNewline) do in.skipCharacter()
@@ -552,7 +539,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     if in.peek() == Some('#') then skipComment()
 
     if (in.isNewline) then {
-      ctx.allowPlainKeys = true
+      ctx.isPlainKeyAllowed = true
       in.skipCharacter()
       skipUntilNextToken()
     }
