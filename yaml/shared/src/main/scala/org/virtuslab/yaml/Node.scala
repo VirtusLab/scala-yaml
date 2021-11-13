@@ -13,7 +13,8 @@ sealed trait Node:
   def as[T](using
       c: YamlDecoder[T],
       settings: LoadSettings = LoadSettings.empty
-  ): Either[YamlError, T] = c.construct(this)
+  ): Either[YamlError, T] =
+    c.construct(this)
 
 object Node:
   final case class ScalarNode private[yaml] (value: String, tag: Tag, pos: Option[Range] = None)

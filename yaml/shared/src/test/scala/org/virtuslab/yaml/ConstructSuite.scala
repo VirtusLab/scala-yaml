@@ -46,7 +46,7 @@ class ConstructSuite extends munit.FunSuite:
     assertEquals(node.as[DummyClass], expectedConstructError)
   }
 
-  test("decode as Any".only) {
+  test("decode as Any") {
 
     val node = MappingNode(
       SequenceNode(1, 2) -> ScalarNode("seq")
@@ -55,9 +55,6 @@ class ConstructSuite extends munit.FunSuite:
     val expected = Map[Any, Any](
       Seq(1, 2) -> "seq"
     )
-
-    println(SequenceNode(1, 2))
-    println(node.as[Any])
 
     assertEquals(node.as[Any], Right(expected))
   }

@@ -34,7 +34,7 @@ class ComposerSuite extends munit.FunSuite:
     assertEquals(ComposerImpl.fromEvents(events), expected)
   }
 
-  test("mapping of scalars".only) {
+  test("mapping of scalars") {
     val events = List(
       StreamStart,
       DocumentStart(),

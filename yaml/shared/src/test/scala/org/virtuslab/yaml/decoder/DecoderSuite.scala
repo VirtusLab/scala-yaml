@@ -205,7 +205,7 @@ class DecoderSuite extends munit.FunSuite:
     assertEquals(yaml.as[Map[Any, Any]], Right(expected))
   }
 
-  test("decode using custom tag".only) {
+  test("decode using custom tag") {
     case class Custom(x: Int, doubledX: Int)
 
     val yaml =
@@ -214,19 +214,13 @@ class DecoderSuite extends munit.FunSuite:
 
     val expected = Custom(5, 10)
 
-    val decoder = new YamlDecoder[Custom] {
-      override def construct(node: Node)(using
-          settings: LoadSettings = LoadSettings.empty
-      ): Either[ConstructError, Custom] = node match {
-        case ScalarNode(value, _) =>
-          val int = value.toInt
-          Right(Custom(int, int * 2))
-        case _ => ???
-      }
-    }.asInstanceOf[YamlDecoder[Any]]
+    val decoder = YamlDecoder[Custom] { case ScalarNode(value, _) =>
+      val int = value.toInt
+      Right(Custom(int, int * 2))
+    }
 
     given settings: LoadSettings = LoadSettings(
-      Map(Tag("!Custom") -> decoder)
+      Map(CustomTag("!Custom") -> decoder)
     )
 
     assertEquals(yaml.as[Any], Right(expected))

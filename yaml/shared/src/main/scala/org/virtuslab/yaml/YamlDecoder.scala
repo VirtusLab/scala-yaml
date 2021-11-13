@@ -25,7 +25,12 @@ object YamlDecoder:
           node: Node
       )(using settings: LoadSettings = LoadSettings.empty): Either[ConstructError, T] =
         if pf.isDefinedAt(node) then pf(node)
-        else Left(ConstructError(s"Could't construct ${classTag.runtimeClass.getName} from $node"))
+        else
+          Left(
+            ConstructError(s"""|Could't construct ${classTag.runtimeClass.getName} from ${node.tag}
+                               |${node.pos.map(_.errorMsg).getOrElse("")}
+                               |""".stripMargin)
+          )
     }
 
   private inline def cannotParse(value: Any, tpe: String, node: Node) = ConstructError.from(
@@ -65,19 +70,17 @@ object YamlDecoder:
   given YamlDecoder[Any] = new YamlDecoder {
     def construct(node: Node)(using settings: LoadSettings = LoadSettings.empty) = {
       node match {
-        case ScalarNode(value, tag) if Tag.primitives.contains(tag) =>
+        case ScalarNode(value, tag: CoreSchemaTag) if Tag.corePrimitives.contains(tag) =>
           tag match {
             case Tag.nullTag => Right(None)
             case Tag.boolean => value.toBooleanOption.toRight(cannotParse(value, "Boolean", node))
             case Tag.int =>
               if value.startsWith("0b") then
-                Try(Integer.parseInt(value.drop(2), 8)).toEither.swap
+                Try(Integer.parseInt(value.drop(2), 8)).toEither.left
                   .map(t => ConstructError.from(t, "Int", node))
-                  .swap
               else if value.startsWith("0x") then
-                Try(Integer.parseInt(value.drop(2), 8)).toEither.swap
+                Try(Integer.parseInt(value.drop(2), 8)).toEither.left
                   .map(t => ConstructError.from(t, "Int", node))
-                  .swap
               else value.toIntOption.toRight(cannotParse(value, "Int", node))
             case Tag.float =>
               value.toDoubleOption.toRight(cannotParse(value, "Double", node))
@@ -92,7 +95,16 @@ object YamlDecoder:
         case _ =>
           settings.constructors.get(node.tag) match {
             case Some(decoder) => decoder.construct(node)
-            case None => Left(ConstructError(s"Could't create construct instance for ${node.tag}"))
+            case None =>
+              Left(
+                ConstructError(
+                  s"""|Could't construct runtime instance of ${node.tag}
+                      |${node.pos.map(_.errorMsg).getOrElse("")}
+                      |If you're using custom datatype consider using yaml.as[MyType] instead of Any
+                      |Or define LoadSettings where you'll specify how to construct ${node.tag}
+                      |""".stripMargin
+                )
+              )
           }
       }
     }

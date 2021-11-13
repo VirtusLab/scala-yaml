@@ -62,7 +62,7 @@ object ComposerImpl extends Composer:
           case Left(err)         => Left(err)
 
     parseChildren(events, Nil).map { case (Result(nodes, rest), pos) =>
-      Result(new Node.SequenceNode(nodes, Tag.seq, pos), rest)
+      Result(Node.SequenceNode(nodes, Tag.seq, pos), rest)
     }
   }
 
@@ -96,7 +96,7 @@ object ComposerImpl extends Composer:
 
     parseMappings(events, Nil).map { case (Result(nodes, rest), pos) =>
       Result(
-        new Node.MappingNode(nodes.toMap, Tag.map, pos),
+        Node.MappingNode(nodes.toMap, Tag.map, pos),
         rest
       )
     }

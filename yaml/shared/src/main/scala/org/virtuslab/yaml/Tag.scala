@@ -2,21 +2,28 @@ package org.virtuslab.yaml
 
 import scala.reflect.ClassTag
 
-final case class Tag(value: String)
+sealed trait Tag:
+  def value: String
+
+final case class CoreSchemaTag(value: String) extends Tag
+final case class CustomTag(value: String)     extends Tag
 
 object Tag:
-  def apply[T](implicit classTag: ClassTag[T]): Tag = Tag(s"!${classTag.runtimeClass.getName}")
+  def apply[T](implicit classTag: ClassTag[T]): Tag = CustomTag(
+    s"!${classTag.runtimeClass.getName}"
+  )
 
   private val default = "tag:yaml.org,2002:"
-  val nullTag: Tag    = Tag(s"${default}null")
-  val boolean: Tag    = Tag(s"${default}bool")
-  val int: Tag        = Tag(s"${default}int")
-  val float: Tag      = Tag(s"${default}float")
-  val str: Tag        = Tag(s"${default}str")
-  val seq: Tag        = Tag(s"${default}seq")
-  val map: Tag        = Tag(s"${default}map")
+  val nullTag: Tag    = CoreSchemaTag(s"${default}null")
+  val boolean: Tag    = CoreSchemaTag(s"${default}bool")
+  val int: Tag        = CoreSchemaTag(s"${default}int")
+  val float: Tag      = CoreSchemaTag(s"${default}float")
+  val str: Tag        = CoreSchemaTag(s"${default}str")
+  val seq: Tag        = CoreSchemaTag(s"${default}seq")
+  val map: Tag        = CoreSchemaTag(s"${default}map")
 
-  val primitives = Set(nullTag, boolean, int, float, str)
+  val corePrimitives   = Set(nullTag, boolean, int, float, str)
+  val coreSchemaValues = (corePrimitives ++ Set(seq, map)).map(_.value)
 
   private val nullPattern    = "null|Null|NULL|~".r
   private val booleanPattern = "true|True|TRUE|false|False|FALSE".r
