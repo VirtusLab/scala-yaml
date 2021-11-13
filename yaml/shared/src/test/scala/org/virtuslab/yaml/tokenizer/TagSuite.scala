@@ -251,3 +251,48 @@ class TagSuite extends BaseYamlSuite:
 
     assertTokenEquals(yaml.tokens, tokens)
   }
+
+  // CUP7.tml
+  test("tag with alias") {
+    val yaml =
+      """|anchored: !local &anchor value
+         |!local2 &anchor2 value2 : anchored2
+         |""".stripMargin
+
+    val tokens = List(
+      MappingStart,
+      MappingKey,
+      Scalar("anchored"),
+      MappingValue,
+      Tag(TagValue.Shorthand(TagHandle.Primary, "local")),
+      Anchor("anchor"),
+      Scalar("value"),
+      MappingKey,
+      Tag(TagValue.Shorthand(TagHandle.Primary, "local2")),
+      Anchor("anchor2"),
+      Scalar("value2"),
+      MappingValue,
+      Scalar("anchored2"),
+      BlockEnd
+    )
+  }
+
+  test("secondary tag with alias") {
+    val yaml = """|&anchor !!int 5 : !!str &anchor2 value
+                    |""".stripMargin
+
+    val tokens = List(
+      MappingStart,
+      MappingKey,
+      Anchor("anchor"),
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "int")),
+      Scalar("5"),
+      MappingValue,
+      Tag(TagValue.Shorthand(TagHandle.Secondary, "str")),
+      Anchor("anchor2"),
+      Scalar("value"),
+      BlockEnd
+    )
+
+    assertTokenEquals(yaml.tokens, tokens)
+  }
