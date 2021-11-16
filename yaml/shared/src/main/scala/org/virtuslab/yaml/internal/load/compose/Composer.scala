@@ -51,8 +51,10 @@ object ComposerImpl extends Composer:
           s.metadata.anchor.foreach(anchor => aliases.put(anchor, node))
           Right(Result(node, tail))
         // todo #88
-        case _: EventKind.Alias =>
-          Left(ComposerError(s"Aliases aren't currently supported"))
+        case EventKind.Alias(alias) =>
+          aliases.get(alias) match
+            case Some(node) => Right(Result(node, tail))
+            case None       => Left(ComposerError(s"There is no anchor for $alias alias"))
         case event => Left(ComposerError(s"Expected YAML node, but found: $event"))
     case Nil =>
       Left(ComposerError("No events available"))

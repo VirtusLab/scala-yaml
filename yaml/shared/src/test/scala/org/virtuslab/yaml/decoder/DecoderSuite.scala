@@ -186,6 +186,109 @@ class DecoderSuite extends munit.FunSuite:
     assertEquals(yaml.as[Spec], Right(expectedSpec))
   }
 
+  test("alias for scalar node") {
+    val yaml =
+      s"""|- &a 5
+          |- *a
+          |""".stripMargin
+
+    assertEquals(yaml.as[Any], Right(List(5, 5)))
+  }
+
+  test("alias for sequence node") {
+    val yaml =
+      s"""|seq1: &a 
+          | - 1
+          | - 2
+          |seq2: *a
+          |""".stripMargin
+
+    assertEquals(
+      yaml.as[Any],
+      Right(
+        Map(
+          "seq1" -> List(1, 2),
+          "seq2" -> List(1, 2)
+        )
+      )
+    )
+  }
+
+  test("alias for value in sequence") {
+    val yaml =
+      s"""|- &b
+          |  name: Mark McGwire
+          |  hr:   65
+          |- *b
+          |""".stripMargin
+
+    assertEquals(
+      yaml.as[Any],
+      Right(
+        List(
+          Map("name" -> "Mark McGwire", "hr" -> 65),
+          Map("name" -> "Mark McGwire", "hr" -> 65)
+        )
+      )
+    )
+  }
+
+  test("alias for flow sequence node") {
+    val yaml =
+      s"""|seq1: &a [1, 2]
+          |seq2: *a
+          |""".stripMargin
+
+    assertEquals(
+      yaml.as[Any],
+      Right(
+        Map(
+          "seq1" -> List(1, 2),
+          "seq2" -> List(1, 2)
+        )
+      )
+    )
+  }
+
+  test("alias for mapping node") {
+    val yaml =
+      s"""|map1: &a 
+          |  1: 2  
+          |  k1: v1
+          |map2: *a
+          |""".stripMargin
+
+    assertEquals(
+      yaml.as[Any],
+      Right(
+        Map(
+          "map1" -> Map(1 -> 2, "k1" -> "v1"),
+          "map2" -> Map(1 -> 2, "k1" -> "v1")
+        )
+      )
+    )
+  }
+
+  test("alias for flow mapping node") {
+    val yaml =
+      s"""|map1: &a {
+          |  1: 2,  
+          |  k1: v1
+          |}
+          |map2: *a
+          |""".stripMargin
+
+    assertEquals(
+      yaml.as[Any],
+      Right(
+        Map(
+          "map1" -> Map(1 -> 2, "k1" -> "v1"),
+          "map2" -> Map(1 -> 2, "k1" -> "v1")
+        )
+      )
+    )
+  }
+
   test("decode into Map[Any, Any]") {
 
     val yaml =
