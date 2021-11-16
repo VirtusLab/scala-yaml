@@ -23,6 +23,8 @@ object ParseError:
 
 final case class ComposerError(msg: String) extends YamlError
 
+final case class TraverseError(msg: String) extends YamlError
+
 final case class ConstructError(msg: String) extends YamlError
 object ConstructError:
   private def from(errorMsg: String, node: Option[Node], expected: Option[String]): ConstructError =

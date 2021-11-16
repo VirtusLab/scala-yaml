@@ -3,6 +3,7 @@ package org.virtuslab.yaml
 import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.syntax.YamlPrimitive
+import org.virtuslab.yaml.syntax.{NodeSelector, NodeVisitor, YamlPrimitive}
 
 /**
   * ADT that corresponds to the YAML representation graph nodes https://yaml.org/spec/1.2/spec.html#id2764044
@@ -15,6 +16,10 @@ sealed trait Node:
       settings: LoadSettings = LoadSettings.empty
   ): Either[YamlError, T] =
     c.construct(this)
+
+  def modify(index: Int): NodeVisitor = NodeVisitor(this, List(NodeSelector.IntSelector(index)))
+  def modify(field: String): NodeVisitor =
+    NodeVisitor(this, List(NodeSelector.StringSelector(field)))
 
 object Node:
   final case class ScalarNode private[yaml] (value: String, tag: Tag, pos: Option[Range] = None)
