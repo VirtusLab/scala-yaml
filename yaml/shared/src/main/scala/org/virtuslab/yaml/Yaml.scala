@@ -35,6 +35,15 @@ extension (str: String)
       t    <- node.as[T]
     yield t
 
+  def asNode: Either[YamlError, Node] =
+    for
+      events <- {
+        val parser = ParserImpl(Scanner(str))
+        parser.getEvents()
+      }
+      node <- ComposerImpl.fromEvents(events)
+    yield node
+
 extension [T](t: T)
   /**
    * Serialize a [[T]] into a YAML string.

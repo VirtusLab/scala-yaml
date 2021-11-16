@@ -2,6 +2,7 @@ package org.virtuslab.yaml
 
 import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.Tag
+import org.virtuslab.yaml.syntax.NodeSelector
 import org.virtuslab.yaml.syntax.YamlPrimitive
 
 /**
@@ -15,6 +16,10 @@ sealed trait Node:
       settings: LoadSettings = LoadSettings.empty
   ): Either[YamlError, T] =
     c.construct(this)
+
+  def modify(index: Int): NodeVisitor = NodeVisitor(this, List(NodeSelector.IntSelector(index)))
+  def modify(field: String): NodeVisitor =
+    NodeVisitor(this, List(NodeSelector.StringSelector(field)))
 
 object Node:
   final case class ScalarNode private[yaml] (value: String, tag: Tag, pos: Option[Range] = None)
@@ -55,4 +60,11 @@ object Node:
       new MappingNode(mappings, Tag.map, None)
     def unapply(node: MappingNode): Option[(Map[Node, Node], Tag)] = Some((node.mappings, node.tag))
   end MappingNode
+
+  extension (either: Either[TraverseError, Node])
+    def modify(index: Int): Either[TraverseError, NodeVisitor] = either.map(_.modify(index))
+
+  extension (either: Either[TraverseError, Node])
+    def modify(field: String): Either[TraverseError, NodeVisitor] = either.map(_.modify(field))
+
 end Node
