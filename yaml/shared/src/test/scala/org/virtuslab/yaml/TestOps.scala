@@ -2,13 +2,10 @@ package org.virtuslab.yaml
 
 object TestOps {
 
-  implicit class EitherThrowOps[E <: YamlError, T](private val either: Either[E, T])
-      extends AnyVal {
+  extension [E <: YamlError, T](either: Either[E, T])
     def orThrow: T =
-      either match {
+      either match
         case Left(e)  => throw new RuntimeException(e.msg)
         case Right(t) => t
-      }
-  }
 
 }

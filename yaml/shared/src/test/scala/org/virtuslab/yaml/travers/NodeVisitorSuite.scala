@@ -3,7 +3,7 @@ package org.virtuslab.yaml.travers
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.TestOps.*
 import org.virtuslab.yaml.Node
-import org.virtuslab.yaml.syntax.NodeVisitor._
+import org.virtuslab.yaml.NodeVisitor._
 
 class NodeVisitorSuite extends munit.FunSuite {
 
@@ -25,7 +25,13 @@ class NodeVisitorSuite extends munit.FunSuite {
 
     val node: Node = yaml.asNode.orThrow
     val modifiedNode: Node =
-      node.modify("services")("web")("ports")(0).setValue("6000:6000").orThrow
+      node
+        .modify("services")("web")("ports")(0)
+        .setValue("6000:6000")
+        .modify("services")("redis")("image")
+        .setValue("openjdk:11")
+        .orThrow
+
     val modifiedYaml = modifiedNode.asYaml
 
     val exptectedYaml =
@@ -39,7 +45,7 @@ class NodeVisitorSuite extends munit.FunSuite {
          |    ports: 
          |      - 6000:6000
          |  redis: 
-         |    image: redis:alpine
+         |    image: openjdk:11
          |""".stripMargin
 
     assertEquals(modifiedYaml, exptectedYaml)
