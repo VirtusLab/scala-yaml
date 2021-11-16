@@ -1,6 +1,7 @@
 package org.virtuslab.yaml.internal.load.compose
 
 import scala.annotation.tailrec
+import scala.collection.mutable
 
 import org.virtuslab.yaml.ComposerError
 import org.virtuslab.yaml.Node
@@ -8,8 +9,10 @@ import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.YamlError
+import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
 
@@ -29,24 +32,36 @@ object ComposerImpl extends Composer:
 
   override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match
     case Nil => Left(ComposerError("No events available"))
-    case _   => composeNode(events).map(_.node)
+    case _   => composeNode(events, mutable.Map.empty).map(_.node)
 
-  private def composeNode(events: List[Event]): ComposeResult[Node] = events match
+  private def composeNode(
+      events: List[Event],
+      aliases: mutable.Map[Anchor, Node]
+  ): ComposeResult[Node] = events match
     case head :: tail =>
       head.kind match
-        case EventKind.StreamStart | _: EventKind.DocumentStart        => composeNode(tail)
-        case _: EventKind.SequenceStart                                => composeSequenceNode(tail)
-        case _: EventKind.MappingStart | _: EventKind.FlowMappingStart => composeMappingNode(tail)
+        case EventKind.StreamStart | _: EventKind.DocumentStart => composeNode(tail, aliases)
+        case EventKind.SequenceStart(NodeEventMetadata(anchor, _)) =>
+          composeSequenceNode(tail, anchor, aliases)
+        case EventKind.MappingStart(NodeEventMetadata(anchor, _)) =>
+          composeMappingNode(tail, anchor, aliases)
         case s: EventKind.Scalar =>
           val tag: Tag = s.metadata.tag.getOrElse(Tag.resolveTag(s.value))
-          Right(Result(Node.ScalarNode(s.value, tag, head.pos), tail))
+          val node     = Node.ScalarNode(s.value, tag, head.pos)
+          s.metadata.anchor.foreach(anchor => aliases.put(anchor, node))
+          Right(Result(node, tail))
         // todo #88
-        case _: EventKind.Alias => Left(ComposerError(s"Aliases aren't currently supported"))
-        case event              => Left(ComposerError(s"Expected YAML node, but found: $event"))
+        case _: EventKind.Alias =>
+          Left(ComposerError(s"Aliases aren't currently supported"))
+        case event => Left(ComposerError(s"Expected YAML node, but found: $event"))
     case Nil =>
       Left(ComposerError("No events available"))
 
-  private def composeSequenceNode(events: List[Event]): ComposeResult[Node.SequenceNode] = {
+  private def composeSequenceNode(
+      events: List[Event],
+      anchorOpt: Option[Anchor],
+      aliases: mutable.Map[Anchor, Node]
+  ): ComposeResult[Node.SequenceNode] = {
     @tailrec
     def parseChildren(
         events: List[Event],
@@ -57,16 +72,22 @@ object ComposerImpl extends Composer:
       case (Event(EventKind.SequenceEnd, _)) :: tail =>
         Right((Result(children, tail), firstChildPos))
       case _ =>
-        composeNode(events) match
+        composeNode(events, aliases) match
           case Right(node, rest) => parseChildren(rest, children :+ node, node.pos)
           case Left(err)         => Left(err)
 
     parseChildren(events, Nil).map { case (Result(nodes, rest), pos) =>
-      Result(Node.SequenceNode(nodes, Tag.seq, pos), rest)
+      val sequence = Node.SequenceNode(nodes, Tag.seq, pos)
+      anchorOpt.foreach(anchor => aliases.put(anchor, sequence))
+      Result(sequence, rest)
     }
   }
 
-  private def composeMappingNode(events: List[Event]): ComposeResult[Node.MappingNode] = {
+  private def composeMappingNode(
+      events: List[Event],
+      anchorOpt: Option[Anchor],
+      aliases: mutable.Map[Anchor, Node]
+  ): ComposeResult[Node.MappingNode] = {
     @tailrec
     def parseMappings(
         events: List[Event],
@@ -75,7 +96,7 @@ object ComposerImpl extends Composer:
     ): ComposeResultWithPos[List[(Node, Node)]] = {
       events match
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
-        case Event(EventKind.MappingEnd | EventKind.FlowMappingEnd, _) :: tail =>
+        case Event(EventKind.MappingEnd, _) :: tail =>
           Right((Result(mappings, tail), firstChildPos))
         case (e @ Event(
               EventKind.StreamStart | EventKind.StreamEnd | _: EventKind.DocumentStart |
@@ -86,8 +107,8 @@ object ComposerImpl extends Composer:
         case _ =>
           val mapping =
             for
-              key <- composeNode(events)
-              v   <- composeNode(key.remaining)
+              key <- composeNode(events, aliases)
+              v   <- composeNode(key.remaining, aliases)
             yield Result((key.node, v.node), v.remaining)
           mapping match
             case Right(node @ (key, value), rest) => parseMappings(rest, mappings :+ node, key.pos)
@@ -95,8 +116,10 @@ object ComposerImpl extends Composer:
     }
 
     parseMappings(events, Nil).map { case (Result(nodes, rest), pos) =>
+      val mapping = Node.MappingNode(nodes.toMap, Tag.map, pos)
+      anchorOpt.foreach(anchor => aliases.put(anchor, mapping))
       Result(
-        Node.MappingNode(nodes.toMap, Tag.map, pos),
+        mapping,
         rest
       )
     }
