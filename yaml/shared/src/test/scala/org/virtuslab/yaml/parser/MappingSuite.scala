@@ -209,12 +209,12 @@ class MappingSuite extends BaseYamlSuite:
       DocumentStart(),
       MappingStart(),
       Scalar("doubles"),
-      FlowMappingStart(),
+      MappingStart(),
       Scalar("double1"),
       Scalar("1.0"),
       Scalar("double2"),
       Scalar("2.0"),
-      FlowMappingEnd,
+      MappingEnd,
       MappingEnd,
       DocumentEnd(),
       StreamEnd
@@ -247,13 +247,13 @@ class MappingSuite extends BaseYamlSuite:
       DocumentStart(),
       MappingStart(),
       Scalar("replicas"),
-      FlowMappingStart(),
-      FlowMappingStart(),
+      MappingStart(),
+      MappingStart(),
       Scalar("replicas"),
       Scalar(""),
-      FlowMappingEnd,
+      MappingEnd,
       Scalar(""),
-      FlowMappingEnd,
+      MappingEnd,
       MappingEnd,
       DocumentEnd(),
       StreamEnd
@@ -267,8 +267,8 @@ class MappingSuite extends BaseYamlSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      FlowMappingStart(),
-      FlowMappingEnd,
+      MappingStart(),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
@@ -281,10 +281,10 @@ class MappingSuite extends BaseYamlSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      FlowMappingStart(),
-      FlowMappingStart(),
-      FlowMappingEnd,
-      FlowMappingEnd,
+      MappingStart(),
+      MappingStart(),
+      MappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
@@ -297,10 +297,10 @@ class MappingSuite extends BaseYamlSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      FlowMappingStart(),
+      MappingStart(),
       SequenceStart(),
       SequenceEnd,
-      FlowMappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
@@ -314,10 +314,10 @@ class MappingSuite extends BaseYamlSuite:
     val events = List(
       StreamStart,
       DocumentStart(),
-      FlowMappingStart(),
+      MappingStart(),
       Scalar("key"),
       Scalar("value"),
-      FlowMappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
@@ -334,12 +334,12 @@ class MappingSuite extends BaseYamlSuite:
     val events = List(
       StreamStart,
       DocumentStart(),
-      FlowMappingStart(),
-      FlowMappingStart(),
+      MappingStart(),
+      MappingStart(),
       Scalar("double"),
       Scalar("1.0"),
-      FlowMappingEnd,
-      FlowMappingEnd,
+      MappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
@@ -356,13 +356,13 @@ class MappingSuite extends BaseYamlSuite:
     val events = List(
       StreamStart,
       DocumentStart(),
-      FlowMappingStart(),
+      MappingStart(),
       Scalar("doubles"),
       SequenceStart(),
       Scalar("v1"),
       Scalar("v2"),
       SequenceEnd,
-      FlowMappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
@@ -380,12 +380,12 @@ class MappingSuite extends BaseYamlSuite:
     val events = List(
       StreamStart,
       DocumentStart(),
-      FlowMappingStart(),
+      MappingStart(),
       Scalar("k1"),
       Scalar("v1"),
       Scalar("k2"),
       Scalar("v2"),
-      FlowMappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
@@ -454,18 +454,18 @@ class MappingSuite extends BaseYamlSuite:
       StreamStart,
       DocumentStart(explicit = true),
       SequenceStart(),
-      FlowMappingStart(),
+      MappingStart(),
       Scalar("single line", ScalarStyle.DoubleQuoted),
       Scalar("", metadata = NodeEventMetadata(Tag.nullTag)),
       Scalar("a"),
       Scalar("b"),
-      FlowMappingEnd,
-      FlowMappingStart(),
+      MappingEnd,
+      MappingStart(),
       Scalar("multi line", ScalarStyle.DoubleQuoted),
       Scalar("", metadata = NodeEventMetadata(Tag.nullTag)),
       Scalar("a"),
       Scalar("b"),
-      FlowMappingEnd,
+      MappingEnd,
       SequenceEnd,
       DocumentEnd(),
       StreamEnd
@@ -483,10 +483,10 @@ class MappingSuite extends BaseYamlSuite:
     val expectedEvents = List(
       StreamStart,
       DocumentStart(explicit = true),
-      FlowMappingStart(),
+      MappingStart(),
       Scalar("foo", ScalarStyle.DoubleQuoted),
       Scalar("bar"),
-      FlowMappingEnd,
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
