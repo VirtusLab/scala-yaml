@@ -42,9 +42,6 @@ enum EventKind:
   case MappingStart(metadata: NodeEventMetadata = NodeEventMetadata.empty)
   case MappingEnd
 
-  case FlowMappingStart(metadata: NodeEventMetadata = NodeEventMetadata.empty)
-  case FlowMappingEnd
-
 /**
  * Carries additional information about event which represents YAML node (scalar, start of mapping or sequence).
  * This could be:

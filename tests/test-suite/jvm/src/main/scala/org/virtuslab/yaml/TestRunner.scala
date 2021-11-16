@@ -54,16 +54,15 @@ object TestRunnerUtils:
   def convertEventToYamlTestSuiteFormat(events: Seq[EventKind]): String =
     events
       .map {
-        case StreamStart                 => "+STR"
-        case StreamEnd                   => "-STR"
-        case DocumentStart(explicit)     => if (explicit) "+DOC ---" else "+DOC"
-        case DocumentEnd(explicit)       => if (explicit) "-DOC ..." else "-DOC"
-        case SequenceStart(data)         => s"+SEQ${data.asString}"
-        case SequenceEnd                 => "-SEQ"
-        case MappingStart(data)          => s"+MAP${data.asString}"
-        case FlowMappingStart(data)      => s"+MAP${data.asString}"
-        case MappingEnd | FlowMappingEnd => "-MAP"
-        case Alias(alias)                => s"=ALI *$alias"
+        case StreamStart             => "+STR"
+        case StreamEnd               => "-STR"
+        case DocumentStart(explicit) => if (explicit) "+DOC ---" else "+DOC"
+        case DocumentEnd(explicit)   => if (explicit) "-DOC ..." else "-DOC"
+        case SequenceStart(data)     => s"+SEQ${data.asString}"
+        case SequenceEnd             => "-SEQ"
+        case MappingStart(data)      => s"+MAP${data.asString}"
+        case MappingEnd              => "-MAP"
+        case Alias(alias)            => s"=ALI *$alias"
         case Scalar(value, style, data) =>
           style match {
             case ScalarStyle.Plain        => s"=VAL${data.asString} :$value"

@@ -232,14 +232,14 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
     case TokenKind.FlowMappingStart =>
       in.popToken()
       productions.prependAll(ParseFlowMappingEntryOpt :: ParseFlowMappingEnd :: Nil)
-      Right(Event(EventKind.FlowMappingStart(), token.range))
+      Right(Event(EventKind.MappingStart(), token.range))
     case _ =>
       Left(ParseError.from(TokenKind.FlowMappingStart, token))
 
   private def parseFlowMappingEnd(token: Token) = token.kind match
     case TokenKind.FlowMappingEnd =>
       in.popToken()
-      Right(Event(EventKind.FlowMappingEnd, token.range))
+      Right(Event(EventKind.MappingEnd, token.range))
     case _ =>
       Left(ParseError.from(TokenKind.FlowMappingEnd, token))
 
@@ -379,7 +379,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser:
         case TokenKind.FlowMappingStart =>
           in.popToken()
           productions.prependAll(ParseFlowMappingEntryOpt :: ParseFlowMappingEnd :: Nil)
-          Right(Event(EventKind.FlowMappingStart(metadata), nextToken.range))
+          Right(Event(EventKind.MappingStart(metadata), nextToken.range))
         case TokenKind.FlowSequenceStart =>
           in.popToken()
           productions.prependAll(ParseFlowSeqEntryOpt :: ParseFlowSeqEnd :: Nil)

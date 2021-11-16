@@ -176,8 +176,8 @@ class SequenceSuite extends BaseYamlSuite:
       StreamStart,
       DocumentStart(),
       SequenceStart(),
-      FlowMappingStart(),
-      FlowMappingEnd,
+      MappingStart(),
+      MappingEnd,
       SequenceEnd,
       DocumentEnd(),
       StreamEnd
@@ -303,10 +303,10 @@ class SequenceSuite extends BaseYamlSuite:
       StreamStart,
       DocumentStart(),
       SequenceStart(),
-      FlowMappingStart(),
+      MappingStart(),
       Scalar("key", style = ScalarStyle.DoubleQuoted),
       Scalar(":value"),
-      FlowMappingEnd,
+      MappingEnd,
       SequenceEnd,
       DocumentEnd(),
       StreamEnd
