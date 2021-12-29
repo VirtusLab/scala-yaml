@@ -1,12 +1,12 @@
 package org.virtuslab.yaml.internal.load
 
 enum TagHandle(val value: String):
-  case Primary extends TagHandle("!")
-  case Secondary extends TagHandle("!!")
+  case Primary             extends TagHandle("!")
+  case Secondary           extends TagHandle("!!")
   case Named(name: String) extends TagHandle(name)
 
 enum TagPrefix(val value: String):
-  case Local(prefix: String) extends TagPrefix(prefix)
+  case Local(prefix: String)  extends TagPrefix(prefix)
   case Global(prefix: String) extends TagPrefix(prefix)
 
 enum TagValue:
