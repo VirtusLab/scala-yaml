@@ -35,7 +35,7 @@ lazy val scalaYamlCore = crossProject(JSPlatform, JVMPlatform)
     name              := projectName,
     scalaVersion      := scala3Version,
     semanticdbEnabled := true,
-    libraryDependencies ++= Seq(Deps.pprint % Test),
+    libraryDependencies ++= Seq(Deps.pprint % Test)
   )
   .settings(docsSettings)
   .settings(munit)
@@ -45,9 +45,9 @@ lazy val scalaYamlTestSuite = crossProject(JSPlatform, JVMPlatform)
   .configs(IntegrationTest)
   .settings(
     Defaults.itSettings,
-    name         := "testSuite",
-    scalaVersion := scala3Version,
-    semanticdbEnabled := true,
+    name              := "testSuite",
+    scalaVersion      := scala3Version,
+    semanticdbEnabled := true
   )
   .settings(testSettings)
   .dependsOn(scalaYamlCore)
