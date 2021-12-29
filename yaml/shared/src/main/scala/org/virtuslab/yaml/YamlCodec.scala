@@ -19,6 +19,6 @@ object YamlCodec:
       def construct(node: Node)(using
           settings: LoadSettings = LoadSettings.empty
       ): Either[ConstructError, T] = decoder.construct(node)
-      def asNode(obj: T): Node     = encoder.asNode(obj)
+      def asNode(obj: T): Node = encoder.asNode(obj)
 
 end YamlCodec

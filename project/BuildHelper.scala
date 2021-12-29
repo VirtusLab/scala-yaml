@@ -29,8 +29,8 @@ object BuildHelper {
   )
 
   lazy val testSettings: Seq[Setting[_]] = Seq(
-      publish / skip := true,
-      libraryDependencies ++= Seq(Deps.osLib, Deps.munit, Deps.pprint)
+    publish / skip := true,
+    libraryDependencies ++= Seq(Deps.osLib, Deps.munit, Deps.pprint)
   ) ++ munit
 
   lazy val munit: Seq[Setting[_]] = Seq(
