@@ -1,0 +1,7 @@
+sidebar:
+  - title: Quick start
+    url: src/quickstart.md
+  - title: Examples
+    url: src/examples.md
+  - title: Contributing guide
+    url: src/contributing.md
