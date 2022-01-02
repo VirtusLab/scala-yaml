@@ -31,7 +31,9 @@ object ConstructError:
     val msg = node.flatMap(_.pos) match
       case Some(range) =>
         s"""|$errorMsg
-            |at ${range.start.line}:${range.start.column},${expected.map(exp => s" expected $exp").getOrElse("")}
+            |at ${range.start.line}:${range.start.column},${expected
+          .map(exp => s" expected $exp")
+          .getOrElse("")}
             |${range.errorMsg} """.stripMargin
       case None =>
         errorMsg
