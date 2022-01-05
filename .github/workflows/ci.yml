@@ -24,6 +24,10 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    matrix:
+      platform: ['JVM', 'JS', 'Native']
 
     steps:
       - uses: actions/checkout@v2
@@ -31,7 +35,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 8
-      - run: sbt test
+      - run: sbt core${{ matrix.platform }}/test
 
   publish:
     needs: test
