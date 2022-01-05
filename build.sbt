@@ -43,7 +43,12 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     name              := projectName,
     scalaVersion      := scala3Version,
     semanticdbEnabled := true,
-    libraryDependencies ++= Seq(Deps.pprint % Test)
+    libraryDependencies ++= Seq(Deps.pprint % Test),
+    
+    // see https://github.com/scala-native/scala-native/blob/master/docs/changelog/0.4.3-RC1.md#cannot-create-documentation-using-scaladoc-in-scala-native-sbt-project
+    Compile / doc / scalacOptions ~= { options =>
+      options.filterNot(_.startsWith("-Xplugin"))
+    }
   )
   .jsSettings(
     libraryDependencies ++= List(
