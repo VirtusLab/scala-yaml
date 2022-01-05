@@ -206,7 +206,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       val sb = new StringBuilder
       while (in.peek().exists(c => !invalidChars(c) && !c.isWhitespace)) do sb.append(in.read())
       if in.peek().exists(c => invalidChars(c)) then throw ScannerError("Invalid character in tag")
-      URLDecoder.decode(sb.result(), StandardCharsets.UTF_8.name)
+      UrlDecoder.decode(sb.result())
 
     def parseShorthandTag(second: Char): TagValue =
       second match

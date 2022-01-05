@@ -1,7 +1,7 @@
 sidebar:
   - title: Quick start
-    url: src/quickstart.md
+    page: src/quickstart.md
   - title: Examples
-    url: src/examples.md
+    page: src/examples.md
   - title: Contributing guide
-    url: src/contributing.md
+    page: src/contributing.md
