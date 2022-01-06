@@ -61,10 +61,10 @@ object Node:
     def unapply(node: MappingNode): Option[(Map[Node, Node], Tag)] = Some((node.mappings, node.tag))
   end MappingNode
 
-  extension (either: Either[TraverseError, Node])
-    def modify(index: Int): Either[TraverseError, NodeVisitor] = either.map(_.modify(index))
+  extension (either: Either[ModifyError, Node])
+    def modify(index: Int): Either[ModifyError, NodeVisitor] = either.map(_.modify(index))
 
-  extension (either: Either[TraverseError, Node])
-    def modify(field: String): Either[TraverseError, NodeVisitor] = either.map(_.modify(field))
+  extension (either: Either[ModifyError, Node])
+    def modify(field: String): Either[ModifyError, NodeVisitor] = either.map(_.modify(field))
 
 end Node
