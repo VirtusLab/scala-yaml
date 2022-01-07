@@ -22,7 +22,7 @@ object YamlEncoder:
 
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[Option[T]] = {
     case Some(t) => encoder.asNode(t)
-    case None => Node.ScalarNode("", Tag.nullTag)
+    case None    => Node.ScalarNode("", Tag.nullTag)
   }
 
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[Set[T]] = (nodes) =>
