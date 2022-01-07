@@ -328,3 +328,15 @@ class DecoderSuite extends munit.FunSuite:
 
     assertEquals(yaml.as[Any], Right(expected))
   }
+
+  test("option".only) {
+    case class Foo(int: Int, string: String) derives YamlCodec
+
+    val foo =
+      """|- int: 1
+       |  string: "1"
+       |- !!null
+       |""".stripMargin.as[List[Option[Foo]]]
+
+    assertEquals(foo, Right(List(Some(Foo(1, "1")), None)))
+  }
