@@ -20,6 +20,11 @@ object YamlEncoder:
   given YamlEncoder[Boolean] = v => Node.ScalarNode(v.toString)
   given YamlEncoder[String]  = v => Node.ScalarNode(v)
 
+  given [T](using encoder: YamlEncoder[T]): YamlEncoder[Option[T]] = {
+    case Some(t) => encoder.asNode(t)
+    case None => Node.ScalarNode("", Tag.nullTag)
+  }
+
   given [T](using encoder: YamlEncoder[T]): YamlEncoder[Set[T]] = (nodes) =>
     Node.SequenceNode(nodes.map(encoder.asNode(_)).toSeq, Tag.seq)
 

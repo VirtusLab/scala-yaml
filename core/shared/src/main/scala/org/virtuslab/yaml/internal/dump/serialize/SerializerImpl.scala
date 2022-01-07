@@ -4,6 +4,7 @@ import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 
 object SerializerImpl extends Serializer:
   override def toEvents(node: Node): Seq[EventKind] =
@@ -23,4 +24,4 @@ object SerializerImpl extends Serializer:
     Seq(SequenceStart()) ++ events ++ Seq(SequenceEnd)
 
   private def convertScalarNode(node: Node.ScalarNode): Seq[EventKind] =
-    Seq(Scalar(node.value))
+    Seq(Scalar(node.value, metadata = NodeEventMetadata(tag = node.tag)))
