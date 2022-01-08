@@ -110,12 +110,9 @@ object YamlDecoder:
     }
   }
 
-  given [T](using c: YamlDecoder[T]): YamlDecoder[Option[T]] = YamlDecoder {
-    case ScalarNode(value, tag) =>
-      value match
-        case _ if tag == Tag.nullTag => Right(None)
-        case _ =>
-          c.construct(ScalarNode(value)).map(Option(_))
+  given [T](using c: YamlDecoder[T]): YamlDecoder[Option[T]] = YamlDecoder { node =>
+    if node.tag == Tag.nullTag then Right(None)
+    else c.construct(node).map(Option(_))
   }
 
   private def constructFromNodes[T](nodes: Seq[Node])(using
