@@ -91,7 +91,7 @@ lazy val integration = project
     libraryDependencies ++= List(
       "org.scalameta" %% "munit"  % "0.7.29",
       "com.lihaoyi"   %% "os-lib" % "0.8.1",
-      "com.lihaoyi"   %% "pprint" % "0.7.1"
+      "com.lihaoyi"   %% "pprint" % "0.7.2"
     )
   )
   .settings(docsSettings)
