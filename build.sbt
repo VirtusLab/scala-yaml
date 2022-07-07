@@ -1,15 +1,15 @@
 import BuildHelper._
 
-def scala3Version        = "3.1.2"
+def scala3Version        = "3.2.0-RC1"
 def projectName          = "scala-yaml"
 def localSnapshotVersion = "0.0.5-SNAPSHOT"
 def isCI                 = System.getenv("CI") != null
 
 inThisBuild(
   List(
-    organization := "org.virtuslab",
+    organization       := "org.virtuslab",
     crossScalaVersions := Seq("2.13.8", scala3Version),
-    scalaVersion := scala3Version,
+    scalaVersion       := scala3Version,
     version ~= { dynVer =>
       if (isCI) dynVer
       else localSnapshotVersion // only for local publishing
@@ -37,7 +37,7 @@ inThisBuild(
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 
-lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val core = crossProject(JSPlatform, JVMPlatform /*, NativePlatform*/ )
   .crossType(CrossType.Full)
   .withoutSuffixFor(JVMPlatform)
   .settings(
@@ -59,19 +59,19 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
         .cross(CrossVersion.for3Use2_13)
     )
   )
-  .nativeSettings(
-    // skip native tests for now since upstream changes in munit are required
-    Test / compile / skip := true,
-    Test / test / skip    := true,
+  // .nativeSettings(
+  //   // skip native tests for now since upstream changes in munit are required
+  //   Test / compile / skip := true,
+  //   Test / test / skip    := true,
 
-    // set dummy directory with tests to avoid unnecessary errors
-    Test / unmanagedSourceDirectories := Nil
+  //   // set dummy directory with tests to avoid unnecessary errors
+  //   Test / unmanagedSourceDirectories := Nil
 
-    // libraryDependencies ++= List(
-    // ("org.scalameta" %% "munit"  % "0.7.29"  % Test).cross(CrossVersion.for3Use2_13),
-    // ("org.scala-native" %%% "test-interface" % nativeVersion  % Test).cross(CrossVersion.for3Use2_13),
-    // ),
-  )
+  //   // libraryDependencies ++= List(
+  //   // ("org.scalameta" %% "munit"  % "0.7.29"  % Test).cross(CrossVersion.for3Use2_13),
+  //   // ("org.scala-native" %%% "test-interface" % nativeVersion  % Test).cross(CrossVersion.for3Use2_13),
+  //   // ),
+  // )
   .settings(docsSettings)
   .jvmSettings(
     libraryDependencies ++= List(
