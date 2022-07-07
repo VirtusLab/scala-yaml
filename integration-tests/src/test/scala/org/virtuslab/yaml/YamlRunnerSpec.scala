@@ -24,7 +24,7 @@ abstract class YamlRunnerSpec extends munit.FunSuite {
             println(s"Running $path")
           }
           val runnerResult = testRunner.run()
-          runnerResult match
+          runnerResult match {
             case RunnerResult.Success(_) => loop(tail, failsPath)
             case RunnerResult.InvalidEvents(obtained, expected) =>
               println(s"Events differ - $path")
@@ -40,6 +40,7 @@ abstract class YamlRunnerSpec extends munit.FunSuite {
                 println(s"Encountered error:\n$error")
               }
               loop(tail, path :: failsPath)
+          }
         }
         case Nil => failsPath
       }
