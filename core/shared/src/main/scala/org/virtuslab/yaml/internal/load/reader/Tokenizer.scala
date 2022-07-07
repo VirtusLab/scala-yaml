@@ -452,9 +452,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
             if (in.column != foldedIndent || in.peek() == None) {
               sb.append("\n")
               sb.result()
-            } else
+            } else {
               sb.append(" ")
               readFolded()
+            }
           }
         case Some(char) =>
           sb.append(in.read())

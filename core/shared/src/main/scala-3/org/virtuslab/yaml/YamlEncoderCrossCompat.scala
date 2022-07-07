@@ -30,9 +30,10 @@ private[yaml] trait YamlEncoderCrossCompanionCompat {
   private inline def deriveSum[T](s: Mirror.SumOf[T]) =
     new YamlEncoder[T]:
       val yamlEncoders = summonSumOf[s.MirroredElemTypes].asInstanceOf[List[YamlEncoder[T]]]
-      override def asNode(t: T): Node =
+      override def asNode(t: T): Node = {
         val index = s.ordinal(t)
         yamlEncoders(index).asInstanceOf[YamlEncoder[Any]].asNode(t)
+      }
 
   private inline def summonSumOf[T <: Tuple]: List[YamlEncoder[_]] = inline erasedValue[T] match
     case _: (t *: ts) =>

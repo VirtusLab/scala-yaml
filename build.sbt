@@ -41,8 +41,7 @@ lazy val core = crossProject(JSPlatform, JVMPlatform /*, NativePlatform*/ )
   .crossType(CrossType.Full)
   .withoutSuffixFor(JVMPlatform)
   .settings(
-    name              := projectName,
-    semanticdbEnabled := true,
+    name := projectName,
     libraryDependencies ++= Seq(Deps.pprint % Test),
 
     // see https://github.com/scala-native/scala-native/blob/master/docs/changelog/0.4.3-RC1.md#cannot-create-documentation-using-scaladoc-in-scala-native-sbt-project
@@ -83,10 +82,9 @@ lazy val integration = project
   .in(file("integration-tests"))
   .dependsOn(core.jvm)
   .settings(
-    name              := "integration",
-    moduleName        := "integration",
-    semanticdbEnabled := true,
-    publish / skip    := true,
+    name           := "integration",
+    moduleName     := "integration",
+    publish / skip := true,
     libraryDependencies ++= List(
       "org.scalameta" %% "munit"  % "0.7.29",
       "com.lihaoyi"   %% "os-lib" % "0.8.1",

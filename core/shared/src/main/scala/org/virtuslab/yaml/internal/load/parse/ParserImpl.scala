@@ -376,9 +376,10 @@ final class ParserImpl private (in: Tokenizer) extends Parser {
         case TokenKind.Alias(alias) =>
           if (metadata.anchor.isDefined)
             Left(ParseError.from("Alias cannot have an anchor", nextToken))
-          else
+          else {
             in.popToken()
             Right(Event(EventKind.Alias(Anchor(alias)), nextToken.range))
+          }
         case _ =>
           Left(ParseError.from(TokenKind.Scalar.toString, token))
       }
@@ -396,9 +397,10 @@ final class ParserImpl private (in: Tokenizer) extends Parser {
         case TokenKind.Alias(alias) =>
           if (metadata.anchor.isDefined)
             Left(ParseError.from("Alias cannot have an anchor", nextToken))
-          else
+          else {
             in.popToken()
             Right(Event(EventKind.Alias(Anchor(alias)), nextToken.range))
+          }
         case TokenKind.MappingStart if couldParseBlockCollection =>
           in.popToken()
           productions.prependAll(ParseMappingEntry :: ParseMappingEnd :: Nil)

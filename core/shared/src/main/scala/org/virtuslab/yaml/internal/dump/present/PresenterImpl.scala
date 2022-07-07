@@ -81,9 +81,10 @@ object PresenterImpl extends Presenter {
 
     def pushAndIncreaseIndent(event: EventKind) = {
       if (toplevelNode) toplevelNode = false
-      else
+      else {
         indent += 2
         sb.append(System.lineSeparator())
+      }
       stack.prepend(event)
     }
 
