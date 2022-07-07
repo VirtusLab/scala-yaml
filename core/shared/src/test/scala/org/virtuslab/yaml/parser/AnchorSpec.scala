@@ -2,10 +2,10 @@ package org.virtuslab.yaml
 package parser
 
 import org.virtuslab.yaml.internal.load.parse.Anchor
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 
-class AnchorSpec extends BaseYamlSuite:
+class AnchorSpec extends BaseYamlSuite {
 
   test("in mapping") {
     val yaml =
@@ -156,3 +156,4 @@ class AnchorSpec extends BaseYamlSuite:
     )
     assertEquals(yaml.events, Right(expectedEvents))
   }
+}

@@ -8,33 +8,34 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 final case class Token(kind: TokenKind, range: Range)
 
-enum TokenKind:
-  case StreamStart
-  case StreamEnd
-  case DocumentStart
-  case DocumentEnd
-  case Anchor(value: String)
-  case Alias(value: String)
-  case TagDirective(handle: TagHandle, prefix: TagPrefix)
-  case Tag(value: TagValue)
-  case MappingStart
-  case SequenceStart
-  case BlockEnd
-  case FlowMappingStart
-  case FlowMappingEnd
-  case FlowSequenceStart
-  case FlowSequenceEnd
-  case SequenceValue
-  case MappingKey
-  case MappingValue
-  case Comma
-  case Scalar private (value: String, scalarStyle: ScalarStyle)
+sealed abstract class TokenKind
+object TokenKind {
+  case object StreamStart                                             extends TokenKind
+  case object StreamEnd                                               extends TokenKind
+  case object DocumentStart                                           extends TokenKind
+  case object DocumentEnd                                             extends TokenKind
+  case class Anchor(value: String)                                    extends TokenKind
+  case class Alias(value: String)                                     extends TokenKind
+  case class TagDirective(handle: TagHandle, prefix: TagPrefix)       extends TokenKind
+  case class Tag(value: TagValue)                                     extends TokenKind
+  case object MappingStart                                            extends TokenKind
+  case object SequenceStart                                           extends TokenKind
+  case object BlockEnd                                                extends TokenKind
+  case object FlowMappingStart                                        extends TokenKind
+  case object FlowMappingEnd                                          extends TokenKind
+  case object FlowSequenceStart                                       extends TokenKind
+  case object FlowSequenceEnd                                         extends TokenKind
+  case object SequenceValue                                           extends TokenKind
+  case object MappingKey                                              extends TokenKind
+  case object MappingValue                                            extends TokenKind
+  case object Comma                                                   extends TokenKind
+  case class Scalar private (value: String, scalarStyle: ScalarStyle) extends TokenKind
 
-object TokenKind:
-  object Scalar:
-    def apply(scalar: String, scalarStyle: ScalarStyle = ScalarStyle.Plain) =
+  object Scalar {
+    def apply(scalar: String, scalarStyle: ScalarStyle = ScalarStyle.Plain) = {
       val escapedScalar = ScalarStyle.escapeSpecialCharacter(scalar, scalarStyle)
       new Scalar(escapedScalar, scalarStyle)
-  end Scalar
+    }
+  }
 
-end TokenKind
+}

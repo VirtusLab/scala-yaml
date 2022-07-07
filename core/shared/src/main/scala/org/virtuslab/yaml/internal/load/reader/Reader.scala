@@ -6,7 +6,7 @@ import scala.util.Try
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.Range
 
-trait Reader:
+trait Reader {
   def read(): Char
   def peek(n: Int = 0): Option[Char]
   def peekNext(): Option[Char]
@@ -24,8 +24,9 @@ trait Reader:
   def offset: Int
   def pos: Position
   def range: Range
+}
 
-private[yaml] class StringReader(in: String) extends Reader:
+private[yaml] class StringReader(in: String) extends Reader {
   var line: Int   = 0
   var column: Int = 0
   var offset: Int = 0
@@ -35,7 +36,7 @@ private[yaml] class StringReader(in: String) extends Reader:
   override def range = Range(pos, lines)
 
   override def peek(n: Int = 0): Option[Char] =
-    if offset + n < in.length then Some(in.charAt(offset + n))
+    if (offset + n < in.length) Some(in.charAt(offset + n))
     else None
 
   override def peekNext(): Option[Char] = peek(1)
@@ -47,29 +48,33 @@ private[yaml] class StringReader(in: String) extends Reader:
 
   private def isWindowsNewline(c: Char) = c == '\r' && peekNext().exists(_ == '\n')
 
-  private inline def nextLine() = { column = 0; line += 1 }
-  private def skipAndMantainPosition() =
+  private def nextLine() = { column = 0; line += 1 }
+  private def skipAndMantainPosition() = {
     val char = in.charAt(offset)
-    if isWindowsNewline(char) then
+    if (isWindowsNewline(char)) {
       offset += 2
       nextLine()
       2
-    else if char == '\n' then
+    } else if (char == '\n') {
       offset += 1
       nextLine()
       1
-    else
+    } else {
       offset += 1
       column += 1
       1
+    }
+  }
 
-  override def skipN(n: Int): Unit =
+  override def skipN(n: Int): Unit = {
     @tailrec def loop(left: Int): Unit =
-      if left <= 0 then ()
-      else
+      if (left <= 0) ()
+      else {
         val skipped = skipAndMantainPosition()
         loop(left - skipped)
+      }
     loop(n)
+  }
 
   override def skipCharacter(): Unit = skipAndMantainPosition()
 
@@ -77,8 +82,9 @@ private[yaml] class StringReader(in: String) extends Reader:
     while (isWhitespace)
       skipCharacter()
 
-  override def read(): Char =
+  override def read(): Char = {
     skipCharacter()
     in.charAt(offset - 1)
+  }
 
-end StringReader
+}

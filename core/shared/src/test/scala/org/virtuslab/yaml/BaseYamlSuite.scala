@@ -21,22 +21,24 @@ trait BaseYamlSuite extends munit.FunSuite {
       case Right(tokens) => assertEquals(tokens, expectedTokens)
     }
 
-  extension (yaml: String)
+  implicit class StringOps (val yaml: String) {
     def events: Either[YamlError, List[EventKind]] = {
-      val reader = Scanner(yaml)
+      val reader = new Scanner(yaml)
       ParserImpl(reader).getEvents().map(_.map(_.kind))
     }
 
-    def tokens: Either[YamlError, List[TokenKind]] =
-      val reader = Scanner(yaml)
+    def tokens: Either[YamlError, List[TokenKind]] = {
+      val reader = new Scanner(yaml)
       def loop(tokens: List[TokenKind]): Either[YamlError, List[TokenKind]] =
         reader.peekToken().flatMap { t =>
-          if t.kind == TokenKind.StreamEnd then Right(tokens.toList)
+          if (t.kind == TokenKind.StreamEnd) Right(tokens.toList)
           else loop(tokens :+ reader.popToken().kind)
         }
 
       loop(Nil)
+    }
 
     def debugTokens: Unit = pprint.pprintln(tokens)
+  }
 
 }

@@ -1,11 +1,11 @@
 package org.virtuslab.yaml
 package parser
 
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class MappingSuite extends BaseYamlSuite:
+class MappingSuite extends BaseYamlSuite {
 
   test("basic mapping") {
     val yaml =
@@ -518,3 +518,4 @@ class MappingSuite extends BaseYamlSuite:
 
     assertEquals(yaml.events, Right(expectedEvents))
   }
+}

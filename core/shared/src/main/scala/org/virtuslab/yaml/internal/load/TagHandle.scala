@@ -1,19 +1,26 @@
 package org.virtuslab.yaml.internal.load
 
-enum TagHandle(val value: String):
-  case Primary             extends TagHandle("!")
-  case Secondary           extends TagHandle("!!")
-  case Named(name: String) extends TagHandle(name)
+sealed abstract class TagHandle(val value: String)
+object TagHandle {
+  case object Primary            extends TagHandle("!")
+  case object Secondary          extends TagHandle("!!")
+  case class Named(name: String) extends TagHandle(name)
+}
 
-enum TagPrefix(val value: String):
-  case Local(prefix: String)  extends TagPrefix(prefix)
-  case Global(prefix: String) extends TagPrefix(prefix)
+sealed abstract class TagPrefix(val value: String)
+object TagPrefix {
+  case class Local(prefix: String)  extends TagPrefix(prefix)
+  case class Global(prefix: String) extends TagPrefix(prefix)
+}
 
-enum TagValue:
-  case NonSpecific
-  case Verbatim(value: String)
-  case Shorthand(handle: TagHandle, rest: String)
+sealed abstract class TagValue
+object TagValue {
+  case object NonSpecific                               extends TagValue
+  case class Verbatim(value: String)                    extends TagValue
+  case class Shorthand(handle: TagHandle, rest: String) extends TagValue
+}
 
-opaque type TagSuffix = String
-object TagSuffix:
-  def apply(suffix: String): TagSuffix = suffix
+final class TagSuffix(val suffix: String) extends AnyVal
+object TagSuffix {
+  def apply(suffix: String): TagSuffix = new TagSuffix(suffix)
+}

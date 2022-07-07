@@ -2,13 +2,14 @@ package org.virtuslab.yaml
 
 import scala.reflect.ClassTag
 
-sealed trait Tag:
+sealed trait Tag {
   def value: String
+}
 
 final case class CoreSchemaTag(value: String) extends Tag
 final case class CustomTag(value: String)     extends Tag
 
-object Tag:
+object Tag {
   def apply[T](implicit classTag: ClassTag[T]): Tag = CustomTag(
     s"!${classTag.runtimeClass.getName}"
   )
@@ -48,4 +49,4 @@ object Tag:
       case _                  => str
     }
   }
-end Tag
+}

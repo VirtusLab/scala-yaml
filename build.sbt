@@ -8,6 +8,7 @@ def isCI                 = System.getenv("CI") != null
 inThisBuild(
   List(
     organization := "org.virtuslab",
+    crossScalaVersions := Seq("2.13.8", scala3Version),
     scalaVersion := scala3Version,
     version ~= { dynVer =>
       if (isCI) dynVer
@@ -41,7 +42,6 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .settings(
     name              := projectName,
-    scalaVersion      := scala3Version,
     semanticdbEnabled := true,
     libraryDependencies ++= Seq(Deps.pprint % Test),
 
@@ -85,7 +85,6 @@ lazy val integration = project
   .settings(
     name              := "integration",
     moduleName        := "integration",
-    scalaVersion      := scala3Version,
     semanticdbEnabled := true,
     publish / skip    := true,
     libraryDependencies ++= List(

@@ -1,14 +1,15 @@
 package org.virtuslab.yaml
 
 import org.virtuslab.yaml.Node
-import org.virtuslab.yaml.Node.*
+import org.virtuslab.yaml.Node._
 import org.virtuslab.yaml.internal.load.compose.ComposerImpl
 import org.virtuslab.yaml.internal.load.parse.Event
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.EventKind._
+import org.virtuslab.yaml.syntax.YamlPrimitive._
 
 /** Examples taken from https://yaml.org/spec/1.2/spec.html#id2759963
   */
-class ComposerSuite extends munit.FunSuite:
+class ComposerSuite extends munit.FunSuite {
 
   test("sequence of scalars") {
     val events = List(
@@ -85,7 +86,7 @@ class ComposerSuite extends munit.FunSuite:
 
     val expected = Right(
       MappingNode(
-        Map(
+        Map[Node, Node](
           ScalarNode("american") ->
             SequenceNode(
               ScalarNode("Boston Red Sox"),
@@ -148,3 +149,4 @@ class ComposerSuite extends munit.FunSuite:
 
     assertEquals(ComposerImpl.fromEvents(events), expected)
   }
+}

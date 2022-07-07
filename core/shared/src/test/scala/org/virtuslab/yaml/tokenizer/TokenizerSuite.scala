@@ -1,13 +1,12 @@
 package org.virtuslab.yaml
 package tokenizer
 
-import org.virtuslab.yaml.*
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
-import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind._
 
-class TokenizerSuite extends BaseYamlSuite:
+class TokenizerSuite extends BaseYamlSuite {
 
   test("scalar") {
     val yaml = "aezakmi"
@@ -225,3 +224,4 @@ class TokenizerSuite extends BaseYamlSuite:
 
     assertTokenEquals(yaml.tokens, tokens)
   }
+}
