@@ -21,7 +21,7 @@ trait BaseYamlSuite extends munit.FunSuite {
       case Right(tokens) => assertEquals(tokens, expectedTokens)
     }
 
-  implicit class StringOps (val yaml: String) {
+  implicit class StringOps(val yaml: String) {
     def events: Either[YamlError, List[EventKind]] = {
       val reader = new Scanner(yaml)
       ParserImpl(reader).getEvents().map(_.map(_.kind))
