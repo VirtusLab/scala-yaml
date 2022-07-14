@@ -21,25 +21,27 @@ import org.virtuslab.yaml.internal.load.reader.Scanner
  * It can fail due to any of several reasons e.g. unexpected event.
  * Returns either [[YamlError]] or [[Node]]
  */
-trait Composer:
+trait Composer {
   def fromEvents(events: List[Event]): Either[YamlError, Node]
+}
 
-object ComposerImpl extends Composer:
+object ComposerImpl extends Composer {
   private case class Result[+T](node: T, remaining: List[Event])
   private type ComposeResult[+T] = Either[YamlError, Result[T]]
   // WithPos is used in inner tailrec methods because they also return position of first child
   private type ComposeResultWithPos[T] = Either[YamlError, (Result[T], Option[Range])]
 
-  override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match
+  override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match {
     case Nil => Left(ComposerError("No events available"))
     case _   => composeNode(events, mutable.Map.empty).map(_.node)
+  }
 
   private def composeNode(
       events: List[Event],
       aliases: mutable.Map[Anchor, Node]
-  ): ComposeResult[Node] = events match
+  ): ComposeResult[Node] = events match {
     case head :: tail =>
-      head.kind match
+      head.kind match {
         case EventKind.StreamStart | _: EventKind.DocumentStart => composeNode(tail, aliases)
         case EventKind.SequenceStart(NodeEventMetadata(anchor, _)) =>
           composeSequenceNode(tail, anchor, aliases)
@@ -52,12 +54,15 @@ object ComposerImpl extends Composer:
           Right(Result(node, tail))
         // todo #88
         case EventKind.Alias(alias) =>
-          aliases.get(alias) match
+          aliases.get(alias) match {
             case Some(node) => Right(Result(node, tail))
             case None       => Left(ComposerError(s"There is no anchor for $alias alias"))
+          }
         case event => Left(ComposerError(s"Expected YAML node, but found: $event"))
+      }
     case Nil =>
       Left(ComposerError("No events available"))
+  }
 
   private def composeSequenceNode(
       events: List[Event],
@@ -69,14 +74,16 @@ object ComposerImpl extends Composer:
         events: List[Event],
         children: List[Node],
         firstChildPos: Option[Range] = None
-    ): ComposeResultWithPos[List[Node]] = events match
+    ): ComposeResultWithPos[List[Node]] = events match {
       case Nil => Left(ComposerError("Not found SequenceEnd event for sequence"))
       case (Event(EventKind.SequenceEnd, _)) :: tail =>
         Right((Result(children, tail), firstChildPos))
       case _ =>
-        composeNode(events, aliases) match
-          case Right(node, rest) => parseChildren(rest, children :+ node, node.pos)
-          case Left(err)         => Left(err)
+        composeNode(events, aliases) match {
+          case Right(Result(node, rest)) => parseChildren(rest, children :+ node, node.pos)
+          case Left(err)                 => Left(err)
+        }
+    }
 
     parseChildren(events, Nil).map { case (Result(nodes, rest), pos) =>
       val sequence = Node.SequenceNode(nodes, Tag.seq, pos)
@@ -96,7 +103,7 @@ object ComposerImpl extends Composer:
         mappings: List[(Node, Node)],
         firstChildPos: Option[Range] = None
     ): ComposeResultWithPos[List[(Node, Node)]] = {
-      events match
+      events match {
         case Nil => Left(ComposerError("Not found MappingEnd event for mapping"))
         case Event(EventKind.MappingEnd, _) :: tail =>
           Right((Result(mappings, tail), firstChildPos))
@@ -108,13 +115,16 @@ object ComposerImpl extends Composer:
           Left(ComposerError(s"Invalid event, got: ${e.kind}, expected Node"))
         case _ =>
           val mapping =
-            for
+            for {
               key <- composeNode(events, aliases)
               v   <- composeNode(key.remaining, aliases)
-            yield Result((key.node, v.node), v.remaining)
-          mapping match
-            case Right(node @ (key, value), rest) => parseMappings(rest, mappings :+ node, key.pos)
-            case Left(err)                        => Left(err)
+            } yield Result((key.node, v.node), v.remaining)
+          mapping match {
+            case Right(Result(node @ (key, value), rest)) =>
+              parseMappings(rest, mappings :+ node, key.pos)
+            case Left(err) => Left(err)
+          }
+      }
     }
 
     parseMappings(events, Nil).map { case (Result(nodes, rest), pos) =>
@@ -126,3 +136,4 @@ object ComposerImpl extends Composer:
       )
     }
   }
+}

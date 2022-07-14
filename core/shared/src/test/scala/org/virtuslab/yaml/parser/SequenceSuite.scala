@@ -1,10 +1,10 @@
 package org.virtuslab.yaml
 package parser
 
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class SequenceSuite extends BaseYamlSuite:
+class SequenceSuite extends BaseYamlSuite {
 
   test("basic sequence") {
     val yaml =
@@ -329,3 +329,4 @@ class SequenceSuite extends BaseYamlSuite:
     )
     assertEquals(yaml.events, Right(expectedEvents))
   }
+}

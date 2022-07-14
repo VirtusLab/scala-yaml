@@ -1,10 +1,9 @@
 package org.virtuslab.yaml.tokenizer
 
-import org.virtuslab.yaml.*
-import org.virtuslab.yaml.*
+import org.virtuslab.yaml._
 import org.virtuslab.yaml.internal.load.reader.StringReader
 
-class StringReaderSuite extends munit.FunSuite:
+class StringReaderSuite extends munit.FunSuite {
 
   test("count position") {
     val input = s"""|a
@@ -13,7 +12,7 @@ class StringReaderSuite extends munit.FunSuite:
                     |""".stripMargin
 
     val lines  = input.split("\n", -1).toVector
-    val reader = StringReader(input)
+    val reader = new StringReader(input)
     assertEquals(reader.range, Range(Position(0, 0, 0), lines))
     assertEquals(reader.read(), 'a')
     assertEquals(reader.range, Range(Position(1, 0, 1), lines))
@@ -32,10 +31,11 @@ class StringReaderSuite extends munit.FunSuite:
                     |""".stripMargin
 
     val lines  = input.split("\n", -1).toVector
-    val reader = StringReader(input)
+    val reader = new StringReader(input)
     assertEquals(reader.range, Range(Position(0, 0, 0), lines))
     assertEquals(reader.read(), 'a')
     assertEquals(reader.range, Range(Position(1, 0, 1), lines))
     assertEquals(reader.read(), '\n')
     assertEquals(reader.range.errorMsg, "\n^")
   }
+}

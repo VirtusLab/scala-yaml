@@ -1,14 +1,14 @@
 package org.virtuslab.yaml
 
 import org.virtuslab.yaml.Node
-import org.virtuslab.yaml.Node.*
+import org.virtuslab.yaml.Node._
 import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.ModifyError
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.syntax.NodeSelector
-import org.virtuslab.yaml.syntax.NodeSelector.*
+import org.virtuslab.yaml.syntax.NodeSelector._
 
-class NodeVisitor(node: Node, selectors: List[NodeSelector]):
+class NodeVisitor(node: Node, selectors: List[NodeSelector]) {
   def apply(index: Int): NodeVisitor =
     NodeVisitor(node, selectors :+ NodeSelector.IntSelector(index))
   def apply(field: String): NodeVisitor =
@@ -95,7 +95,7 @@ class NodeVisitor(node: Node, selectors: List[NodeSelector]):
     }
 
   private def updateMappingNode(modifyValue: String => String, mapping: MappingNode) =
-    selectors match
+    selectors match {
       case StringSelector(field) :: rest =>
         val mappings = mapping.mappings
         val entryToUpdateOpt = mappings.find {
@@ -103,13 +103,14 @@ class NodeVisitor(node: Node, selectors: List[NodeSelector]):
           case _                           => false
         }
 
-        entryToUpdateOpt match
+        entryToUpdateOpt match {
           case Some(entryToUpdate) =>
-            val updatedValueE = entryToUpdate match
+            val updatedValueE = entryToUpdate match {
               case (ScalarNode(keyName, _), valueNode) =>
                 val updatedNode = NodeVisitor(valueNode, rest).modifyValue(modifyValue)
                 updatedNode
               case _ => Left(ModifyError(s"Not found $field in mapping"))
+            }
 
             updatedValueE.map { updatedValue =>
               mapping.copy(
@@ -117,6 +118,7 @@ class NodeVisitor(node: Node, selectors: List[NodeSelector]):
               )
             }
           case None => Left(ModifyError(s"Not found $field in mapping"))
+        }
       case IntSelector(index) :: rest =>
         Left(
           ModifyError(
@@ -124,9 +126,10 @@ class NodeVisitor(node: Node, selectors: List[NodeSelector]):
           )
         )
       case _ => Left(ModifyError(s"Expected plain text, instead found end of path"))
+    }
 
   private def removeMappingNode(mapping: MappingNode) =
-    selectors match
+    selectors match {
       case StringSelector(field) :: rest =>
         if (rest.isEmpty) {
           Right(
@@ -144,13 +147,14 @@ class NodeVisitor(node: Node, selectors: List[NodeSelector]):
             case _                           => false
           }
 
-          entryToUpdateOpt match
+          entryToUpdateOpt match {
             case Some(entryToUpdate) =>
-              val updatedValueE = entryToUpdate match
+              val updatedValueE = entryToUpdate match {
                 case (ScalarNode(keyName, _), valueNode) =>
                   val updatedNode = NodeVisitor(valueNode, rest).removeValue()
                   updatedNode
                 case _ => Left(ModifyError(s"Not found $field in mapping"))
+              }
 
               updatedValueE.map { updatedValue =>
                 mapping.copy(
@@ -158,6 +162,7 @@ class NodeVisitor(node: Node, selectors: List[NodeSelector]):
                 )
               }
             case None => Left(ModifyError(s"Not found $field in mapping"))
+          }
         }
       case IntSelector(index) :: rest =>
         Left(
@@ -166,40 +171,43 @@ class NodeVisitor(node: Node, selectors: List[NodeSelector]):
           )
         )
       case _ => Left(ModifyError(s"Expected plain text, instead found end of path"))
+    }
 
-  def modifyValue(fn: String => String): Either[ModifyError, Node] = node match
+  def modifyValue(fn: String => String): Either[ModifyError, Node] = node match {
     case scalar: ScalarNode     => updateScalarNode(fn, scalar)
     case sequence: SequenceNode => updateSequenceNode(fn, sequence)
     case mapping: MappingNode   => updateMappingNode(fn, mapping)
+  }
 
-  def setValue(value: String): Either[ModifyError, Node] = node match
+  def setValue(value: String): Either[ModifyError, Node] = node match {
     case scalar: ScalarNode     => updateScalarNode((_) => value, scalar)
     case sequence: SequenceNode => updateSequenceNode((_) => value, sequence)
     case mapping: MappingNode   => updateMappingNode((_) => value, mapping)
+  }
 
-  def removeValue(): Either[ModifyError, Node] = node match
+  def removeValue(): Either[ModifyError, Node] = node match {
     case scalar: ScalarNode     => removeScalarNode(scalar)
     case sequence: SequenceNode => removeSequenceNode(sequence)
     case mapping: MappingNode   => removeMappingNode(mapping)
+  }
+}
 
-object NodeVisitor:
+object NodeVisitor {
 
   def apply(node: Node, selectors: List[NodeSelector]): NodeVisitor =
     new NodeVisitor(node, selectors)
 
-  extension (either: Either[ModifyError, NodeVisitor])
+  implicit class EitherOps(val either: Either[ModifyError, NodeVisitor]) extends AnyVal {
     def apply(field: String): Either[ModifyError, NodeVisitor] = either.map(_.apply(field))
 
-  extension (either: Either[ModifyError, NodeVisitor])
     def apply(index: Int): Either[ModifyError, NodeVisitor] = either.map(_.apply(index))
 
-  extension (either: Either[ModifyError, NodeVisitor])
     def setValue(value: String): Either[ModifyError, Node] =
       either.flatMap(_.modifyValue((_) => value))
 
-  extension (either: Either[ModifyError, NodeVisitor])
     def modifyValue(fn: String => String): Either[ModifyError, Node] =
       either.flatMap(_.modifyValue(fn))
 
-  extension (either: Either[ModifyError, NodeVisitor])
     def removeValue(): Either[ModifyError, Node] = either.flatMap(_.removeValue())
+  }
+}

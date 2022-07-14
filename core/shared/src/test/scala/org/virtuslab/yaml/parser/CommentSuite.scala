@@ -1,9 +1,9 @@
 package org.virtuslab.yaml
 package parser
 
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.EventKind._
 
-class CommentSpec extends BaseYamlSuite:
+class CommentSpec extends BaseYamlSuite {
 
   test("ignore comment") {
     val yaml =
@@ -61,3 +61,4 @@ class CommentSpec extends BaseYamlSuite:
     )
     assertEquals(yaml.events, Right(expectedEvents))
   }
+}
