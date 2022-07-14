@@ -7,9 +7,9 @@ import org.virtuslab.yaml.internal.load.TagValue
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
-import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind._
 
-class TagSuite extends BaseYamlSuite:
+class TagSuite extends BaseYamlSuite {
 
   test("tag directive: primary tag handle") {
     val yaml = """|%TAG ! tag:example.com,2000:app/
@@ -294,3 +294,4 @@ class TagSuite extends BaseYamlSuite:
 
     assertTokenEquals(yaml.tokens, tokens)
   }
+}

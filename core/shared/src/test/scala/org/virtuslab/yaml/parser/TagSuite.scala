@@ -3,11 +3,11 @@ package parser
 
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.EventKind
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class TagSuite extends BaseYamlSuite:
+class TagSuite extends BaseYamlSuite {
   // from test 6WLZ
   test("two documents and global tag") {
     val yaml = """|!foo "bar"
@@ -155,3 +155,4 @@ class TagSuite extends BaseYamlSuite:
 
     assertEquals(yaml.events, Left(ScannerError("Invalid character in tag")))
   }
+}

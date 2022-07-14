@@ -9,47 +9,52 @@ import scala.util.Try
 import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.EventKind
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-trait TestRunner():
+trait TestRunner {
   def inYaml: String
   def expectedEvents: String
 
-  def run(): RunnerResult =
-    val reader = Scanner(inYaml)
+  def run(): RunnerResult = {
+    val reader = new Scanner(inYaml)
     val parser = ParserImpl(reader)
     val acc    = new mutable.ArrayDeque[EventKind]()
 
     @tailrec
     def loop(): RunnerResult = {
-      parser.getNextEvent() match
+      parser.getNextEvent() match {
         case Right(event) =>
           acc.append(event.kind)
-          if event.kind != EventKind.StreamEnd then loop()
+          if (event.kind != EventKind.StreamEnd) loop()
           else RunnerResult(acc.toList, expectedEvents)
         case Left(error) =>
           RunnerResult(acc.toList, expectedEvents, error)
+      }
     }
     loop()
-  end run
+  }
 
-end TestRunner
+}
 
-object TestRunnerUtils:
+object TestRunnerUtils {
 
-  extension (anchor: Option[Anchor])
-    def anchorAsString: String                         = anchor.map(a => s" &$a").getOrElse("")
-  extension (tag: Option[Tag]) def tagAsString: String = tag.map(a => s" <$a>").getOrElse("")
-  extension (metadata: NodeEventMetadata)
+  implicit class OptionAnchorOps(anchor: Option[Anchor]) {
+    def anchorAsString: String = anchor.map(a => s" &$a").getOrElse("")
+  }
+  implicit class OptionTagOps(tag: Option[Tag]) {
+    def tagAsString: String = tag.map(a => s" <$a>").getOrElse("")
+  }
+  implicit class NodeEventMetadataOps(metadata: NodeEventMetadata) {
     def asString: String =
       List(
         metadata.anchor.anchorAsString,
         metadata.tag.tagAsString
       ).mkString
+  }
 
   def convertEventToYamlTestSuiteFormat(events: Seq[EventKind]): String =
     events
@@ -74,9 +79,9 @@ object TestRunnerUtils:
       }
       .mkString("\n")
 
-end TestRunnerUtils
+}
 
-case class K8sYamlTestRunner(yamlPath: os.Path, libYaml: os.Path) extends TestRunner:
+case class K8sYamlTestRunner(yamlPath: os.Path, libYaml: os.Path) extends TestRunner {
   override val inYaml = os.read(yamlPath)
   override val expectedEvents = os
     .proc(libYaml, yamlPath)
@@ -85,16 +90,17 @@ case class K8sYamlTestRunner(yamlPath: os.Path, libYaml: os.Path) extends TestRu
     .text()
     .trim
 
-  override def run(): RunnerResult =
+  override def run(): RunnerResult = {
     println(yamlPath)
     super.run()
+  }
 
-end K8sYamlTestRunner
+}
 
-case class YamlSuiteTestRunner(testYamlML: os.Path) extends TestRunner:
+case class YamlSuiteTestRunner(testYamlML: os.Path) extends TestRunner {
   private val testMl = TestMlEntry.from(testYamlML)
 
   override val inYaml         = testMl.inYaml
   override val expectedEvents = testMl.seqEvent
 
-end YamlSuiteTestRunner
+}

@@ -10,13 +10,14 @@ final case class Range(
     start: Position,
     input: Vector[String],
     end: Option[Position] = None
-):
-  def errorMsg: String =
+) {
+  def errorMsg: String = {
     val msg          = input(start.line)
     val spaces       = start.column
     val circumflexes = msg.length - spaces
     s"""|$msg
         |${" " * spaces}^""".stripMargin
+  }
 
   def withEndPos(end: Position): Range =
     copy(
@@ -24,3 +25,4 @@ final case class Range(
     )
 
   def show: String = s"Position(${start.line}, ${start.column}), offset ${start.offset}"
+}

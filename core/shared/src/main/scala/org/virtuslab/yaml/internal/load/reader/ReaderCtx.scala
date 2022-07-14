@@ -22,19 +22,20 @@ case class ReaderCtx(reader: Reader) {
   def addIndent(newIndent: Int): Unit = indentations.append(newIndent)
   def removeLastIndent(): Unit        = if (indentations.nonEmpty) indentations.removeLast()
 
-  def popPotentialKeys(): List[Token] =
+  def popPotentialKeys(): List[Token] = {
     val plainKeys = potentialKeys.toList
     potentialKeys.removeAll()
     plainKeys
+  }
 
   def needMoreTokens(): Boolean =
     tokens.isEmpty || potentialKeys.nonEmpty
 
   def checkIndents(current: Int): List[Token] =
-    if current < indent then
+    if (current < indent) {
       indentations.removeLast()
       Token(BlockEnd, reader.range) +: checkIndents(current)
-    else Nil
+    } else Nil
 
   def enterFlowSequence: Unit = flowSequenceLevel += 1
   def leaveFlowSequence: Unit = flowSequenceLevel -= 1
@@ -58,5 +59,6 @@ case class ReaderCtx(reader: Reader) {
     popPotentialKeys() ++ checkIndents(-1) ++ List(Token(DocumentEnd, reader.range))
 }
 
-object ReaderCtx:
-  def apply(in: String): ReaderCtx = ReaderCtx(StringReader(in))
+object ReaderCtx {
+  def apply(in: String): ReaderCtx = ReaderCtx(new StringReader(in))
+}

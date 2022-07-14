@@ -1,10 +1,10 @@
 package org.virtuslab.yaml
 package parser
 
-import org.virtuslab.yaml.internal.load.parse.EventKind.*
+import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class ScalarSpec extends BaseYamlSuite:
+class ScalarSpec extends BaseYamlSuite {
 
   test("plain value") {
     val yaml =
@@ -458,3 +458,4 @@ class ScalarSpec extends BaseYamlSuite:
     )
     assertEquals(yaml.events, Right(expectedEvents))
   }
+}
