@@ -1,7 +1,8 @@
-sidebar:
+index: index.md
+subsection:
   - title: Quick start
-    page: src/quickstart.md
+    page: quickstart.md
   - title: Examples
-    page: src/examples.md
+    page: examples.md
   - title: Contributing guide
-    page: src/contributing.md
+    page: contributing.md
