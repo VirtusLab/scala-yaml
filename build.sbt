@@ -1,6 +1,6 @@
 import BuildHelper._
 
-def scala3Version        = "3.2.0-RC2"
+def scala3Version        = "3.2.0-RC4"
 def projectName          = "scala-yaml"
 def localSnapshotVersion = "0.0.5-SNAPSHOT"
 def isCI                 = System.getenv("CI") != null
