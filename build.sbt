@@ -1,7 +1,7 @@
 import BuildHelper._
 
 def scala3Version        = "3.1.3"
-def scala2Version        = "2.13.9"
+def scala2Version        = "2.13.8"
 def munitVersion         = "1.0.0-M6"
 def projectName          = "scala-yaml"
 def localSnapshotVersion = "0.0.5-SNAPSHOT"

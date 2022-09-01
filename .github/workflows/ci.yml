@@ -36,13 +36,13 @@ jobs:
           java-version: 8
       - name: JVM tests
         if: matrix.platform == 'jvm'
-        run: sbt core/test
+        run: sbt +core/test
       - name: JS tests
         if: matrix.platform == 'js'
-        run: sbt coreJS/test
+        run: sbt +coreJS/test
       - name: Native tests
         if: matrix.platform == 'native'
-        run: sbt coreNative/test
+        run: sbt +coreNative/test
 
   publish:
     needs: test
