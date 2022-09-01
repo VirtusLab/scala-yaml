@@ -5,12 +5,14 @@ import org.virtuslab.yaml.Node.*
 import scala.compiletime.*
 import scala.deriving.Mirror
 
-private[yaml] trait YamlDecoderCompanionCrossCompat {
+private[yaml] trait YamlDecoderCompanionCrossCompat extends DecoderMacros {
   inline def derived[T](using m: Mirror.Of[T]): YamlDecoder[T] = inline m match
     case p: Mirror.ProductOf[T] => deriveProduct(p)
     case s: Mirror.SumOf[T]     => sumOf(s)
+}
 
-  private def extractKeyValues(
+private[yaml] trait DecoderMacros {
+  protected def extractKeyValues(
       mappings: Map[Node, Node]
   ): Either[ConstructError, Map[String, Node]] = {
     val keyValueMap = mappings
@@ -26,7 +28,7 @@ private[yaml] trait YamlDecoderCompanionCrossCompat {
     else Right(valuesSeq.toMap)
   }
 
-  private def constructValues[T](
+  protected def constructValues[T](
       elemLabels: List[String],
       instances: List[YamlDecoder[_]],
       valuesMap: Map[String, Node],
@@ -42,7 +44,7 @@ private[yaml] trait YamlDecoderCompanionCrossCompat {
     else Right(p.fromProduct(Tuple.fromArray(right.toArray)))
   }
 
-  private inline def deriveProduct[T](p: Mirror.ProductOf[T]) =
+  protected inline def deriveProduct[T](p: Mirror.ProductOf[T]) =
     val instances  = summonAll[p.MirroredElemTypes]
     val elemLabels = getElemLabels[p.MirroredElemLabels]
     new YamlDecoder[T] {
@@ -59,7 +61,7 @@ private[yaml] trait YamlDecoderCompanionCrossCompat {
             Left(ConstructError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
     }
 
-  private inline def sumOf[T](s: Mirror.SumOf[T]) =
+  protected inline def sumOf[T](s: Mirror.SumOf[T]) =
     val instances = summonSumOf[s.MirroredElemTypes].asInstanceOf[List[YamlDecoder[T]]]
     new YamlDecoder[T]:
       override def construct(
@@ -70,18 +72,18 @@ private[yaml] trait YamlDecoderCompanionCrossCompat {
         .collectFirst { case r @ Right(_) => r }
         .getOrElse(Left(ConstructError(s"Cannot parse $node")))
 
-  private inline def summonSumOf[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
+  protected inline def summonSumOf[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
     case _: (t *: ts) =>
       summonFrom { case p: Mirror.ProductOf[`t`] =>
         deriveProduct(p) :: summonSumOf[ts]
       }
     case _: EmptyTuple => Nil
 
-  private inline def summonAll[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
+  protected inline def summonAll[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
     case _: EmptyTuple => Nil
     case _: (t *: ts)  => summonInline[YamlDecoder[t]] :: summonAll[ts]
 
-  private inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match
+  protected inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match
     case _: EmptyTuple     => Nil
     case _: (head *: tail) => constValue[head].toString :: getElemLabels[tail]
 
