@@ -1,6 +1,6 @@
 import BuildHelper._
 
-def scala3Version        = "3.2.0-RC2"
+def scala3Version        = "3.2.0"
 def projectName          = "scala-yaml"
 def localSnapshotVersion = "0.0.5-SNAPSHOT"
 def isCI                 = System.getenv("CI") != null
@@ -37,17 +37,12 @@ inThisBuild(
 
 ThisBuild / scalafixDependencies += "com.github.liancheng" %% "organize-imports" % "0.6.0"
 
-lazy val core = crossProject(JSPlatform, JVMPlatform /*, NativePlatform*/ )
+lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Full)
   .withoutSuffixFor(JVMPlatform)
   .settings(
     name := projectName,
     libraryDependencies ++= Seq(Deps.pprint % Test),
-
-    // see https://github.com/scala-native/scala-native/blob/master/docs/changelog/0.4.3-RC1.md#cannot-create-documentation-using-scaladoc-in-scala-native-sbt-project
-    Compile / doc / scalacOptions ~= { options =>
-      options.filterNot(_.startsWith("-Xplugin"))
-    }
   )
   .jsSettings(
     libraryDependencies ++= List(
@@ -58,19 +53,19 @@ lazy val core = crossProject(JSPlatform, JVMPlatform /*, NativePlatform*/ )
         .cross(CrossVersion.for3Use2_13)
     )
   )
-  // .nativeSettings(
-  //   // skip native tests for now since upstream changes in munit are required
-  //   Test / compile / skip := true,
-  //   Test / test / skip    := true,
+  .nativeSettings(
+    // skip native tests for now since upstream changes in munit are required
+    Test / compile / skip := true,
+    Test / test / skip    := true,
 
-  //   // set dummy directory with tests to avoid unnecessary errors
-  //   Test / unmanagedSourceDirectories := Nil
+    // set dummy directory with tests to avoid unnecessary errors
+    Test / unmanagedSourceDirectories := Nil
 
-  //   // libraryDependencies ++= List(
-  //   // ("org.scalameta" %% "munit"  % "0.7.29"  % Test).cross(CrossVersion.for3Use2_13),
-  //   // ("org.scala-native" %%% "test-interface" % nativeVersion  % Test).cross(CrossVersion.for3Use2_13),
-  //   // ),
-  // )
+    // libraryDependencies ++= List(
+    // ("org.scalameta" %% "munit"  % "0.7.29"  % Test).cross(CrossVersion.for3Use2_13),
+    // ("org.scala-native" %%% "test-interface" % nativeVersion  % Test).cross(CrossVersion.for3Use2_13),
+    // ),
+  )
   .settings(docsSettings)
   .jvmSettings(
     libraryDependencies ++= List(
