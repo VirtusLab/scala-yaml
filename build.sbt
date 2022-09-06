@@ -2,9 +2,8 @@ import BuildHelper._
 
 def scala3Version        = "3.1.3"
 def scala2Version        = "2.13.8"
-def munitVersion         = "1.0.0-M6"
 def projectName          = "scala-yaml"
-def localSnapshotVersion = "0.0.5-SNAPSHOT"
+def localSnapshotVersion = "0.0.6-SNAPSHOT"
 def isCI                 = System.getenv("CI") != null
 
 inThisBuild(
@@ -30,7 +29,7 @@ inThisBuild(
       Developer(
         "kpodsiad",
         "Kamil Podsiadło",
-        "kpodsiadlo@virtuslab.com",
+        "kamilpodsiadlo44@gmail.com",
         url("https://github.com/kpodsiad")
       )
     )
@@ -44,12 +43,18 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .withoutSuffixFor(JVMPlatform)
   .settings(
     name := projectName,
-    libraryDependencies ++= Seq(Deps.pprint % Test),
     libraryDependencies ++= List(
-      "org.scalameta" %%% "munit" % munitVersion % Test
-    )
+      Deps.munit % Test,
+      Deps.pprint % Test,
+    ),
+    // add pprint conditionally only on local machines
+    libraryDependencies ++= {
+      if(isCI) Nil 
+      else List(Deps.pprint)
+    }
   )
   .settings(docsSettings)
+
 
 lazy val integration = project
   .in(file("integration-tests"))
@@ -59,9 +64,9 @@ lazy val integration = project
     moduleName     := "integration",
     publish / skip := true,
     libraryDependencies ++= List(
-      "org.scalameta" %% "munit"  % munitVersion,
-      "com.lihaoyi"   %% "os-lib" % "0.8.1",
-      "com.lihaoyi"   %% "pprint" % "0.7.3"
+      Deps.munit,
+      Deps.osLib,
+      Deps.pprint,
     )
   )
   .settings(docsSettings)
