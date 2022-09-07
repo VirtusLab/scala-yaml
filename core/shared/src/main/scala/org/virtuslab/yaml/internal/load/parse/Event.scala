@@ -15,32 +15,35 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
  * mapping ::= MAPPING-START (node node)* MAPPING-END
  */
 final case class Event(kind: EventKind, pos: Option[Range])
-object Event:
-  import EventKind.*
+object Event {
+  import EventKind._
 
   val streamStart = Event(StreamStart, None)
   val streamEnd   = Event(StreamEnd, None)
 
   def apply(kind: EventKind, pos: Range): Event = Event(kind, Some(pos))
+}
 
-enum EventKind:
-  case StreamStart
-  case StreamEnd
-  case DocumentStart(explicit: Boolean = false)
-  case DocumentEnd(explicit: Boolean = false)
+sealed abstract class EventKind
+object EventKind {
+  case object StreamStart                             extends EventKind
+  case object StreamEnd                               extends EventKind
+  case class DocumentStart(explicit: Boolean = false) extends EventKind
+  case class DocumentEnd(explicit: Boolean = false)   extends EventKind
 
-  case Alias(id: Anchor)
-  case Scalar(
+  case class Alias(id: Anchor) extends EventKind
+  case class Scalar(
       value: String,
       style: ScalarStyle = ScalarStyle.Plain,
       metadata: NodeEventMetadata = NodeEventMetadata.empty
-  )
+  ) extends EventKind
 
-  case SequenceStart(metadata: NodeEventMetadata = NodeEventMetadata.empty)
-  case SequenceEnd
+  case class SequenceStart(metadata: NodeEventMetadata = NodeEventMetadata.empty) extends EventKind
+  case object SequenceEnd                                                         extends EventKind
 
-  case MappingStart(metadata: NodeEventMetadata = NodeEventMetadata.empty)
-  case MappingEnd
+  case class MappingStart(metadata: NodeEventMetadata = NodeEventMetadata.empty) extends EventKind
+  case object MappingEnd                                                         extends EventKind
+}
 
 /**
  * Carries additional information about event which represents YAML node (scalar, start of mapping or sequence).
@@ -51,18 +54,20 @@ enum EventKind:
 final case class NodeEventMetadata(
     anchor: Option[Anchor] = None,
     tag: Option[Tag] = None
-):
+) {
   def withAnchor(anchor: Anchor) = this.copy(anchor = Some(anchor))
   def withTag(tag: Tag)          = this.copy(tag = Some(tag))
-end NodeEventMetadata
+}
 
-object NodeEventMetadata:
+object NodeEventMetadata {
   final val empty                              = NodeEventMetadata()
   def apply(anchor: Anchor): NodeEventMetadata = NodeEventMetadata(anchor = Some(anchor))
   def apply(anchor: Anchor, tag: Tag): NodeEventMetadata =
     NodeEventMetadata(anchor = Some(anchor), tag = Some(tag))
   def apply(tag: Tag): NodeEventMetadata = NodeEventMetadata(tag = Some(tag))
+}
 
-opaque type Anchor = String
-object Anchor:
-  def apply(anchor: String): Anchor = anchor
+class Anchor(val anchor: String) extends AnyVal
+object Anchor {
+  def apply(anchor: String): Anchor = new Anchor(anchor)
+}

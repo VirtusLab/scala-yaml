@@ -1,9 +1,9 @@
 package org.virtuslab.yaml.traverse
 
-import org.virtuslab.yaml.*
-import org.virtuslab.yaml.TestOps.*
+import org.virtuslab.yaml._
+import org.virtuslab.yaml.TestOps._
 
-class NodeVisitorSuite extends munit.FunSuite:
+class NodeVisitorSuite extends munit.FunSuite {
 
   test("should update ports for web") {
 
@@ -127,3 +127,4 @@ class NodeVisitorSuite extends munit.FunSuite:
 
     assertEquals(modifiedYaml, exptectedYaml)
   }
+}

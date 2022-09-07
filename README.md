@@ -1,6 +1,6 @@
 # Scala Yaml
 
-![Example](./docs/Scala_YAML_red.svg)
+![Example](./docs/_assets/Scala_YAML_red.svg)
 
 Scala Yaml is written in Scala, dependency-free library that allows to work with the [YAML](https://yaml.org/spec/1.2.2/).  
 

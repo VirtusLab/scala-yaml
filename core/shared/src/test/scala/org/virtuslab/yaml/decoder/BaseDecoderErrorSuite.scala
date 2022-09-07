@@ -2,7 +2,7 @@ package org.virtuslab.yaml.decoder
 
 import org.virtuslab.yaml.YamlError
 
-class BaseDecoderErrorSuite extends munit.FunSuite:
+class BaseDecoderErrorSuite extends munit.FunSuite {
 
   def assertError[T](obtained: Either[YamlError, T], expected: String): Unit =
     obtained match {
@@ -10,4 +10,4 @@ class BaseDecoderErrorSuite extends munit.FunSuite:
       case Left(error: YamlError) => assertNoDiff(error.msg, expected)
     }
 
-end BaseDecoderErrorSuite
+}
