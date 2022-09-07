@@ -21,7 +21,7 @@ object BuildHelper {
           s"Copyright (c) 2021, VirtusLab",
           "-source-links:github://VirtusLab/scala-yaml",
           "-revision",
-          "master"
+          "main"
         )
       } else Seq.empty
     },
