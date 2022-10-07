@@ -6,6 +6,8 @@ def projectName          = "scala-yaml"
 def localSnapshotVersion = "0.0.6-SNAPSHOT"
 def isCI                 = System.getenv("CI") != null
 
+enablePlugins(NoPublishPlugin)
+
 inThisBuild(
   List(
     organization       := "org.virtuslab",
@@ -62,7 +64,6 @@ lazy val integration = project
   .settings(
     name           := "integration",
     moduleName     := "integration",
-    publish / skip := true,
     libraryDependencies ++= List(
       Deps.munit,
       Deps.osLib,
@@ -70,3 +71,4 @@ lazy val integration = project
     )
   )
   .settings(docsSettings)
+  .enablePlugins(NoPublishPlugin)
