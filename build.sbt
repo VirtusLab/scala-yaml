@@ -1,10 +1,12 @@
 import BuildHelper._
 
 def scala3Version        = "3.1.3"
-def scala2Version        = "2.13.8"
+def scala2Version        = "2.13.10"
 def projectName          = "scala-yaml"
 def localSnapshotVersion = "0.0.6-SNAPSHOT"
 def isCI                 = System.getenv("CI") != null
+
+enablePlugins(NoPublishPlugin)
 
 inThisBuild(
   List(
@@ -44,29 +46,28 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     name := projectName,
     libraryDependencies ++= List(
-      Deps.munit % Test,
-      Deps.pprint % Test,
+      Deps.munit  % Test,
+      Deps.pprint % Test
     ),
     // add pprint conditionally only on local machines
     libraryDependencies ++= {
-      if(isCI) Nil 
+      if (isCI) Nil
       else List(Deps.pprint)
     }
   )
   .settings(docsSettings)
 
-
 lazy val integration = project
   .in(file("integration-tests"))
   .dependsOn(core.jvm)
   .settings(
-    name           := "integration",
-    moduleName     := "integration",
-    publish / skip := true,
+    name       := "integration",
+    moduleName := "integration",
     libraryDependencies ++= List(
       Deps.munit,
       Deps.osLib,
-      Deps.pprint,
+      Deps.pprint
     )
   )
   .settings(docsSettings)
+  .enablePlugins(NoPublishPlugin)
