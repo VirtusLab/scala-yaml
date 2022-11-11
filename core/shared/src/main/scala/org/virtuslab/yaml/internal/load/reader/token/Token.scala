@@ -1,12 +1,16 @@
 package org.virtuslab.yaml.internal.load.reader.token
 
+import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.internal.load.TagHandle
 import org.virtuslab.yaml.internal.load.TagPrefix
 import org.virtuslab.yaml.internal.load.TagValue
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-final case class Token(kind: TokenKind, range: Range)
+final case class Token(kind: TokenKind, range: Range) {
+  def start: Position = range.start
+  def end: Option[Position] = range.end
+}
 
 sealed abstract class TokenKind
 object TokenKind {

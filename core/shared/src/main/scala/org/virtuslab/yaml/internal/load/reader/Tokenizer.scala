@@ -4,6 +4,7 @@ import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 import org.virtuslab.yaml.Range
@@ -53,13 +54,13 @@ private class StringTokenizer(str: String) extends Tokenizer {
   }
 
   /**
-  * Plain keys have to be resolved in the same line they were created, otherwise they cannot be keys, thus they are ordinary tokens
+  * Plain keys have to be resolved in the same line they were created, otherwise they are ordinary tokens.
   */
   private def shouldPopPlainKeys: Boolean =
-    !ctx.isInFlowCollection && ctx.potentialKeys.headOption
+    ctx.isInBlockCollection && ctx.potentialKeyOpt
       .exists(_.range.start.line != in.line)
 
-  private def getNextTokens(): List[Token] = {
+  private def getNextTokens(): Seq[Token] = {
     skipUntilNextToken()
     val closedBlockTokens = ctx.checkIndents(in.column)
     val closedTokens =
@@ -137,16 +138,25 @@ private class StringTokenizer(str: String) extends Tokenizer {
     ctx.popPotentialKeys() ++ List(Token(FlowMappingEnd, in.range))
   }
 
-  private def parseBlockSequence() =
-    if (!ctx.isInFlowCollection && ctx.indent < in.column) {
+  private def parseBlockSequence() = {
+    val builder = new ListBuffer[Token]
+
+    // when last indent is lesser than current one, it means that this is start of the sequence
+    if (ctx.isInBlockCollection && ctx.indent < in.column) {
       ctx.addIndent(in.column)
-      List(Token(SequenceStart, in.range))
-    } else if (ctx.isInBlockCollection && !ctx.isPlainKeyAllowed) {
-      throw ScannerError.from(in.range, "cannot start sequence")
-    } else {
-      in.skipCharacter()
-      ctx.popPotentialKeys() ++ List(Token(SequenceValue, in.range))
+      builder.addOne(Token(SequenceStart, in.range))
     }
+
+    if (ctx.isInBlockCollection && !ctx.isPlainKeyAllowed) {
+      throw ScannerError.from(in.range, "cannot start sequence")
+    }
+
+    in.skipCharacter() // skip '-'
+    builder.addAll(ctx.popPotentialKeys())
+    builder.addOne(Token(SequenceValue, in.range))
+
+    builder.toList
+  }
 
   private def parseDirective(): List[Token] = {
     val range = in.range
@@ -288,7 +298,7 @@ private class StringTokenizer(str: String) extends Tokenizer {
     }
 
     if (ctx.isPlainKeyAllowed) {
-      ctx.potentialKeys.append(Token(tag, range))
+      ctx.addPotentialKey(Token(tag, range))
       Nil
     } else List(Token(tag, range))
   }
@@ -317,7 +327,7 @@ private class StringTokenizer(str: String) extends Tokenizer {
     val (name, range) = parseAnchorName()
     val anchorToken   = Token(Anchor(name), range)
     if (ctx.isPlainKeyAllowed) {
-      ctx.potentialKeys.append(anchorToken)
+      ctx.addPotentialKey(anchorToken)
       Nil
     } else List(anchorToken)
   }
@@ -326,7 +336,7 @@ private class StringTokenizer(str: String) extends Tokenizer {
     val (name, pos) = parseAnchorName()
     val aliasToken  = Token(Alias(name), pos)
     if (ctx.isPlainKeyAllowed) {
-      ctx.potentialKeys.append(aliasToken)
+      ctx.addPotentialKey(aliasToken)
       Nil
     } else List(aliasToken)
   }
@@ -362,7 +372,7 @@ private class StringTokenizer(str: String) extends Tokenizer {
     val endRange    = range.withEndPos(in.pos)
     val scalarToken = Token(Scalar(scalar, ScalarStyle.DoubleQuoted), endRange)
     if (isPlainKeyAllowed) {
-      ctx.potentialKeys.append(scalarToken)
+      ctx.addPotentialKey(scalarToken)
       Nil
     } else List(scalarToken)
   }
@@ -523,7 +533,7 @@ private class StringTokenizer(str: String) extends Tokenizer {
     val endRange    = range.withEndPos(in.pos)
     val scalarToken = Token(Scalar(scalar, ScalarStyle.SingleQuoted), endRange)
     if (isPlainKeyAllowed) {
-      ctx.potentialKeys.append(scalarToken)
+      ctx.addPotentialKey(scalarToken)
       Nil
     } else List(scalarToken)
   }
@@ -541,7 +551,7 @@ private class StringTokenizer(str: String) extends Tokenizer {
     def readScalar(): String = {
       val peeked = in.peek()
       peeked match {
-        case Reader.nullTerminator => sb.result()
+        case Reader.nullTerminator                                 => sb.result()
         case ':' if in.isNextWhitespace                            => sb.result()
         case ':' if in.peekNext() == ',' && ctx.isInFlowCollection => sb.result()
         case char if !ctx.isAllowedSpecialCharacter(char)          => sb.result()
@@ -567,7 +577,7 @@ private class StringTokenizer(str: String) extends Tokenizer {
     val endRange          = range.withEndPos(in.pos)
     val scalarToken       = Token(Scalar(scalar.trim, ScalarStyle.Plain), endRange)
     if (isPlainKeyAllowed) {
-      ctx.potentialKeys.append(scalarToken)
+      ctx.addPotentialKey(scalarToken)
       Nil
     } else List(scalarToken)
   }
@@ -581,8 +591,8 @@ private class StringTokenizer(str: String) extends Tokenizer {
     )
 
     val maybeMappingStart =
-      if (!ctx.isInFlowCollection && ctx.indent < firstSimpleKey.range.start.column) {
-        ctx.addIndent(firstSimpleKey.range.start.column)
+      if (ctx.isInBlockCollection && ctx.indent < firstSimpleKey.start.column) {
+        ctx.addIndent(firstSimpleKey.start.column)
         List(Token(MappingStart, firstSimpleKey.range))
       } else Nil
 

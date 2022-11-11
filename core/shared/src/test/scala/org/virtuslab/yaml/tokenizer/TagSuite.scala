@@ -4,7 +4,6 @@ package tokenizer
 import org.virtuslab.yaml.internal.load.TagHandle
 import org.virtuslab.yaml.internal.load.TagPrefix
 import org.virtuslab.yaml.internal.load.TagValue
-import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind._

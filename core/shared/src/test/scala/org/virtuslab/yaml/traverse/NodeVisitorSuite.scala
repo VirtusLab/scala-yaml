@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.traverse
 
-import org.virtuslab.yaml._
 import org.virtuslab.yaml.TestOps._
+import org.virtuslab.yaml._
 
 class NodeVisitorSuite extends munit.FunSuite {
 

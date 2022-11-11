@@ -57,8 +57,8 @@ private[reader] case class TokenizerContext(reader: Reader) {
   def isInFlowMapping: Boolean    = flowMappingLevel > 0
   def isInFlowSequence: Boolean   = flowSequenceLevel > 0
   def isInFlowCollection: Boolean = isInFlowMapping || isInFlowSequence
-
-  def isInBlockCollection = !isInFlowCollection
+  
+  def isInBlockCollection: Boolean = !isInFlowCollection
 
   def parseDocumentStart(indent: Int): List[Token] =
     checkIndents(-1) ++ List(Token(DocumentStart, reader.range))
