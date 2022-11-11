@@ -64,37 +64,36 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       else closedBlockTokens
     val peeked = in.peek()
     val tokens: List[Token] = peeked match {
-      case Some('-') if isDocumentStart     => parseDocumentStart()
-      case Some('-') if in.isNextWhitespace => parseBlockSequence()
-      case Some('.') if isDocumentEnd       => parseDocumentEnd()
-      case Some('[')                        => parseFlowSequenceStart()
-      case Some(']')                        => parseFlowSequenceEnd()
-      case Some('{')                        => parseFlowMappingStart()
-      case Some('}')                        => parseFlowMappingEnd()
-      case Some('&')                        => parseAnchor()
-      case Some('!')                        => parseTag()
-      case Some('%')                        => parseDirective()
-      case Some('"')                        => parseDoubleQuoteValue()
-      case Some('\'')                       => parseSingleQuoteValue()
-      case Some('>')                        => parseFoldedValue()
-      case Some('|')                        => parseLiteral()
-      case Some('*')                        => parseAlias()
-      case Some(',') =>
+      case Reader.nullTerminator =>
+        ctx.popPotentialKeys() ++ ctx.checkIndents(-1) ++ List(Token(StreamEnd, in.range))
+      case '-' if isDocumentStart     => parseDocumentStart()
+      case '-' if in.isNextWhitespace => parseBlockSequence()
+      case '.' if isDocumentEnd       => parseDocumentEnd()
+      case '['                        => parseFlowSequenceStart()
+      case ']'                        => parseFlowSequenceEnd()
+      case '{'                        => parseFlowMappingStart()
+      case '}'                        => parseFlowMappingEnd()
+      case '&'                        => parseAnchor()
+      case '!'                        => parseTag()
+      case '%'                        => parseDirective()
+      case '"'                        => parseDoubleQuoteValue()
+      case '\''                       => parseSingleQuoteValue()
+      case '>'                        => parseFoldedValue()
+      case '|'                        => parseLiteral()
+      case '*'                        => parseAlias()
+      case ',' =>
         in.skipCharacter()
         ctx.isPlainKeyAllowed = true
         ctx.popPotentialKeys() ++ List(Token(Comma, in.range))
-      case Some(':')
-          if (in.isNextWhitespace || (ctx.isInFlowCollection && ctx.isPlainKeyAllowed)) =>
+      case ':' if (in.isNextWhitespace || (ctx.isInFlowCollection && ctx.isPlainKeyAllowed)) =>
         fetchValue()
-      case Some(_) => parsePlainScalar()
-      case None =>
-        ctx.popPotentialKeys() ++ ctx.checkIndents(-1) ++ List(Token(StreamEnd, in.range))
+      case _ => parsePlainScalar()
     }
     closedTokens ++ tokens
   }
 
   private def isDocumentStart =
-    in.peekN(3) == "---" && in.peek(3).exists(_.isWhitespace)
+    in.peekN(3) == "---" && in.peek(3).isWhitespace
 
   private def parseDocumentStart() = {
     in.skipN(4)
@@ -102,7 +101,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   }
 
   private def isDocumentEnd =
-    in.peekN(3) == "..." && in.peek(3).exists(_.isWhitespace)
+    in.peekN(3) == "..." && in.peek(3).isWhitespace
 
   private def parseDocumentEnd() = {
     in.skipN(4)
@@ -156,16 +155,20 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     def parseTagDirective() = {
       def parseTagHandle() = {
         in.peekNext() match { // peeking next char!! current char is exclamation mark
-          case Some(' ') =>
+          case ' ' =>
             in.skipCharacter() // skip exclamation mark
             TagHandle.Primary
-          case Some('!') =>
+          case '!' =>
             in.skipN(2) // skip both exclamation marks
             TagHandle.Secondary
           case _ =>
             val sb = new StringBuilder
             sb.append(in.read())
-            while (in.peek().exists(c => !c.isWhitespace && c != '!')) sb.append(in.read())
+            def condition = {
+              val c = in.peek()
+              !c.isWhitespace && c != '!'
+            }
+            while (condition) { sb.append(in.read()) }
             sb.append(in.read())
             TagHandle.Named(sb.result())
         }
@@ -174,13 +177,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       def parseTagPrefix() = {
         skipSpaces()
         in.peek() match {
-          case Some('!') =>
+          case '!' =>
             val sb = new StringBuilder
-            while (in.peek().exists(c => !c.isWhitespace)) sb.append(in.read())
+            while (!in.peek().isWhitespace) { sb.append(in.read()) }
             TagPrefix.Local(sb.result())
-          case Some(char) if char != '!' && char != ',' =>
+          case char if char != '!' && char != ',' =>
             val sb = new StringBuilder
-            while (in.peek().exists(c => !c.isWhitespace)) sb.append(in.read())
+            while (!in.peek().isWhitespace) { sb.append(in.read()) }
             TagPrefix.Global(sb.result())
           case _ => throw ScannerError.from(in.range, "Invalid tag prefix in TAG directive")
         }
@@ -188,7 +191,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
       skipSpaces()
       in.peek() match {
-        case Some('!') =>
+        case '!' =>
           val handle = parseTagHandle()
           val prefix = parseTagPrefix()
           List(Token(TokenKind.TagDirective(handle, prefix), range))
@@ -198,10 +201,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     }
 
     in.peek() match {
-      case Some('Y') if in.peekN(4) == "YAML" =>
+      case 'Y' if in.peekN(4) == "YAML" =>
         in.skipN(4)
         parseYamlDirective()
-      case Some('T') if in.peekN(3) == "TAG" =>
+      case 'T' if in.peekN(3) == "TAG" =>
         in.skipN(3)
         parseTagDirective()
       case _ => throw ScannerError.from(in.range, "Unknown directive, expected YAML or TAG")
@@ -215,9 +218,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     def parseVerbatimTag(): String = {
       val sb = new StringBuilder
       sb.append('!')
-      while (in.peek().exists(c => c != '>' && !c.isWhitespace)) sb.append(in.read())
+      def condition = {
+        val c = in.peek()
+        c != '>' && !c.isWhitespace
+      }
+      while (condition) sb.append(in.read())
       in.peek() match {
-        case Some('>') =>
+        case '>' =>
           sb.append(in.read())
           sb.result()
         case _ => throw ScannerError.from(in.range, "Lacks '>' which closes verbatim tag attribute")
@@ -226,9 +233,13 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
     def parseTagSuffix(): String = {
       val sb = new StringBuilder
-      while (in.peek().exists(c => !invalidChars(c) && !c.isWhitespace)) sb.append(in.read())
-      if (in.peek().exists(c => invalidChars(c)))
-        throw ScannerError.from(in.range, "Invalid character in tag")
+      def condition = {
+        val c = in.peek()
+        !invalidChars(c) && !c.isWhitespace
+      }
+      while (condition) sb.append(in.read())
+
+      if (invalidChars.contains(in.peek())) throw ScannerError.from(in.range, "Invalid character in tag")
       UrlDecoder.decode(sb.result())
     }
 
@@ -239,17 +250,20 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           TagValue.Shorthand(TagHandle.Secondary, parseTagSuffix())
         case _ => // tag handle starts with '!<char>' where char isn't space
           val sb = new StringBuilder
-
-          while (in.peek().exists(c => !invalidChars(c) && !c.isWhitespace && c != '!'))
+          def condition = {
+            val c = in.peek()
+            !invalidChars(c) && !c.isWhitespace && c != '!'
+          }
+          while (condition)
             sb.append(in.read())
-          if (in.peek().exists(c => invalidChars(c)))
+          if (invalidChars.contains(in.peek()))
             throw ScannerError.from(in.range, "Invalid character in tag")
           in.peek() match {
-            case Some('!') =>
+            case '!' =>
               sb.insert(0, '!')    // prepend already skipped exclamation mark
               sb.append(in.read()) // append ending exclamation mark
               TagValue.Shorthand(TagHandle.Named(sb.result()), parseTagSuffix())
-            case Some(' ') =>
+            case ' ' =>
               TagValue.Shorthand(TagHandle.Primary, sb.result())
             case _ => throw ScannerError.from(in.range, "Invalid tag handle")
           }
@@ -258,15 +272,15 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     in.skipCharacter() // skip first '!'
     val peeked = in.peek()
     val tag: Tag = peeked match {
-      case Some('<') =>
+      case Reader.nullTerminator => throw ScannerError.from(in.range, "Input stream ended unexpectedly")
+      case '<' =>
         val tag = parseVerbatimTag()
         Tag(TagValue.Verbatim(tag))
-      case Some(' ') =>
+      case ' ' =>
         Tag(TagValue.NonSpecific)
-      case Some(char) =>
+      case char =>
         val tagValue = parseShorthandTag(char)
         Tag(tagValue)
-      case None => throw ScannerError.from(in.range, "Input stream ended unexpectedly")
     }
 
     if (ctx.isPlainKeyAllowed) {
@@ -282,7 +296,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     @tailrec
     def readAnchorName(): String =
       in.peek() match {
-        case Some(char) if !invalidChars(char) && !in.isWhitespace =>
+        case Reader.nullTerminator => sb.result()
+        case char if !invalidChars(char) && !in.isWhitespace =>
           sb.append(in.read())
           readAnchorName()
         case _ => sb.result()
@@ -318,22 +333,22 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     @tailrec
     def readScalar(): String =
       in.peek() match {
+        case Reader.nullTerminator =>
+          sb.result()
         case _ if in.isNewline =>
           skipUntilNextToken()
           sb.append(" ")
           readScalar()
-        case Some('\\') if in.peekNext() == Some('"') =>
+        case '\\' if in.peekNext() == '"' =>
           in.skipN(2)
           sb.append("\"")
           readScalar()
-        case Some('"') =>
+        case '"' =>
           in.skipCharacter()
           sb.result()
-        case Some(char) =>
+        case char =>
           sb.append(in.read())
           readScalar()
-        case None =>
-          sb.result()
       }
 
     val isPlainKeyAllowed = ctx.isPlainKeyAllowed
@@ -352,10 +367,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
    * This header is followed by a non-content line break with an optional comment.
    */
   private def parseBlockHeader(): Unit = {
-    while (in.peek() == Some(' '))
+    while (in.peek() == ' ')
       in.skipCharacter()
 
-    if (in.peek() == Some('#'))
+    if (in.peek() == '#')
       skipComment()
 
     if (in.isNewline) in.skipCharacter()
@@ -366,10 +381,10 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
    */
   private def parseChompingIndicator(): BlockChompingIndicator =
     in.peek() match {
-      case Some('-') =>
+      case '-' =>
         in.skipCharacter()
         BlockChompingIndicator.Strip
-      case Some('+') =>
+      case '+' =>
         in.skipCharacter()
         BlockChompingIndicator.Keep
       case _ => BlockChompingIndicator.Clip
@@ -377,7 +392,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
 
   private def parseIndentationIndicator(): Option[Int] =
     in.peek() match {
-      case Some(number) if number.isDigit =>
+      case number if number.isDigit =>
         in.skipCharacter()
         Some(number.asDigit)
       case _ => None
@@ -402,16 +417,16 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     @tailrec
     def readLiteral(): String =
       in.peek() match {
+        case Reader.nullTerminator => sb.result()
         case _ if in.isNewline =>
           ctx.isPlainKeyAllowed = true
           sb.append(in.read())
           skipUntilNextIndent(foldedIndent)
           if (!in.isWhitespace && in.column != foldedIndent) sb.result()
           else readLiteral()
-        case Some(char) =>
+        case char =>
           sb.append(in.read())
           readLiteral()
-        case None => sb.result()
       }
 
     val scalar        = readLiteral()
@@ -443,11 +458,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     @tailrec
     def readFolded(): String =
       in.peek() match {
+        case Reader.nullTerminator => sb.result()
         case _ if in.isNewline =>
           ctx.isPlainKeyAllowed = true
           if (in.isNextNewline) {
             chompedEmptyLines()
-            if (in.peek().isDefined) {
+            if (in.peek() != Reader.nullTerminator) {
               in.skipCharacter()
               skipUntilNextIndent(foldedIndent)
             }
@@ -455,7 +471,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           } else {
             in.skipCharacter()
             skipUntilNextIndent(foldedIndent)
-            if (in.column != foldedIndent || in.peek() == None) {
+            if (in.column != foldedIndent || in.peek() == Reader.nullTerminator) {
               sb.append("\n")
               sb.result()
             } else {
@@ -463,10 +479,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
               readFolded()
             }
           }
-        case Some(char) =>
+        case char =>
           sb.append(in.read())
           readFolded()
-        case None => sb.result()
       }
 
     val scalar        = readFolded()
@@ -480,21 +495,21 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     @tailrec
     def readScalar(): String =
       in.peek() match {
-        case Some('\'') if in.peekNext() == Some('\'') =>
+        case Reader.nullTerminator => sb.result()
+        case '\'' if in.peekNext() == '\'' =>
           in.skipN(2)
           sb.append('\'')
           readScalar()
-        case Some('\n') =>
+        case '\n' =>
           sb.append(' ')
           skipUntilNextToken()
           readScalar()
-        case Some('\'') =>
+        case '\'' =>
           in.skipCharacter()
           sb.result()
-        case Some(char) =>
+        case char =>
           sb.append(in.read())
           readScalar()
-        case None => sb.result()
       }
 
     val isPlainKeyAllowed = ctx.isPlainKeyAllowed
@@ -522,11 +537,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     def readScalar(): String = {
       val peeked = in.peek()
       peeked match {
-        case Some(':') if in.isNextWhitespace                                      => sb.result()
-        case Some(':') if in.peekNext().exists(_ == ',') && ctx.isInFlowCollection => sb.result()
-        case Some(char) if !ctx.isAllowedSpecialCharacter(char)                    => sb.result()
-        case _ if isDocumentEnd || isDocumentStart                                 => sb.result()
-        case Some(' ') if in.peekNext() == Some('#')                               => sb.result()
+        case Reader.nullTerminator => sb.result()
+        case ':' if in.isNextWhitespace                            => sb.result()
+        case ':' if in.peekNext() == ',' && ctx.isInFlowCollection => sb.result()
+        case char if !ctx.isAllowedSpecialCharacter(char)          => sb.result()
+        case _ if isDocumentEnd || isDocumentStart                 => sb.result()
+        case ' ' if in.peekNext() == '#'                           => sb.result()
         case _ if in.isNewline =>
           ctx.isPlainKeyAllowed = true
           if (in.isNextNewline) chompedEmptyLines()
@@ -535,10 +551,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           if (in.column > ctx.indent)
             readScalar()
           else sb.result()
-        case Some(char) =>
+        case char =>
           sb.append(in.read())
           readScalar()
-        case Some(_) | None => sb.result()
       }
     }
 
@@ -584,7 +599,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   def skipUntilNextToken(): Unit = {
     while (in.isWhitespace && !in.isNewline) in.skipCharacter()
 
-    if (in.peek() == Some('#')) skipComment()
+    if (in.peek() == '#') skipComment()
 
     if (in.isNewline) {
       ctx.isPlainKeyAllowed = true
@@ -594,14 +609,14 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
   }
 
   def skipSpaces(): Unit =
-    while (in.peek().contains(' ')) in.skipCharacter()
+    while (in.peek() == ' ') in.skipCharacter()
 
   def skipUntilNextIndent(indentBlock: Int): Unit =
-    while (in.peek() == Some(' ') && in.column < indentBlock) in.skipCharacter()
+    while (in.peek() == ' ' && in.column < indentBlock) in.skipCharacter()
 
   def skipUntilNextChar() =
     while (in.isWhitespace) in.skipCharacter()
 
-  private def skipComment(): Unit = while (in.peek().isDefined && !in.isNewline)
+  private def skipComment(): Unit = while (in.peek() != Reader.nullTerminator && !in.isNewline)
     in.skipCharacter()
 }
