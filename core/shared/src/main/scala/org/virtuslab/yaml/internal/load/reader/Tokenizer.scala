@@ -25,7 +25,11 @@ trait Tokenizer {
   def popToken(): Token
 }
 
-private[yaml] class Scanner(str: String) extends Tokenizer {
+object Tokenizer {
+  def make(str: String): Tokenizer = new StringTokenizer(str)
+}
+
+private class StringTokenizer(str: String) extends Tokenizer {
 
   private val ctx = ReaderCtx(str)
   private val in  = ctx.reader
