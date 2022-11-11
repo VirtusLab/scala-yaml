@@ -518,4 +518,10 @@ class MappingSuite extends BaseYamlSuite {
 
     assertEquals(yaml.events, Right(expectedEvents))
   }
+
+  test("invalid sequence as mapping value") {
+    val yaml = """foo: - bar"""
+
+    assert(yaml.events.isLeft)
+  }
 }

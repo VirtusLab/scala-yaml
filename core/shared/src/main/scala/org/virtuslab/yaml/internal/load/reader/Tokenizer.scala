@@ -138,6 +138,11 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     if (!ctx.isInFlowCollection && ctx.indent < in.column) {
       ctx.addIndent(in.column)
       List(Token(SequenceStart, in.range))
+    } else if (ctx.isInBlockCollection && !ctx.isPlainKeyAllowed) {
+      val range = in.range
+      throw ScannerError(
+        s"line ${range.start.line}, column ${range.start.column} - cannot start sequence here"
+      )
     } else {
       in.skipCharacter()
       ctx.popPotentialKeys() ++ List(Token(SequenceValue, in.range))
@@ -565,7 +570,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     ctx.isPlainKeyAllowed = false
 
     if (
-      !ctx.isInFlowCollection &&
+      ctx.isInBlockCollection &&
       firstSimpleKey.range.end.exists(
         _.line > firstSimpleKey.range.start.line
       )
