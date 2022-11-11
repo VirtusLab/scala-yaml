@@ -14,7 +14,6 @@ final case class Range(
   def errorMsg: String = {
     val msg          = input(start.line)
     val spaces       = start.column
-    val circumflexes = msg.length - spaces
     s"""|$msg
         |${" " * spaces}^""".stripMargin
   }
