@@ -31,7 +31,7 @@ object Tokenizer {
 
 private class StringTokenizer(str: String) extends Tokenizer {
 
-  private val ctx = ReaderCtx(str)
+  private val ctx = TokenizerContext(str)
   private val in  = ctx.reader
 
   override def peekToken(): Either[YamlError, Token] = ctx.tokens.headOption match {
