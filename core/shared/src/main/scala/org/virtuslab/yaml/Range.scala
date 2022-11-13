@@ -12,8 +12,8 @@ final case class Range(
     end: Option[Position] = None
 ) {
   def errorMsg: String = {
-    val msg          = input(start.line)
-    val spaces       = start.column
+    val msg    = input(start.line)
+    val spaces = start.column
     s"""|$msg
         |${" " * spaces}^""".stripMargin
   }
