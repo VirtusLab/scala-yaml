@@ -52,6 +52,8 @@ case class ReaderCtx(reader: Reader) {
   def isInFlowSequence: Boolean   = flowSequenceLevel > 0
   def isInFlowCollection: Boolean = isInFlowMapping || isInFlowSequence
 
+  def isInBlockCollection = !isInFlowCollection
+
   def parseDocumentStart(indent: Int): List[Token] =
     checkIndents(-1) ++ List(Token(DocumentStart, reader.range))
 
