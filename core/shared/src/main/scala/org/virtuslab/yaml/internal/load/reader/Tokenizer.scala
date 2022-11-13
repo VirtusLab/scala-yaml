@@ -138,6 +138,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     if (!ctx.isInFlowCollection && ctx.indent < in.column) {
       ctx.addIndent(in.column)
       List(Token(SequenceStart, in.range))
+    } else if (ctx.isInBlockCollection && !ctx.isPlainKeyAllowed) {
+      throw ScannerError.from(in.range, "cannot start sequence")
     } else {
       in.skipCharacter()
       ctx.popPotentialKeys() ++ List(Token(SequenceValue, in.range))
@@ -147,7 +149,9 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     val range = in.range
     in.skipCharacter() // skip %
 
-    def parseYamlDirective() = { throw ScannerError("YAML directives are not supported yet.") }
+    def parseYamlDirective() = {
+      throw ScannerError.from(in.range, "YAML directives are not supported yet.")
+    }
 
     def parseTagDirective() = {
       def parseTagHandle() = {
@@ -178,7 +182,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
             val sb = new StringBuilder
             while (in.peek().exists(c => !c.isWhitespace)) sb.append(in.read())
             TagPrefix.Global(sb.result())
-          case _ => throw ScannerError("Invalid tag prefix in TAG directive")
+          case _ => throw ScannerError.from(in.range, "Invalid tag prefix in TAG directive")
         }
       }
 
@@ -188,7 +192,8 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           val handle = parseTagHandle()
           val prefix = parseTagPrefix()
           List(Token(TokenKind.TagDirective(handle, prefix), range))
-        case _ => throw ScannerError("Tag handle in TAG directive should start with '!'")
+        case _ =>
+          throw ScannerError.from(in.range, "Tag handle in TAG directive should start with '!'")
       }
     }
 
@@ -199,7 +204,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some('T') if in.peekN(3) == "TAG" =>
         in.skipN(3)
         parseTagDirective()
-      case _ => throw ScannerError("Unknown directive, expected YAML or TAG")
+      case _ => throw ScannerError.from(in.range, "Unknown directive, expected YAML or TAG")
     }
   }
 
@@ -215,14 +220,15 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
         case Some('>') =>
           sb.append(in.read())
           sb.result()
-        case _ => throw ScannerError("Lacks '>' which closes verbatim tag attribute")
+        case _ => throw ScannerError.from(in.range, "Lacks '>' which closes verbatim tag attribute")
       }
     }
 
     def parseTagSuffix(): String = {
       val sb = new StringBuilder
       while (in.peek().exists(c => !invalidChars(c) && !c.isWhitespace)) sb.append(in.read())
-      if (in.peek().exists(c => invalidChars(c))) throw ScannerError("Invalid character in tag")
+      if (in.peek().exists(c => invalidChars(c)))
+        throw ScannerError.from(in.range, "Invalid character in tag")
       UrlDecoder.decode(sb.result())
     }
 
@@ -237,7 +243,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
           while (in.peek().exists(c => !invalidChars(c) && !c.isWhitespace && c != '!'))
             sb.append(in.read())
           if (in.peek().exists(c => invalidChars(c)))
-            throw ScannerError("Invalid character in tag")
+            throw ScannerError.from(in.range, "Invalid character in tag")
           in.peek() match {
             case Some('!') =>
               sb.insert(0, '!')    // prepend already skipped exclamation mark
@@ -245,7 +251,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
               TagValue.Shorthand(TagHandle.Named(sb.result()), parseTagSuffix())
             case Some(' ') =>
               TagValue.Shorthand(TagHandle.Primary, sb.result())
-            case _ => throw ScannerError("Invalid tag handle")
+            case _ => throw ScannerError.from(in.range, "Invalid tag handle")
           }
       }
 
@@ -260,7 +266,7 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
       case Some(char) =>
         val tagValue = parseShorthandTag(char)
         Tag(tagValue)
-      case None => throw ScannerError("Input stream ended unexpectedly")
+      case None => throw ScannerError.from(in.range, "Input stream ended unexpectedly")
     }
 
     if (ctx.isPlainKeyAllowed) {
@@ -565,12 +571,12 @@ private[yaml] class Scanner(str: String) extends Tokenizer {
     ctx.isPlainKeyAllowed = false
 
     if (
-      !ctx.isInFlowCollection &&
+      ctx.isInBlockCollection &&
       firstSimpleKey.range.end.exists(
         _.line > firstSimpleKey.range.start.line
       )
     )
-      throw ScannerError.from("Not alowed here a mapping value", mappingValueToken)
+      throw ScannerError.from("Mapping value is not allowed", mappingValueToken)
     else
       maybeMappingStart ++ List(Token(MappingKey, in.range)) ++ potentialKeys :+ mappingValueToken
   }

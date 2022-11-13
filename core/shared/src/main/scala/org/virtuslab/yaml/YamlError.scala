@@ -72,4 +72,11 @@ object ScannerError {
         |$obtained but expected got ${got.kind}
         |${got.range.errorMsg}""".stripMargin
   )
+
+  def from(range: Range, msg: String): ScannerError = ScannerError(
+    s"""|Error at line ${range.start.line}, column ${range.start.column}:
+        |${range.errorMsg}
+        |$msg
+        |""".stripMargin
+  )
 }
