@@ -12,15 +12,15 @@ import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
-import org.virtuslab.yaml.internal.load.reader.Scanner
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
+import org.virtuslab.yaml.internal.load.reader.Tokenizer
 
 trait TestRunner {
   def inYaml: String
   def expectedEvents: String
 
   def run(): RunnerResult = {
-    val reader = new Scanner(inYaml)
+    val reader = Tokenizer.make(inYaml)
     val parser = ParserImpl(reader)
     val acc    = new mutable.ArrayDeque[EventKind]()
 
