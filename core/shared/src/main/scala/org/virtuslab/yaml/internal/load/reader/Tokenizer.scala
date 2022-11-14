@@ -253,7 +253,8 @@ private class StringTokenizer(str: String) extends Tokenizer {
       }
       while (condition) sb.append(in.read())
 
-      if (invalidChars.contains(in.peek())) throw ScannerError.from(in.range, "Invalid character in tag")
+      if (invalidChars.contains(in.peek()))
+        throw ScannerError.from(in.range, "Invalid character in tag")
       UrlDecoder.decode(sb.result())
     }
 
@@ -286,7 +287,8 @@ private class StringTokenizer(str: String) extends Tokenizer {
     in.skipCharacter() // skip first '!'
     val peeked = in.peek()
     val tag: Tag = peeked match {
-      case Reader.nullTerminator => throw ScannerError.from(in.range, "Input stream ended unexpectedly")
+      case Reader.nullTerminator =>
+        throw ScannerError.from(in.range, "Input stream ended unexpectedly")
       case '<' =>
         val tag = parseVerbatimTag()
         Tag(TagValue.Verbatim(tag))

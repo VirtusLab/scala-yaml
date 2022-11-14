@@ -8,7 +8,7 @@ import org.virtuslab.yaml.internal.load.TagValue
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 final case class Token(kind: TokenKind, range: Range) {
-  def start: Position = range.start
+  def start: Position       = range.start
   def end: Option[Position] = range.end
 }
 
