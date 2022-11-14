@@ -57,7 +57,7 @@ private[yaml] class StringReader(in: String) extends Reader {
 
   override def peek(n: Int = 0): Char =
     if (offset + n < in.length) in.charAt(offset + n)
-    else '\u0000'
+    else Reader. nullTerminator
 
   private def nextLine() = { column = 0; line += 1 }
   private def skipAndMantainPosition() = {
