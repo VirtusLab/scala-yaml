@@ -14,7 +14,6 @@ import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
-import org.virtuslab.yaml.internal.load.reader.Scanner
 
 /**
  * Composing takes a series of serialization events and produces a representation graph. 
