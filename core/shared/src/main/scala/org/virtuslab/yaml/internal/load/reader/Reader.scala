@@ -7,23 +7,43 @@ import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.Range
 
 trait Reader {
+
+  /** Read current character and advance by 1 position
+    * @return current character or '\u0000' in case there are no chars left
+    */
   def read(): Char
-  def peek(n: Int = 0): Option[Char]
-  def peekNext(): Option[Char]
-  def peekN(n: Int): String
-  def isWhitespace: Boolean
-  def isNextWhitespace: Boolean
-  def isNewline: Boolean
-  def isNextNewline: Boolean
-  def skipCharacter(): Unit
-  def skipN(n: Int): Unit
-  def skipWhitespaces(): Unit
+
+  /** Read current character without advancing
+    * @return current character or '\u0000' in case there are no chars left
+    */
+  def peek(n: Int = 0): Char
 
   def line: Int
   def column: Int
   def offset: Int
   def pos: Position
   def range: Range
+
+  def skipCharacter(): Unit
+  def skipN(n: Int): Unit
+  def skipWhitespaces(): Unit
+
+  final def peekNext(): Char          = peek(1)
+  final def peekN(n: Int): String     = (0 until n).map(peek(_)).mkString("")
+  final def isWhitespace: Boolean     = peek().isWhitespace
+  final def isNextWhitespace: Boolean = peekNext().isWhitespace
+  final def isNewline: Boolean        = isNewlineN(0)
+  final def isNextNewline: Boolean    = isNewlineN(1)
+
+  private def isNewlineN(n: Int): Boolean = {
+    val c = peek(n)
+    c == '\n' || isWindowsNewline(c)
+  }
+  protected def isWindowsNewline(c: Char): Boolean = c == '\r' && peekNext() == '\n'
+}
+
+object Reader {
+  final val nullTerminator: Char = '\u0000'
 }
 
 private[yaml] class StringReader(in: String) extends Reader {
@@ -35,18 +55,9 @@ private[yaml] class StringReader(in: String) extends Reader {
   override def pos   = Position(offset, line, column)
   override def range = Range(pos, lines)
 
-  override def peek(n: Int = 0): Option[Char] =
-    if (offset + n < in.length) Some(in.charAt(offset + n))
-    else None
-
-  override def peekNext(): Option[Char] = peek(1)
-  override def peekN(n: Int): String    = (0 until n).map(peek(_)).flatten.mkString("")
-  override def isWhitespace             = peek().exists(_.isWhitespace)
-  override def isNextWhitespace         = peekNext().exists(_.isWhitespace)
-  override def isNewline                = peek().exists(c => c == '\n' || isWindowsNewline(c))
-  override def isNextNewline            = peekNext().exists(c => c == '\n' || isWindowsNewline(c))
-
-  private def isWindowsNewline(c: Char) = c == '\r' && peekNext().exists(_ == '\n')
+  override def peek(n: Int = 0): Char =
+    if (offset + n < in.length) in.charAt(offset + n)
+    else Reader.nullTerminator
 
   private def nextLine() = { column = 0; line += 1 }
   private def skipAndMantainPosition() = {

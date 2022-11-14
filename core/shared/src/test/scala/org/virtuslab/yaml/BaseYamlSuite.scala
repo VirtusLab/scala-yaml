@@ -7,7 +7,7 @@ import scala.util.Try
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
-import org.virtuslab.yaml.internal.load.reader.Scanner
+import org.virtuslab.yaml.internal.load.reader.Tokenizer
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 
 trait BaseYamlSuite extends munit.FunSuite {
@@ -23,16 +23,16 @@ trait BaseYamlSuite extends munit.FunSuite {
 
   implicit class StringOps(val yaml: String) {
     def events: Either[YamlError, List[EventKind]] = {
-      val reader = new Scanner(yaml)
-      ParserImpl(reader).getEvents().map(_.map(_.kind))
+      val tokenizer = Tokenizer.make(yaml)
+      ParserImpl(tokenizer).getEvents().map(_.map(_.kind))
     }
 
     def tokens: Either[YamlError, List[TokenKind]] = {
-      val reader = new Scanner(yaml)
+      val tokenizer = Tokenizer.make(yaml)
       def loop(tokens: List[TokenKind]): Either[YamlError, List[TokenKind]] =
-        reader.peekToken().flatMap { t =>
+        tokenizer.peekToken().flatMap { t =>
           if (t.kind == TokenKind.StreamEnd) Right(tokens.toList)
-          else loop(tokens :+ reader.popToken().kind)
+          else loop(tokens :+ tokenizer.popToken().kind)
         }
 
       loop(Nil)

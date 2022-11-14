@@ -5,7 +5,7 @@ import org.virtuslab.yaml.internal.dump.serialize.SerializerImpl
 import org.virtuslab.yaml.internal.load.compose.ComposerImpl
 import org.virtuslab.yaml.internal.load.parse.Parser
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
-import org.virtuslab.yaml.internal.load.reader.Scanner
+import org.virtuslab.yaml.internal.load.reader.Tokenizer
 
 package object yaml {
 
@@ -25,7 +25,7 @@ package object yaml {
     ): Either[YamlError, T] =
       for {
         events <- {
-          val parser = ParserImpl(new Scanner(str))
+          val parser = ParserImpl(Tokenizer.make(str))
           parser.getEvents()
         }
         node <- ComposerImpl.fromEvents(events)
@@ -35,7 +35,7 @@ package object yaml {
     def asNode: Either[YamlError, Node] =
       for {
         events <- {
-          val parser = ParserImpl(new Scanner(str))
+          val parser = ParserImpl(Tokenizer.make(str))
           parser.getEvents()
         }
         node <- ComposerImpl.fromEvents(events)
