@@ -3,7 +3,7 @@ import BuildHelper._
 def scala3Version        = "3.2.1"
 def scala2Version        = "2.13.10"
 def projectName          = "scala-yaml"
-def localSnapshotVersion = "0.0.6-SNAPSHOT"
+def localSnapshotVersion = "0.0.7"
 def isCI                 = System.getenv("CI") != null
 
 enablePlugins(NoPublishPlugin)
@@ -48,6 +48,16 @@ lazy val core = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     libraryDependencies ++= List(
       Deps.munit  % Test,
       Deps.pprint % Test
+    ),
+    publishMavenStyle := true,
+    publishTo := Some (
+      "GitHub Package Registry " at "https://maven.pkg.github.com/UnconventionalMindset/scala-yaml"
+    ),
+    credentials += Credentials(
+      "GitHub Package Registry", // realm
+      "maven.pkg.github.com", // host
+      "UnconventionalMindset", // user
+      sys.env.getOrElse("GITHUB_TOKEN", "abc123") // password
     ),
     // add pprint conditionally only on local machines
     libraryDependencies ++= {
