@@ -3,7 +3,7 @@ package parser
 
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle.DoubleQuoted
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle.{DoubleQuoted, SingleQuoted}
 
 class SequenceSuite extends BaseYamlSuite {
 
@@ -336,6 +336,7 @@ class SequenceSuite extends BaseYamlSuite {
       """
         | -  "123"
         | -  "bool"
+        | -  'bool'
         | -  "0xFFFF"
     """.stripMargin
     val expectedEvents = List(
@@ -344,6 +345,7 @@ class SequenceSuite extends BaseYamlSuite {
       SequenceStart(),
       Scalar("123", DoubleQuoted),
       Scalar("bool", DoubleQuoted),
+      Scalar("bool", SingleQuoted),
       Scalar("0xFFFF", DoubleQuoted),
       SequenceEnd,
       DocumentEnd(),
@@ -360,7 +362,13 @@ class SequenceSuite extends BaseYamlSuite {
       """ "true" """,
       """ "null" """,
       """ "123.456" """,
-      """ "-.inf" """ // TODO #222: Cannot parse -.inf as Double.
+      """ "-.inf" """, // TODO #222: Cannot parse -.inf as Double.
+      """ '123' """,
+      """ '0xFFFF' """, // TODO #222: Cannot parse 0xFFFF as Int.
+      """ 'true' """,
+      """ 'null' """,
+      """ '123.456' """,
+      """ '-.inf' """
     ).map { yaml =>
       val obj = SO(yaml).as[Any].toOption.get
       obj.isInstanceOf[java.lang.String]
