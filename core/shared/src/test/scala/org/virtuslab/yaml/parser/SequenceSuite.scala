@@ -356,11 +356,11 @@ class SequenceSuite extends BaseYamlSuite {
     import org.virtuslab.yaml.{StringOps ⇒ SO, _}
     val isStringType = Seq(
       """ "123" """,
-//      """ "0xFFFF" """, // TODO: Cannot parse 0xFFFF as Int?
+      """ "0xFFFF" """, // TODO: Cannot parse 0xFFFF as Int?
       """ "true" """,
       """ "null" """,
-      """ "123.456" """
-//      """ "-.inf" """, // TODO: Cannot parse -.inf as Double?
+      """ "123.456" """,
+      """ "-.inf" """, // TODO: Cannot parse -.inf as Double?
     ).map { yaml =>
       println(yaml, SO(yaml).as[Any])
       val obj = SO(yaml).as[Any].toOption.get
