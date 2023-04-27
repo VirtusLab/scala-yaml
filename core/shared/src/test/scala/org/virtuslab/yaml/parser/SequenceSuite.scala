@@ -3,7 +3,6 @@ package parser
 
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle.{DoubleQuoted, SingleQuoted}
 
 class SequenceSuite extends BaseYamlSuite {
 
