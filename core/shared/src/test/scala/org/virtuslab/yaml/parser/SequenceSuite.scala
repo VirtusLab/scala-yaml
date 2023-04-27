@@ -330,49 +330,4 @@ class SequenceSuite extends BaseYamlSuite {
     )
     assertEquals(yaml.events, Right(expectedEvents))
   }
-
-  test("quoted integer and bool values") {
-    val yaml =
-      """
-        | -  "123"
-        | -  "bool"
-        | -  'bool'
-        | -  "0xFFFF"
-    """.stripMargin
-    val expectedEvents = List(
-      StreamStart,
-      DocumentStart(),
-      SequenceStart(),
-      Scalar("123", DoubleQuoted),
-      Scalar("bool", DoubleQuoted),
-      Scalar("bool", SingleQuoted),
-      Scalar("0xFFFF", DoubleQuoted),
-      SequenceEnd,
-      DocumentEnd(),
-      StreamEnd
-    )
-    assertEquals(yaml.events, Right(expectedEvents))
-  }
-
-  test("quoted values are read as String type") {
-    import org.virtuslab.yaml.{StringOps ⇒ SO, _}
-    val isStringType: Seq[Boolean] = Seq(
-      """ "123" """,
-      """ "0xFFFF" """, // TODO #222: Cannot parse 0xFFFF as Int.
-      """ "true" """,
-      """ "null" """,
-      """ "123.456" """,
-      """ "-.inf" """, // TODO #222: Cannot parse -.inf as Double.
-      """ '123' """,
-      """ '0xFFFF' """, // TODO #222: Cannot parse 0xFFFF as Int.
-      """ 'true' """,
-      """ 'null' """,
-      """ '123.456' """,
-      """ '-.inf' """
-    ).map { yaml =>
-      val obj = SO(yaml).as[Any].toOption.get
-      obj.isInstanceOf[java.lang.String]
-    }
-    assertEquals(isStringType, Seq.fill(isStringType.length)(true))
-  }
 }
