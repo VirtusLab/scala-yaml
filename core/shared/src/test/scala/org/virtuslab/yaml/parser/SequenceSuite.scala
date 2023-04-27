@@ -3,6 +3,7 @@ package parser
 
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle.DoubleQuoted
 
 class SequenceSuite extends BaseYamlSuite {
 
@@ -328,5 +329,34 @@ class SequenceSuite extends BaseYamlSuite {
       StreamEnd
     )
     assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("quoted integer and bool values") {
+    val yaml =
+      """
+        | -  "123"
+        | -  "bool"
+    """.stripMargin
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("123", DoubleQuoted),
+      Scalar("bool", DoubleQuoted),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("quoted integer and bool values are read as String type") {
+    import org.virtuslab.yaml.{StringOps ⇒ SO, _}
+    val yaml1 = """ "123" """
+    val obj1 = SO(yaml1).as[Any].toOption.get
+    assert(obj1.isInstanceOf[java.lang.String])
+    val yaml2 = """ "true" """
+    val obj2 = SO(yaml2).as[Any].toOption.get
+    assert(obj2.isInstanceOf[java.lang.String])
   }
 }

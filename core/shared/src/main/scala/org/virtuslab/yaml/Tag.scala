@@ -1,5 +1,8 @@
 package org.virtuslab.yaml
 
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle.{DoubleQuoted, SingleQuoted}
+
 import scala.reflect.ClassTag
 
 sealed trait Tag {
@@ -35,9 +38,11 @@ object Tag {
   private val minusInfinity  = "-(\\.inf|\\.Inf|\\.INF)".r
   private val plusInfinity   = "\\+?(\\.inf|\\.Inf|\\.INF)".r
 
-  def resolveTag(value: String): Tag = {
+  def resolveTag(value: String, style: Option[ScalarStyle] = None): Tag = {
+    val assumeString = style.exists(s => s == DoubleQuoted || s == SingleQuoted)
     value match {
       case null               => nullTag
+      case _ if assumeString  => str
       case nullPattern(_*)    => nullTag
       case booleanPattern(_*) => boolean
       case int10Pattern(_*)   => int
