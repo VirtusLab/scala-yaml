@@ -359,7 +359,7 @@ class SequenceSuite extends BaseYamlSuite {
 //      """ "0xFFFF" """, // TODO: Cannot parse 0xFFFF as Int?
       """ "true" """,
       """ "null" """,
-      """ "123.456" """,
+      """ "123.456" """
 //      """ "-.inf" """, // TODO: Cannot parse -.inf as Double?
     ).map { yaml =>
       println(yaml, SO(yaml).as[Any])
