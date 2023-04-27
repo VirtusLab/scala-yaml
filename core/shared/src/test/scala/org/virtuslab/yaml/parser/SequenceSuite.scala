@@ -354,7 +354,7 @@ class SequenceSuite extends BaseYamlSuite {
 
   test("quoted values are read as String type") {
     import org.virtuslab.yaml.{StringOps ⇒ SO, _}
-    val isStringType = Seq(
+    val isStringType: Seq[Boolean] = Seq(
       """ "123" """,
       """ "0xFFFF" """, // TODO #222: Cannot parse 0xFFFF as Int.
       """ "true" """,
