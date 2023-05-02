@@ -101,7 +101,7 @@ pages = [{"l":"index.html#","e":false,"i":"","n":"Scala-yaml","t":"Scala-yaml","
 {"l":"org/virtuslab/yaml/Tag$.html#int-0","e":false,"i":"","n":"int","t":"int: Tag","d":"org.virtuslab.yaml.Tag","k":"val"},
 {"l":"org/virtuslab/yaml/Tag$.html#map-0","e":false,"i":"","n":"map","t":"map: Tag","d":"org.virtuslab.yaml.Tag","k":"val"},
 {"l":"org/virtuslab/yaml/Tag$.html#nullTag-0","e":false,"i":"","n":"nullTag","t":"nullTag: Tag","d":"org.virtuslab.yaml.Tag","k":"val"},
-{"l":"org/virtuslab/yaml/Tag$.html#resolveTag-fffff7f6","e":false,"i":"","n":"resolveTag","t":"resolveTag(value: String): Tag","d":"org.virtuslab.yaml.Tag","k":"def"},
+{"l":"org/virtuslab/yaml/Tag$.html#resolveTag-2f3","e":false,"i":"","n":"resolveTag","t":"resolveTag(value: String, style: Option[ScalarStyle]): Tag","d":"org.virtuslab.yaml.Tag","k":"def"},
 {"l":"org/virtuslab/yaml/Tag$.html#seq-0","e":false,"i":"","n":"seq","t":"seq: Tag","d":"org.virtuslab.yaml.Tag","k":"val"},
 {"l":"org/virtuslab/yaml/Tag$.html#str-0","e":false,"i":"","n":"str","t":"str: Tag","d":"org.virtuslab.yaml.Tag","k":"val"},
 {"l":"org/virtuslab/yaml/YamlCodec.html#","e":false,"i":"","n":"YamlCodec","t":"YamlCodec[T] extends YamlDecoder[T] with YamlEncoder[T]","d":"org.virtuslab.yaml","k":"trait"},
