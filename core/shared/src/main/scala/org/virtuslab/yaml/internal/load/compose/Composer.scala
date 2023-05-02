@@ -47,7 +47,7 @@ object ComposerImpl extends Composer {
         case EventKind.MappingStart(NodeEventMetadata(anchor, _)) =>
           composeMappingNode(tail, anchor, aliases)
         case s: EventKind.Scalar =>
-          val tag: Tag = s.metadata.tag.getOrElse(Tag.resolveTag(s.value))
+          val tag: Tag = s.metadata.tag.getOrElse(Tag.resolveTag(s.value, Some(s.style)))
           val node     = Node.ScalarNode(s.value, tag, head.pos)
           s.metadata.anchor.foreach(anchor => aliases.put(anchor, node))
           Right(Result(node, tail))

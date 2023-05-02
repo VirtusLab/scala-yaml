@@ -458,4 +458,54 @@ class ScalarSpec extends BaseYamlSuite {
     )
     assertEquals(yaml.events, Right(expectedEvents))
   }
+  test("quoted integer and bool values") {
+    val yaml =
+      """
+        | -  "123"
+        | -  "bool"
+        | -  'bool'
+        | -  "0xFFFF"
+        | -  123
+        | -  bool
+        | -  0xFFFF
+        |    """.stripMargin
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      SequenceStart(),
+      Scalar("123", ScalarStyle.DoubleQuoted),
+      Scalar("bool", ScalarStyle.DoubleQuoted),
+      Scalar("bool", ScalarStyle.SingleQuoted),
+      Scalar("0xFFFF", ScalarStyle.DoubleQuoted),
+      Scalar("123", ScalarStyle.Plain),
+      Scalar("bool", ScalarStyle.Plain),
+      Scalar("0xFFFF", ScalarStyle.Plain),
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("quoted values are read as String type") {
+    import org.virtuslab.yaml.{StringOps ⇒ SO, _}
+    val isStringType: Seq[Boolean] = Seq(
+      """ "123" """,
+      """ "0xFFFF" """,
+      """ "true" """,
+      """ "null" """,
+      """ "123.456" """,
+      """ "-.inf" """,
+      """ '123' """,
+      """ '0xFFFF' """,
+      """ 'true' """,
+      """ 'null' """,
+      """ '123.456' """,
+      """ '-.inf' """
+    ).map { yaml =>
+      val obj = SO(yaml).as[Any].toOption.get
+      obj.isInstanceOf[java.lang.String]
+    }
+    assertEquals(isStringType, Seq.fill(isStringType.length)(true))
+  }
 }
