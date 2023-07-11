@@ -48,8 +48,8 @@ private[yaml] trait DecoderMacros {
   }
 
   protected inline def deriveProduct[T](p: Mirror.ProductOf[T]) =
-    val instances  = summonAll[p.MirroredElemTypes]
-    val elemLabels = getElemLabels[p.MirroredElemLabels]
+    val instances     = summonAll[p.MirroredElemTypes]
+    val elemLabels    = getElemLabels[p.MirroredElemLabels]
     val optionalTypes = getOptionalTypes[p.MirroredElemTypes]
     new YamlDecoder[T] {
       override def construct(node: Node)(using
@@ -58,8 +58,14 @@ private[yaml] trait DecoderMacros {
         node match
           case Node.MappingNode(mappings, _) =>
             for {
-              valuesMap         <- extractKeyValues(mappings)
-              constructedValues <- constructValues(elemLabels, instances, optionalTypes, valuesMap, p)
+              valuesMap <- extractKeyValues(mappings)
+              constructedValues <- constructValues(
+                elemLabels,
+                instances,
+                optionalTypes,
+                valuesMap,
+                p
+              )
             } yield (constructedValues)
           case _ =>
             Left(ConstructError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
@@ -92,8 +98,8 @@ private[yaml] trait DecoderMacros {
     case _: (head *: tail) => constValue[head].toString :: getElemLabels[tail]
 
   protected inline def getOptionalTypes[T <: Tuple]: List[Boolean] = inline erasedValue[T] match
-    case _: EmptyTuple     => Nil
-    case _: (Option[_] *: tail) => true  :: getOptionalTypes[tail]
-    case _: (_         *: tail) => false :: getOptionalTypes[tail]
+    case _: EmptyTuple          => Nil
+    case _: (Option[_] *: tail) => true :: getOptionalTypes[tail]
+    case _: (_ *: tail)         => false :: getOptionalTypes[tail]
 
 }
