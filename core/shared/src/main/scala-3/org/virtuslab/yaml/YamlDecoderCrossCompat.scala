@@ -31,13 +31,16 @@ private[yaml] trait DecoderMacros {
   protected def constructValues[T](
       elemLabels: List[String],
       instances: List[YamlDecoder[_]],
+      optionalTypes: List[Boolean],
       valuesMap: Map[String, Node],
       p: Mirror.ProductOf[T]
   ) = {
-    val values = elemLabels.zip(instances).map { case (label, c) =>
+    val values = elemLabels.zip(instances).zip(optionalTypes).map { case ((label, c), isOptional) =>
       valuesMap.get(label) match
         case Some(value) => c.construct(value)
-        case None        => Left(ConstructError(s"Key $label doesn't exist in parsed document"))
+        case None =>
+          if (isOptional) Right(None)
+          else Left(ConstructError(s"Key $label doesn't exist in parsed document"))
     }
     val (left, right) = values.partitionMap(identity)
     if left.nonEmpty then Left(left.head)
@@ -45,8 +48,9 @@ private[yaml] trait DecoderMacros {
   }
 
   protected inline def deriveProduct[T](p: Mirror.ProductOf[T]) =
-    val instances  = summonAll[p.MirroredElemTypes]
-    val elemLabels = getElemLabels[p.MirroredElemLabels]
+    val instances     = summonAll[p.MirroredElemTypes]
+    val elemLabels    = getElemLabels[p.MirroredElemLabels]
+    val optionalTypes = getOptionalTypes[p.MirroredElemTypes]
     new YamlDecoder[T] {
       override def construct(node: Node)(using
           constructor: LoadSettings = LoadSettings.empty
@@ -54,8 +58,14 @@ private[yaml] trait DecoderMacros {
         node match
           case Node.MappingNode(mappings, _) =>
             for {
-              valuesMap         <- extractKeyValues(mappings)
-              constructedValues <- constructValues(elemLabels, instances, valuesMap, p)
+              valuesMap <- extractKeyValues(mappings)
+              constructedValues <- constructValues(
+                elemLabels,
+                instances,
+                optionalTypes,
+                valuesMap,
+                p
+              )
             } yield (constructedValues)
           case _ =>
             Left(ConstructError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
@@ -86,5 +96,10 @@ private[yaml] trait DecoderMacros {
   protected inline def getElemLabels[T <: Tuple]: List[String] = inline erasedValue[T] match
     case _: EmptyTuple     => Nil
     case _: (head *: tail) => constValue[head].toString :: getElemLabels[tail]
+
+  protected inline def getOptionalTypes[T <: Tuple]: List[Boolean] = inline erasedValue[T] match
+    case _: EmptyTuple          => Nil
+    case _: (Option[_] *: tail) => true :: getOptionalTypes[tail]
+    case _: (_ *: tail)         => false :: getOptionalTypes[tail]
 
 }

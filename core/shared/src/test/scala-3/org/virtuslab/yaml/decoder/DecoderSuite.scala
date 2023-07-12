@@ -42,8 +42,12 @@ class DecoderSuite extends munit.FunSuite:
 
   test("option") {
     // todo Option YamlEncoder
-    case class OptionTypes(double: Option[Double], float: Option[Float], int: Option[Int])
-        derives YamlDecoder
+    case class OptionTypes(
+        double: Option[Double],
+        float: Option[Float],
+        int: Option[Int],
+        short: Option[Short]
+    ) derives YamlDecoder
 
     val numberYaml =
       s"""double: ${Double.MaxValue}
@@ -54,7 +58,8 @@ class DecoderSuite extends munit.FunSuite:
     val expectedNumber = OptionTypes(
       double = Some(Double.MaxValue),
       float = None,
-      int = None
+      int = None,
+      short = None
     )
 
     assertEquals(numberYaml.as[OptionTypes], Right(expectedNumber))
