@@ -10,7 +10,7 @@ The goal of this project is to create idiomatic library which:
 * have explicit error handling and helpful error messages
 * cross compiles to [Scala.js](http://www.scala-js.org/) and [Scala Native](https://github.com/scala-native/scala-native) (waiting for Scala 3 support in SN)
 
-Please see the [guide](https://virtuslab.github.io/scala-yaml/) for more information
+Please see the [guide](https://virtuslab.github.io/scala-yaml/docs/) for more information
 
 # Help us create our roadmap!
 Take part in our [discussions](https://github.com/VirtusLab/scala-yaml/discussions), post your ideas, vote for feature requests and have a real impact on how our next milestone will look like!
