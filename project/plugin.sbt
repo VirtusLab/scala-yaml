@@ -12,4 +12,4 @@ addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.13.1")
 
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.12")
 
-addSbtPlugin("org.typelevel" % "sbt-typelevel-no-publish" % "0.4.20")
+addSbtPlugin("org.typelevel" % "sbt-typelevel-no-publish" % "0.6.0")
