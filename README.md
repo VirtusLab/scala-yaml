@@ -17,6 +17,19 @@ Take part in our [discussions](https://github.com/VirtusLab/scala-yaml/discussio
 
 # Usage
 
+Add as a dependency:
+
+- via sbt
+```scala
+libraryDependencies += "org.virtuslab" %% "scala-yaml" % "<version>"
+```
+- via scala-cli
+```scala
+//> using dep org.virtuslab::scala-yaml:<version>
+```
+
+and use it in your code!
+
 ```scala sc:compile
 import org.virtuslab.yaml.*
 
