@@ -26,9 +26,11 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
         if (pf.isDefinedAt(node)) pf(node)
         else
           Left(
-            ConstructError(s"""|Could't construct ${classTag.runtimeClass.getName} from ${node.tag}
-                               |${node.pos.map(_.errorMsg).getOrElse("")}
-                               |""".stripMargin)
+            ConstructError.from(
+              s"""|Could't construct ${classTag.runtimeClass.getName} from ${node.tag}
+                  |${node.pos.map(_.errorMsg).getOrElse("")}
+                  |""".stripMargin
+            )
           )
     }
 
@@ -96,7 +98,7 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
             case Some(decoder) => decoder.construct(node)
             case None =>
               Left(
-                ConstructError(
+                ConstructError.from(
                   s"""|Could't construct runtime instance of ${node.tag}
                       |${node.pos.map(_.errorMsg).getOrElse("")}
                       |If you're using custom datatype consider using yaml.as[MyType] instead of Any

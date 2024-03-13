@@ -456,7 +456,7 @@ final class ParserImpl private (in: Tokenizer) extends Parser {
                     else CustomTag(tagValue)
                   parseNodeAttributes(in.peekToken(), metadata.withTag(tag))
                 case None =>
-                  Left(ParseError(s"There is no registered tag directive for handle $handleKey"))
+                  Left(ParseError.NoRegisteredTagDirective(handleKey, token))
               }
           }
         case _ => Right(metadata, token)
