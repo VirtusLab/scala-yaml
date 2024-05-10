@@ -18,6 +18,11 @@ object YamlEncoder extends YamlEncoderCrossCompanionCompat {
   implicit def forBoolean: YamlEncoder[Boolean] = v => Node.ScalarNode(v.toString)
   implicit def forString: YamlEncoder[String]   = v => Node.ScalarNode(v)
 
+  given [T](using encoder: YamlEncoder[T]): YamlEncoder[Option[T]] = {
+    case Some(t) => encoder.asNode(t)
+    case None => Node.ScalarNode("", Tag.nullTag)
+  }
+
   implicit def forSet[T](implicit encoder: YamlEncoder[T]): YamlEncoder[Set[T]] = (nodes) =>
     Node.SequenceNode(nodes.map(encoder.asNode(_)).toSeq, Tag.seq)
 
