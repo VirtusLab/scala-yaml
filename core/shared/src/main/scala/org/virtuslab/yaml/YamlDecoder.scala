@@ -77,14 +77,18 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
               val valueNorm = value.replaceAll("_", "")
               Try(java.lang.Integer.decode(valueNorm))
                 .orElse(Try(java.lang.Long.decode(valueNorm)))
+                .orElse(Try(BigInt(valueNorm)))
                 .toEither
                 .left
                 .map(t => ConstructError.from(t, "int", node))
             case Tag.float =>
               val valueNorm = value.replaceAll("_", "")
-              valueNorm.toFloatOption
-                .orElse(valueNorm.toDoubleOption)
-                .toRight(cannotParse(value, "float", node))
+              Try(java.lang.Float.parseFloat(valueNorm))
+                .orElse(Try(java.lang.Double.parseDouble(valueNorm)))
+                .orElse(Try(BigDecimal(valueNorm)))
+                .toEither
+                .left
+                .map(t => ConstructError.from(t, "float", node))
             case Tag.str => Right(value)
           }
         case MappingNode(mappings, Tag.map) =>
