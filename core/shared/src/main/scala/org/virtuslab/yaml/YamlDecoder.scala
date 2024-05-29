@@ -112,16 +112,18 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
             case Tag.boolean =>
               forBoolean.construct(node)
             case Tag.int =>
-              forByte.widen
-                .orElse(forShort.widen)
-                .orElse(forInt.widen)
-                .orElse(forLong.widen)
-                .orElse(forBigInt.widen)
+              forByte
+                .widen[Any]
+                .orElse(forShort.widen[Any])
+                .orElse(forInt.widen[Any])
+                .orElse(forLong.widen[Any])
+                .orElse(forBigInt.widen[Any])
                 .construct(node)
             case Tag.float =>
-              forFloat.widen
-                .orElse(forDouble.widen)
-                .orElse(forBigDecimal.widen)
+              forFloat
+                .widen[Any]
+                .orElse(forDouble.widen[Any])
+                .orElse(forBigDecimal.widen[Any])
                 .construct(node)
             case Tag.str =>
               Right(value)
