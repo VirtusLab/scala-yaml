@@ -9,11 +9,9 @@ import org.virtuslab.yaml.internal.load.reader.token.TokenKind
 /**
  * An ADT representing a decoding failure.
  */
-sealed trait YamlError {
-  def msg: String
-}
+sealed abstract class YamlError(val msg: String) extends Exception(msg)
 
-final case class ParseError(msg: String) extends YamlError
+final case class ParseError(override val msg: String) extends YamlError(msg)
 object ParseError {
   def from(expected: String, got: Token): ParseError = ParseError(
     s"""|Expected 
@@ -23,11 +21,11 @@ object ParseError {
   def from(expected: TokenKind, got: Token): ParseError = ParseError.from(expected.toString, got)
 }
 
-final case class ComposerError(msg: String) extends YamlError
+final case class ComposerError(override val msg: String) extends YamlError(msg)
 
-final case class ModifyError(msg: String) extends YamlError
+final case class ModifyError(override val msg: String) extends YamlError(msg)
 
-final case class ConstructError(msg: String) extends YamlError
+final case class ConstructError(override val msg: String) extends YamlError(msg)
 object ConstructError {
   private def from(
       errorMsg: String,
@@ -65,7 +63,7 @@ object ConstructError {
   def from(t: Throwable): ConstructError = from(t.getMessage, None, None)
 }
 
-final case class ScannerError(msg: String) extends Throwable with YamlError with NoStackTrace
+final case class ScannerError(override val msg: String) extends YamlError(msg)
 object ScannerError {
   def from(obtained: String, got: Token): ScannerError = ScannerError(
     s"""|Obtained 
