@@ -24,6 +24,8 @@ trait YamlDecoder[T] { self =>
       }
   }
 
+  final def widen[T1 >: T]: YamlDecoder[T1] = self.asInstanceOf[YamlDecoder[T1]]
+
   final def map[T1](f: T => T1): YamlDecoder[T1] = new YamlDecoder[T1] {
     override def construct(node: Node)(implicit
         settings: LoadSettings
@@ -110,18 +112,16 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
             case Tag.boolean =>
               forBoolean.construct(node)
             case Tag.int =>
-              forByte
-                .map(identity[Any])
-                .orElse(forShort.map(identity[Any]))
-                .orElse(forInt.map(identity[Any]))
-                .orElse(forLong.map(identity[Any]))
-                .orElse(forBigInt.map(identity[Any]))
+              forByte.widen
+                .orElse(forShort.widen)
+                .orElse(forInt.widen)
+                .orElse(forLong.widen)
+                .orElse(forBigInt.widen)
                 .construct(node)
             case Tag.float =>
-              forFloat
-                .map(identity[Any])
-                .orElse(forDouble.map(identity[Any]))
-                .orElse(forBigDecimal.map(identity[Any]))
+              forFloat.widen
+                .orElse(forDouble.widen)
+                .orElse(forBigDecimal.widen)
                 .construct(node)
             case Tag.str =>
               Right(value)
