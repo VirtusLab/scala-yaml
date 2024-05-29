@@ -14,12 +14,21 @@ trait YamlDecoder[T] { self =>
       settings: LoadSettings = LoadSettings.empty
   ): Either[ConstructError, T]
 
-  final def orElse(that: => YamlDecoder[T]): YamlDecoder[T] = new YamlDecoder[T] {
-    override def construct(node: Node)(implicit settings: LoadSettings): Either[ConstructError, T] =
+  final def orElse[T1 >: T](that: => YamlDecoder[T1]): YamlDecoder[T1] = new YamlDecoder[T1] {
+    override def construct(
+        node: Node
+    )(implicit settings: LoadSettings): Either[ConstructError, T1] =
       self.construct(node) match {
-        case Right(result) => result
-        case Left(_)       => that.construct(node)
+        case result @ Right(_) => result
+        case Left(_)           => that.construct(node)
       }
+  }
+
+  final def map[T1](f: T => T1): YamlDecoder[T1] = new YamlDecoder[T1] {
+    override def construct(node: Node)(implicit
+        settings: LoadSettings
+    ): Either[ConstructError, T1] =
+      self.construct(node).map(f)
   }
 }
 
@@ -47,12 +56,12 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
   )
 
   implicit def forInt: YamlDecoder[Int] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Integer.decode(value.replaceAll("_", ""))).toEither.left
+    Try(java.lang.Integer.decode(value.replaceAll("_", "")).toInt).toEither.left
       .map(ConstructError.from(_, "Int", s))
   }
 
   implicit def forLong: YamlDecoder[Long] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Long.decode(value.replaceAll("_", ""))).toEither.left
+    Try(java.lang.Long.decode(value.replaceAll("_", "")).toLong).toEither.left
       .map(ConstructError.from(_, "Long", s))
   }
 
@@ -67,12 +76,12 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
   }
 
   implicit def forShort: YamlDecoder[Short] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Short.decode(value.replaceAll("_", ""))).toEither.left
+    Try(java.lang.Short.decode(value.replaceAll("_", "")).toShort).toEither.left
       .map(ConstructError.from(_, "Short", s))
   }
 
   implicit def forByte: YamlDecoder[Byte] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Byte.decode(value.replaceAll("_", ""))).toEither.left
+    Try(java.lang.Byte.decode(value.replaceAll("_", "")).toByte).toEither.left
       .map(ConstructError.from(_, "Byte", s))
   }
 
@@ -102,15 +111,17 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
               forBoolean.construct(node)
             case Tag.int =>
               forByte
-                .orElse(forShort)
-                .orElse(forInt)
-                .orElse(forLong)
-                .orElse(forBigInt)
+                .map(identity[Any])
+                .orElse(forShort.map(identity[Any]))
+                .orElse(forInt.map(identity[Any]))
+                .orElse(forLong.map(identity[Any]))
+                .orElse(forBigInt.map(identity[Any]))
                 .construct(node)
             case Tag.float =>
               forFloat
-                .orElse(forDouble)
-                .orElse(forBigDecimal)
+                .map(identity[Any])
+                .orElse(forDouble.map(identity[Any]))
+                .orElse(forBigDecimal.map(identity[Any]))
                 .construct(node)
             case Tag.str =>
               Right(value)
