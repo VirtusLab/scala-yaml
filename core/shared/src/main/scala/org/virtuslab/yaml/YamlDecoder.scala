@@ -9,10 +9,17 @@ import org.virtuslab.yaml.Node._
 /**
  * A type class that provides a conversion from a [[Node]] into given type [[T]]
  */
-trait YamlDecoder[T] {
+trait YamlDecoder[T] { self =>
   def construct(node: Node)(implicit
       settings: LoadSettings = LoadSettings.empty
   ): Either[ConstructError, T]
+
+  def orElse(that: => YamlDecoder[T]): YamlDecoder[T] = new YamlDecoder[T] {
+    override def construct(node: Node)(implicit settings: LoadSettings): Either[ConstructError, T] =
+      self.construct(node) match
+        case Right(result) => result
+        case _: Left[?, ?] => that.construct(node)
+  }
 }
 
 object YamlDecoder extends YamlDecoderCompanionCrossCompat {
@@ -39,57 +46,73 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
   )
 
   implicit def forInt: YamlDecoder[Int] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    value.toIntOption.toRight(cannotParse(value, "Int", s))
+    Try(java.lang.Integer.decode(value.replaceAll("_", ""))).toEither.left
+      .map(ConstructError.from(_, "Int", s))
   }
 
   implicit def forLong: YamlDecoder[Long] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    value.toLongOption.toRight(cannotParse(value, "Long", s))
+    Try(java.lang.Long.decode(value.replaceAll("_", ""))).toEither.left
+      .map(ConstructError.from(_, "Long", s))
   }
 
   implicit def forDouble: YamlDecoder[Double] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    value.toDoubleOption.toRight(cannotParse(value, "Double", s))
+    Try(java.lang.Double.parseDouble(value.replaceAll("_", ""))).toEither.left
+      .map(ConstructError.from(_, "Double", s))
   }
 
   implicit def forFloat: YamlDecoder[Float] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    value.toFloatOption.toRight(cannotParse(value, "Float", s))
+    Try(java.lang.Float.parseFloat(value.replaceAll("_", ""))).toEither.left
+      .map(ConstructError.from(_, "Float", s))
   }
 
   implicit def forShort: YamlDecoder[Short] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    value.toShortOption.toRight(cannotParse(value, "Short", s))
+    Try(java.lang.Short.decode(value.replaceAll("_", ""))).toEither.left
+      .map(ConstructError.from(_, "Short", s))
   }
 
   implicit def forByte: YamlDecoder[Byte] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    value.toByteOption.toRight(cannotParse(value, "Byte", s))
+    Try(java.lang.Byte.decode(value.replaceAll("_", ""))).toEither.left
+      .map(ConstructError.from(_, "Byte", s))
   }
 
   implicit def forBoolean: YamlDecoder[Boolean] = YamlDecoder { case s @ ScalarNode(value, _) =>
     value.toBooleanOption.toRight(cannotParse(value, "Boolean", s))
   }
 
+  implicit def forBigInt: YamlDecoder[BigInt] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    Try(BigInt(value.replaceAll("_", ""))).toEither.left
+      .map(ConstructError.from(_, "BigInt", s))
+  }
+
+  implicit def forBigDecimal: YamlDecoder[BigDecimal] = YamlDecoder {
+    case s @ ScalarNode(value, _) =>
+      Try(BigDecimal(value.replaceAll("_", ""))).toEither.left
+        .map(ConstructError.from(_, "BigDecimal", s))
+  }
+
   implicit def forAny: YamlDecoder[Any] = new YamlDecoder[Any] {
     def construct(node: Node)(implicit settings: LoadSettings = LoadSettings.empty) = {
       node match {
-        case ScalarNode(value, tag: CoreSchemaTag) if Tag.corePrimitives.contains(tag) =>
+        case node @ ScalarNode(value, tag: CoreSchemaTag) if Tag.corePrimitives.contains(tag) =>
           tag match {
-            case Tag.nullTag => Right(None)
-            case Tag.boolean => value.toBooleanOption.toRight(cannotParse(value, "Boolean", node))
+            case Tag.nullTag =>
+              Right(None)
+            case Tag.boolean =>
+              forBoolean.construct(node)
             case Tag.int =>
-              val valueNorm = value.replaceAll("_", "")
-              Try(java.lang.Integer.decode(valueNorm))
-                .orElse(Try(java.lang.Long.decode(valueNorm)))
-                .orElse(Try(BigInt(valueNorm)))
-                .toEither
-                .left
-                .map(t => ConstructError.from(t, "int", node))
+              forByte
+                .orElse(forShort)
+                .orElse(forInt)
+                .orElse(forLong)
+                .orElse(forBigInt)
+                .construct(node)
             case Tag.float =>
-              val valueNorm = value.replaceAll("_", "")
-              Try(java.lang.Float.parseFloat(valueNorm))
-                .orElse(Try(java.lang.Double.parseDouble(valueNorm)))
-                .orElse(Try(BigDecimal(valueNorm)))
-                .toEither
-                .left
-                .map(t => ConstructError.from(t, "float", node))
-            case Tag.str => Right(value)
+              forFloat
+                .orElse(forDouble)
+                .orElse(forBigDecimal)
+                .construct(node)
+            case Tag.str =>
+              Right(value)
           }
         case MappingNode(mappings, Tag.map) =>
           val decoder = implicitly[YamlDecoder[Map[Any, Any]]]
