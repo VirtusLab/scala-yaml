@@ -14,7 +14,7 @@ trait YamlDecoder[T] { self =>
       settings: LoadSettings = LoadSettings.empty
   ): Either[ConstructError, T]
 
-  def orElse(that: => YamlDecoder[T]): YamlDecoder[T] = new YamlDecoder[T] {
+  final def orElse(that: => YamlDecoder[T]): YamlDecoder[T] = new YamlDecoder[T] {
     override def construct(node: Node)(implicit settings: LoadSettings): Either[ConstructError, T] =
       self.construct(node) match
         case Right(result) => result
