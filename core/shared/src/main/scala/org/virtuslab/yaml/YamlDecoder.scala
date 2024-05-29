@@ -105,29 +105,26 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
   implicit def forAny: YamlDecoder[Any] = new YamlDecoder[Any] {
     def construct(node: Node)(implicit settings: LoadSettings = LoadSettings.empty) = {
       node match {
-        case node @ ScalarNode(value, tag: CoreSchemaTag) if Tag.corePrimitives.contains(tag) =>
-          tag match {
-            case Tag.nullTag =>
-              Right(None)
-            case Tag.boolean =>
-              forBoolean.construct(node)
-            case Tag.int =>
-              forByte
-                .widen[Any]
-                .orElse(forShort.widen[Any])
-                .orElse(forInt.widen[Any])
-                .orElse(forLong.widen[Any])
-                .orElse(forBigInt.widen[Any])
-                .construct(node)
-            case Tag.float =>
-              forFloat
-                .widen[Any]
-                .orElse(forDouble.widen[Any])
-                .orElse(forBigDecimal.widen[Any])
-                .construct(node)
-            case Tag.str =>
-              Right(value)
-          }
+        case ScalarNode(_, Tag.nullTag) =>
+          Right(None)
+        case node @ ScalarNode(_, Tag.boolean) =>
+          forBoolean.construct(node)
+        case node @ ScalarNode(_, Tag.int) =>
+          forByte
+            .widen[Any]
+            .orElse(forShort.widen[Any])
+            .orElse(forInt.widen[Any])
+            .orElse(forLong.widen[Any])
+            .orElse(forBigInt.widen[Any])
+            .construct(node)
+        case node @ ScalarNode(_, Tag.float) =>
+          forFloat
+            .widen[Any]
+            .orElse(forDouble.widen[Any])
+            .orElse(forBigDecimal.widen[Any])
+            .construct(node)
+        case ScalarNode(value, Tag.str) =>
+          Right(value)
         case MappingNode(mappings, Tag.map) =>
           val decoder = implicitly[YamlDecoder[Map[Any, Any]]]
           decoder.construct(node)
