@@ -74,15 +74,21 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
             case Tag.nullTag => Right(None)
             case Tag.boolean => value.toBooleanOption.toRight(cannotParse(value, "Boolean", node))
             case Tag.int =>
-              if (value.startsWith("0b"))
-                Try(Integer.parseInt(value.drop(2), 8)).toEither.left
-                  .map(t => ConstructError.from(t, "Int", node))
-              else if (value.startsWith("0x"))
-                Try(Integer.parseInt(value.drop(2), 8)).toEither.left
-                  .map(t => ConstructError.from(t, "Int", node))
-              else value.toIntOption.toRight(cannotParse(value, "Int", node))
+              val valueNorm = value.replaceAll("_", "")
+              Try(java.lang.Integer.decode(valueNorm))
+                .orElse(Try(java.lang.Long.decode(valueNorm)))
+                .orElse(Try(BigInt(valueNorm)))
+                .toEither
+                .left
+                .map(t => ConstructError.from(t, "int", node))
             case Tag.float =>
-              value.toDoubleOption.toRight(cannotParse(value, "Double", node))
+              val valueNorm = value.replaceAll("_", "")
+              Try(java.lang.Float.parseFloat(valueNorm))
+                .orElse(Try(java.lang.Double.parseDouble(valueNorm)))
+                .orElse(Try(BigDecimal(valueNorm)))
+                .toEither
+                .left
+                .map(t => ConstructError.from(t, "float", node))
             case Tag.str => Right(value)
           }
         case MappingNode(mappings, Tag.map) =>
