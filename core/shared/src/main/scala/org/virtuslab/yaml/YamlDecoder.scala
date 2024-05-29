@@ -103,49 +103,47 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
   }
 
   implicit def forAny: YamlDecoder[Any] = new YamlDecoder[Any] {
-    def construct(node: Node)(implicit settings: LoadSettings = LoadSettings.empty) = {
-      node match {
-        case ScalarNode(_, Tag.nullTag) =>
-          Right(None)
-        case node @ ScalarNode(_, Tag.boolean) =>
-          forBoolean.construct(node)
-        case node @ ScalarNode(_, Tag.int) =>
-          forByte
-            .widen[Any]
-            .orElse(forShort.widen[Any])
-            .orElse(forInt.widen[Any])
-            .orElse(forLong.widen[Any])
-            .orElse(forBigInt.widen[Any])
-            .construct(node)
-        case node @ ScalarNode(_, Tag.float) =>
-          forFloat
-            .widen[Any]
-            .orElse(forDouble.widen[Any])
-            .orElse(forBigDecimal.widen[Any])
-            .construct(node)
-        case ScalarNode(value, Tag.str) =>
-          Right(value)
-        case MappingNode(mappings, Tag.map) =>
-          val decoder = implicitly[YamlDecoder[Map[Any, Any]]]
-          decoder.construct(node)
-        case SequenceNode(seq, Tag.seq) =>
-          val decoder = implicitly[YamlDecoder[Seq[Any]]]
-          decoder.construct(node)
-        case _ =>
-          settings.constructors.get(node.tag) match {
-            case Some(decoder) => decoder.construct(node)
-            case None =>
-              Left(
-                ConstructError(
-                  s"""|Could't construct runtime instance of ${node.tag}
+    def construct(node: Node)(implicit settings: LoadSettings = LoadSettings.empty) = node match {
+      case ScalarNode(_, Tag.nullTag) =>
+        Right(None)
+      case node @ ScalarNode(_, Tag.boolean) =>
+        forBoolean.construct(node)
+      case node @ ScalarNode(_, Tag.int) =>
+        forByte
+          .widen[Any]
+          .orElse(forShort.widen[Any])
+          .orElse(forInt.widen[Any])
+          .orElse(forLong.widen[Any])
+          .orElse(forBigInt.widen[Any])
+          .construct(node)
+      case node @ ScalarNode(_, Tag.float) =>
+        forFloat
+          .widen[Any]
+          .orElse(forDouble.widen[Any])
+          .orElse(forBigDecimal.widen[Any])
+          .construct(node)
+      case ScalarNode(value, Tag.str) =>
+        Right(value)
+      case MappingNode(mappings, Tag.map) =>
+        val decoder = implicitly[YamlDecoder[Map[Any, Any]]]
+        decoder.construct(node)
+      case SequenceNode(seq, Tag.seq) =>
+        val decoder = implicitly[YamlDecoder[Seq[Any]]]
+        decoder.construct(node)
+      case _ =>
+        settings.constructors.get(node.tag) match {
+          case Some(decoder) => decoder.construct(node)
+          case None =>
+            Left(
+              ConstructError(
+                s"""|Could't construct runtime instance of ${node.tag}
                       |${node.pos.map(_.errorMsg).getOrElse("")}
                       |If you're using custom datatype consider using yaml.as[MyType] instead of Any
                       |Or define LoadSettings where you'll specify how to construct ${node.tag}
                       |""".stripMargin
-                )
               )
-          }
-      }
+            )
+        }
     }
   }
 
