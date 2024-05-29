@@ -19,7 +19,7 @@ private[yaml] trait DecoderMacros {
       .map { (k, v) =>
         k match {
           case ScalarNode(scalarKey, _) => Right((scalarKey, v))
-          case _ => Left(ConstructError(s"Parameter of a class must be a scalar value"))
+          case _ => Left(ConstructError.from(s"Parameter of a class must be a scalar value"))
         }
       }
     val (error, valuesSeq) = keyValueMap.partitionMap(identity)
@@ -40,7 +40,7 @@ private[yaml] trait DecoderMacros {
         case Some(value) => c.construct(value)
         case None =>
           if (isOptional) Right(None)
-          else Left(ConstructError(s"Key $label doesn't exist in parsed document"))
+          else Left(ConstructError.from(s"Key $label doesn't exist in parsed document"))
     }
     val (left, right) = values.partitionMap(identity)
     if left.nonEmpty then Left(left.head)
@@ -68,7 +68,7 @@ private[yaml] trait DecoderMacros {
               )
             } yield (constructedValues)
           case _ =>
-            Left(ConstructError(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
+            Left(ConstructError.from(s"Expected MappingNode, got ${node.getClass.getSimpleName}"))
     }
 
   protected inline def sumOf[T](s: Mirror.SumOf[T]) =
@@ -80,7 +80,7 @@ private[yaml] trait DecoderMacros {
         .from(instances)
         .map(c => c.construct(node))
         .collectFirst { case r @ Right(_) => r }
-        .getOrElse(Left(ConstructError(s"Cannot parse $node")))
+        .getOrElse(Left(ConstructError.from(s"Cannot parse $node")))
 
   protected inline def summonSumOf[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
     case _: (t *: ts) =>
