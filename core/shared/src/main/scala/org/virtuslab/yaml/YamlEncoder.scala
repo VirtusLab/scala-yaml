@@ -3,11 +3,18 @@ package org.virtuslab.yaml
 /**
  * A type class that provides a conversion from a given type [[T]] into [[Node]]
  */
-trait YamlEncoder[T] {
+trait YamlEncoder[T] { self =>
   def asNode(obj: T): Node
+
+  final def mapContra[T1](f: T1 => T): YamlEncoder[T1] = new YamlEncoder[T1] {
+    override def asNode(obj: T1): Node = self.asNode(f(obj))
+  }
 }
 
 object YamlEncoder extends YamlEncoderCrossCompanionCompat {
+
+  def apply[T](implicit self: YamlEncoder[T]): YamlEncoder[T] = self
+
   implicit def forByte: YamlEncoder[Byte]       = v => Node.ScalarNode(v.toString)
   implicit def forChar: YamlEncoder[Char]       = v => Node.ScalarNode(v.toString)
   implicit def forShort: YamlEncoder[Short]     = v => Node.ScalarNode(v.toString)

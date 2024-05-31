@@ -191,6 +191,20 @@ class DecoderSuite extends munit.FunSuite:
     assertEquals(yaml.as[Spec], Right(expectedSpec))
   }
 
+  test("codec mapping") {
+    case class Capital(value: String)
+
+    object Capital:
+      given YamlCodec[Capital] =
+        YamlCodec.make[String].mapInvariant(s => Capital(s.toUpperCase))(_.value.toUpperCase)
+
+    assertEquals(
+      "- hello\n- world\n".as[List[Capital]],
+      Right(List(Capital("HELLO"), Capital("WORLD")))
+    )
+    assertEquals(List(Capital("hello"), Capital("world")).asYaml, "- HELLO\n- WORLD\n")
+  }
+
   test("alias for scalar node") {
     val yaml =
       s"""|- &a 5
