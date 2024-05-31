@@ -5,4 +5,8 @@ package org.virtuslab.yaml
  */
 trait YamlCodec[T] extends YamlDecoder[T] with YamlEncoder[T]
 
-object YamlCodec extends YamlCodecCompanionCrossCompat
+object YamlCodec extends YamlCodecCompanionCrossCompat {
+
+  def apply[T](implicit self: YamlCodec[T]): YamlCodec[T] = self
+
+}

@@ -8,6 +8,9 @@ trait YamlEncoder[T] {
 }
 
 object YamlEncoder extends YamlEncoderCrossCompanionCompat {
+
+  def apply[T](implicit self: YamlEncoder[T]): YamlEncoder[T] = self
+
   implicit def forByte: YamlEncoder[Byte]       = v => Node.ScalarNode(v.toString)
   implicit def forChar: YamlEncoder[Char]       = v => Node.ScalarNode(v.toString)
   implicit def forShort: YamlEncoder[Short]     = v => Node.ScalarNode(v.toString)
