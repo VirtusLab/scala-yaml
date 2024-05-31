@@ -17,7 +17,7 @@ class DecoderErrorsSuite extends BaseDecoderErrorSuite:
 
     assertError(
       yaml.as[Person],
-      s"""|Cannot parse xxx as Int
+      s"""|For input string: "xxx"
           |at 1:5, expected Int
           |age: xxx
           |     ^
