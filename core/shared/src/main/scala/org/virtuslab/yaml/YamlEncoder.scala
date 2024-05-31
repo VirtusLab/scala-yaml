@@ -6,7 +6,7 @@ package org.virtuslab.yaml
 trait YamlEncoder[T] { self =>
   def asNode(obj: T): Node
 
-  final def contramap[T1](f: T1 => T): YamlEncoder[T1] = new YamlEncoder[T1] {
+  final def mapContra[T1](f: T1 => T): YamlEncoder[T1] = new YamlEncoder[T1] {
     override def asNode(obj: T1): Node = self.asNode(f(obj))
   }
 }
