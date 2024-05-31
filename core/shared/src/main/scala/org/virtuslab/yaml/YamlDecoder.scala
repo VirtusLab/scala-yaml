@@ -32,6 +32,13 @@ trait YamlDecoder[T] { self =>
     ): Either[ConstructError, T1] =
       self.construct(node).map(f)
   }
+
+  final def flatMap[T1](f: T => Either[ConstructError, T1]): YamlDecoder[T1] = new YamlDecoder[T1] {
+    override def construct(node: Node)(implicit
+        settings: LoadSettings
+    ): Either[ConstructError, T1] =
+      self.construct(node).flatMap(f)
+  }
 }
 
 object YamlDecoder extends YamlDecoderCompanionCrossCompat {
