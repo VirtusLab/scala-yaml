@@ -33,11 +33,22 @@ trait YamlDecoder[T] { self =>
       self.construct(node).map(f)
   }
 
-  final def flatMap[T1](f: T => Either[ConstructError, T1]): YamlDecoder[T1] = new YamlDecoder[T1] {
+  final def mapError[T1](f: T => Either[ConstructError, T1]): YamlDecoder[T1] =
+    new YamlDecoder[T1] {
+      override def construct(node: Node)(implicit
+          settings: LoadSettings
+      ): Either[ConstructError, T1] =
+        self.construct(node).flatMap(f)
+    }
+
+  final def flatMap[T1](f: T => YamlDecoder[T1]): YamlDecoder[T1] = new YamlDecoder[T1] {
     override def construct(node: Node)(implicit
         settings: LoadSettings
     ): Either[ConstructError, T1] =
-      self.construct(node).flatMap(f)
+      self.construct(node) match {
+        case Right(result) => f(result).construct(node)
+        case l @ Left(_)   => l.asInstanceOf[Left[ConstructError, Nothing]]
+      }
   }
 }
 
@@ -125,16 +136,16 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
       case node @ ScalarNode(_, Tag.int) =>
         forByte
           .widen[Any]
-          .orElse(forShort.widen[Any])
-          .orElse(forInt.widen[Any])
-          .orElse(forLong.widen[Any])
-          .orElse(forBigInt.widen[Any])
+          .orElse(forShort.widen)
+          .orElse(forInt.widen)
+          .orElse(forLong.widen)
+          .orElse(forBigInt.widen)
           .construct(node)
       case node @ ScalarNode(_, Tag.float) =>
         forFloat
           .widen[Any]
-          .orElse(forDouble.widen[Any])
-          .orElse(forBigDecimal.widen[Any])
+          .orElse(forDouble.widen)
+          .orElse(forBigDecimal.widen)
           .construct(node)
       case ScalarNode(value, Tag.str) =>
         Right(value)
