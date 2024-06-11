@@ -9,7 +9,7 @@ trait YamlCodec[T] extends YamlDecoder[T] with YamlEncoder[T] { self =>
     YamlCodec.make(self.map(f), self.mapContra(g))
 
   def mapInvariantError[T1](f: T => Either[ConstructError, T1])(g: T1 => T): YamlCodec[T1] =
-    YamlCodec.make(self.flatMap(f), self.mapContra(g))
+    YamlCodec.make(self.mapError(f), self.mapContra(g))
 }
 
 object YamlCodec extends YamlCodecCompanionCrossCompat {
