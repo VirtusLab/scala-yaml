@@ -2,7 +2,7 @@ package org.virtuslab.yaml
 
 import org.virtuslab.yaml.*
 
-class BaseYamlEncoderSuite extends munit.FunSuite:
+class YamlEncoderSuite extends munit.FunSuite:
 
   test("plain value") {
     val data: String = "aezakmi"
@@ -123,6 +123,16 @@ class BaseYamlEncoderSuite extends munit.FunSuite:
          |""".stripMargin
 
     assertEquals(data.asYaml, expected)
+  }
+
+  test("option") {
+    case class Foo(field: Option[String]) derives YamlCodec
+
+    val some = Foo(Some("some"))
+    val none = Foo(None)
+
+    assertNoDiff(some.asYaml, "field: some")
+    assertNoDiff(none.asYaml, "field: !!null")
   }
 
   test("complex kubernetes mapping") {
