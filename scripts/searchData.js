@@ -319,6 +319,7 @@ pages = [{"l":"index.html#","e":false,"i":"","n":"Scala-yaml","t":"Scala-yaml","
 {"l":"org/virtuslab/yaml/YamlEncoder$.html#forList-fffffe09","e":false,"i":"","n":"forList","t":"forList[T](implicit encoder: YamlEncoder[T]): YamlEncoder[List[T]]","d":"org.virtuslab.yaml.YamlEncoder","k":"def","x":""},
 {"l":"org/virtuslab/yaml/YamlEncoder$.html#forLong-0","e":false,"i":"","n":"forLong","t":"forLong: YamlEncoder[Long]","d":"org.virtuslab.yaml.YamlEncoder","k":"def","x":""},
 {"l":"org/virtuslab/yaml/YamlEncoder$.html#forMap-fffffe36","e":false,"i":"","n":"forMap","t":"forMap[K, V](implicit keyCodec: YamlEncoder[K], valueCodec: YamlEncoder[V]): YamlEncoder[Map[K, V]]","d":"org.virtuslab.yaml.YamlEncoder","k":"def","x":""},
+{"l":"org/virtuslab/yaml/YamlEncoder$.html#forOption-fffffe09","e":false,"i":"","n":"forOption","t":"forOption[T](implicit encoder: YamlEncoder[T]): YamlEncoder[Option[T]]","d":"org.virtuslab.yaml.YamlEncoder","k":"def","x":""},
 {"l":"org/virtuslab/yaml/YamlEncoder$.html#forSeq-fffffe09","e":false,"i":"","n":"forSeq","t":"forSeq[T](implicit encoder: YamlEncoder[T]): YamlEncoder[Seq[T]]","d":"org.virtuslab.yaml.YamlEncoder","k":"def","x":""},
 {"l":"org/virtuslab/yaml/YamlEncoder$.html#forSet-fffffe09","e":false,"i":"","n":"forSet","t":"forSet[T](implicit encoder: YamlEncoder[T]): YamlEncoder[Set[T]]","d":"org.virtuslab.yaml.YamlEncoder","k":"def","x":""},
 {"l":"org/virtuslab/yaml/YamlEncoder$.html#forShort-0","e":false,"i":"","n":"forShort","t":"forShort: YamlEncoder[Short]","d":"org.virtuslab.yaml.YamlEncoder","k":"def","x":""},
