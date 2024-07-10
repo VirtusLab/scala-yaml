@@ -42,7 +42,12 @@ class ConstructSuite extends munit.FunSuite:
     )
 
     val expectedConstructError =
-      Left(ConstructError(s"Parameter of a class must be a scalar value"))
+      Left(
+        ConstructError.from(
+          s"Parameter of a class must be a scalar value",
+          MappingNode("key" -> "value")
+        )
+      )
     assertEquals(node.as[DummyClass], expectedConstructError)
   }
 

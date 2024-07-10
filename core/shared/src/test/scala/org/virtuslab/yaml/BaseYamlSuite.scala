@@ -38,6 +38,8 @@ trait BaseYamlSuite extends munit.FunSuite {
       loop(Nil)
     }
 
+    def asNode: Either[YamlError, Node] = new org.virtuslab.yaml.StringOps(yaml).asNode
+
     def debugTokens: Unit = pprint.pprintln(tokens)
   }
 
