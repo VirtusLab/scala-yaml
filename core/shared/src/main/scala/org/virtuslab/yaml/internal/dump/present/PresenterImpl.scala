@@ -4,8 +4,10 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 
 import org.virtuslab.yaml.Range
+import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind._
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 
 object PresenterImpl extends Presenter {
   override def asString(events: Seq[EventKind]): String = {
@@ -28,10 +30,11 @@ object PresenterImpl extends Presenter {
               insertSequencePadding()
               pushAndIncreaseIndent(SequenceStart())
               parseSequence(tail)
-            case Scalar(value, _, _) =>
+            case Scalar(value, _, NodeEventMetadata(_, tag)) =>
               insertSequencePadding()
               // todo escape string using doublequotes
-              sb.append(value)
+              if (tag.contains(Tag.nullTag)) sb.append("!!null")
+              else sb.append(value)
               sb.append(newline)
               tail
             case DocumentStart(_) => parseNode(tail)
