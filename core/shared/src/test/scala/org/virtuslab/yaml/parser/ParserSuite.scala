@@ -93,7 +93,7 @@ class ParserSuite extends BaseYamlSuite {
   }
 
   test("Parsing error") {
-    val errorMessage = """Expected 
+    val errorMessage = """Expected
                          |BlockEnd but instead got MappingKey
                          |  -- zipcode: 12-345
                          |             ^""".stripMargin
