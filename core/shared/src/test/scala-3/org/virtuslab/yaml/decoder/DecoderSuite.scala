@@ -363,10 +363,10 @@ class DecoderSuite extends munit.FunSuite:
   test("issue 281 - parse multiline string") {
     case class Data(description: String) derives YamlCodec
 
-    val yaml = """|description: |
-                  |Hi
-                  |my name
-                  |is John""".stripMargin
+    val yaml = """|description: |-
+                  |  Hi
+                  |  my name
+                  |  is John""".stripMargin
 
     val expectedStr = """Hi
                         |my name

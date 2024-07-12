@@ -361,7 +361,7 @@ class ScalarSpec extends BaseYamlSuite {
       Scalar("command"),
       SequenceStart(),
       Scalar("bash"),
-      Scalar("# The \\nCRARG\\n# We\\n", ScalarStyle.Literal),
+      Scalar("# The \nCRARG\n# We\n", ScalarStyle.Literal),
       SequenceEnd,
       MappingEnd,
       DocumentEnd(),
@@ -386,7 +386,7 @@ class ScalarSpec extends BaseYamlSuite {
       MappingStart(),
       Scalar("certificate", ScalarStyle.Plain),
       Scalar(
-        "-----BEGIN CERTIFICATE-----\\n0MTk0MVoXDenkKThvP7IS9q\\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\\n-----END CERTIFICATE----",
+        "-----BEGIN CERTIFICATE-----\n0MTk0MVoXDenkKThvP7IS9q\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\n-----END CERTIFICATE----",
         ScalarStyle.Literal
       ),
       Scalar("kind", ScalarStyle.Plain),
@@ -416,7 +416,7 @@ class ScalarSpec extends BaseYamlSuite {
       MappingStart(),
       Scalar("certificate", ScalarStyle.Plain),
       Scalar(
-        "-----BEGIN CERTIFICATE-----\\n0MTk0MVoXDenkKThvP7IS9q\\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\\n-----END CERTIFICATE----\\n\\n\\n",
+        "-----BEGIN CERTIFICATE-----\n0MTk0MVoXDenkKThvP7IS9q\n+Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=\n-----END CERTIFICATE----\n\n\n",
         ScalarStyle.Literal
       ),
       Scalar("kind", ScalarStyle.Plain),
@@ -445,11 +445,11 @@ class ScalarSpec extends BaseYamlSuite {
       SequenceStart(),
       MappingStart(),
       Scalar("content"),
-      Scalar("[Unit]\\n", ScalarStyle.Literal),
+      Scalar("[Unit]\n", ScalarStyle.Literal),
       MappingEnd,
       MappingStart(),
       Scalar("content"),
-      Scalar("set -x\\n", ScalarStyle.Literal),
+      Scalar("set -x\n", ScalarStyle.Literal),
       MappingEnd,
       SequenceEnd,
       MappingEnd,
