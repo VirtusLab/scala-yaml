@@ -378,3 +378,9 @@ class DecoderSuite extends munit.FunSuite:
       case Right(data) =>
         assertEquals(data.description, expectedStr)
   }
+
+  test("issue 258 - scala-yaml should not escape backslashes in single-quoted strings") {
+    raw"'hello\there'".as[String] match
+      case Right(s) => assertEquals(s, raw"hello\there")
+      case Left(e)  => fail(s"error ${e.msg}", e)
+  }

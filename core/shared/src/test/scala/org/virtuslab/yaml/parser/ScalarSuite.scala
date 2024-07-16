@@ -29,7 +29,7 @@ class ScalarSpec extends BaseYamlSuite {
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("/mnt/ \\\\iscsipd 'skip'", ScalarStyle.SingleQuoted),
+      Scalar("/mnt/ \\iscsipd 'skip'", ScalarStyle.SingleQuoted),
       DocumentEnd(),
       StreamEnd
     )
