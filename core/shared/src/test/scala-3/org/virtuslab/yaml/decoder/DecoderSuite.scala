@@ -360,6 +360,60 @@ class DecoderSuite extends munit.FunSuite:
     assertEquals(foo, Right(List(Some(Foo(1, "1")), None)))
   }
 
+  test("issue 222 - parse edge cases of booleans floats doubles and integers") {
+    case class Data(
+        booleans: List[Boolean],
+        integers: List[Int],
+        floats: List[Float],
+        `also floats`: List[Float],
+        `also doubles`: List[Double]
+    ) derives YamlCodec
+
+    val yaml = """booleans: [ true, True, false, FALSE ]
+                 |integers: [ 0, 0o7, 0x3A, -19 ]
+                 |floats: [
+                 |  0., -0.0, .5, +12e03, -2E+05 ]
+                 |also floats: [
+                 |  .inf, -.Inf, +.INF, .NAN, .nan, .NaN]
+                 |also doubles: [
+                 |  .inf, -.Inf, +.INF, .NAN, .nan, .NaN]""".stripMargin
+
+    val expected = Data(
+      booleans = List(true, true, false, false),
+      integers = List(0, 7, 58, -19),
+      floats = List(0.0f, -0.0f, 0.5f, 12000.0f, -200000.0f),
+      `also floats` = List(
+        Float.PositiveInfinity,
+        Float.NegativeInfinity,
+        Float.PositiveInfinity,
+        Float.NaN,
+        Float.NaN,
+        Float.NaN
+      ),
+      `also doubles` = List(
+        Double.PositiveInfinity,
+        Double.NegativeInfinity,
+        Double.PositiveInfinity,
+        Double.NaN,
+        Double.NaN,
+        Double.NaN
+      )
+    )
+
+    yaml.as[Data] match
+      case Left(error: YamlError) => throw error
+      case Right(data) =>
+        assertEquals(data.booleans, expected.booleans)
+        assertEquals(data.integers, expected.integers)
+        assertEquals(data.floats, expected.floats)
+        data.`also floats`.zipAll(expected.`also floats`, 0f, 0f).foreach { case (a, b) =>
+          assertEqualsFloat(a, b, 0f)
+        }
+        data.`also doubles`.zipAll(expected.`also doubles`, 0.0d, 0.0d).foreach { case (a, b) =>
+          assertEqualsDouble(a, b, 0.0d)
+        }
+  }
+
   test("issue 281 - parse multiline string") {
     case class Data(description: String) derives YamlCodec
 
