@@ -100,43 +100,29 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
       .map(ConstructError.from(_, "Long", s))
   }
 
-  private val infinityRegex = """([-+]?)(\.inf|\.Inf|\.INF)""".r
-
-  private val nanRegex = """(\.nan|\.NaN|\.NAN)""".r
-
   implicit def forDouble: YamlDecoder[Double] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    infinityRegex.findFirstMatchIn(value) match {
-      case Some(m) =>
-        Right(m.group(1) match {
-          case "-" => Double.NegativeInfinity
-          case _   => Double.PositiveInfinity
-        })
-      case None =>
-        nanRegex.findFirstMatchIn(value) match {
-          case Some(_) =>
-            Right(Double.NaN)
-          case None =>
-            Try(java.lang.Double.parseDouble(value.replaceAll("_", ""))).toEither.left
-              .map(ConstructError.from(_, "Double", s))
-        }
+    val lowercased = value.toLowerCase
+    if (lowercased.endsWith("inf")) {
+      if (value.startsWith("-")) Right(Double.NegativeInfinity)
+      else Right(Double.PositiveInfinity)
+    } else if (lowercased.endsWith("nan")) {
+      Right(Double.NaN)
+    } else {
+      Try(java.lang.Double.parseDouble(value.replaceAll("_", ""))).toEither.left
+        .map(ConstructError.from(_, "Double", s))
     }
   }
 
   implicit def forFloat: YamlDecoder[Float] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    infinityRegex.findFirstMatchIn(value) match {
-      case Some(m) =>
-        Right(m.group(1) match {
-          case "-" => Float.NegativeInfinity
-          case _   => Float.PositiveInfinity
-        })
-      case None =>
-        nanRegex.findFirstMatchIn(value) match {
-          case Some(_) =>
-            Right(Float.NaN)
-          case None =>
-            Try(java.lang.Float.parseFloat(value.replaceAll("_", ""))).toEither.left
-              .map(ConstructError.from(_, "Float", s))
-        }
+    val lowercased = value.toLowerCase
+    if (lowercased.endsWith("inf")) {
+      if (value.startsWith("-")) Right(Float.NegativeInfinity)
+      else Right(Float.PositiveInfinity)
+    } else if (lowercased.endsWith("nan")) {
+      Right(Float.NaN)
+    } else {
+      Try(java.lang.Float.parseFloat(value.replaceAll("_", ""))).toEither.left
+        .map(ConstructError.from(_, "Float", s))
     }
   }
 
