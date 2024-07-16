@@ -86,7 +86,7 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
 
   implicit def forInt: YamlDecoder[Int] = YamlDecoder { case s @ ScalarNode(value, _) =>
     val normalizedValue =
-      if value.startsWith("0o") then value.stripPrefix("0o").prepended('0') else value
+      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
 
     Try(java.lang.Integer.decode(normalizedValue.replaceAll("_", "")).toInt).toEither.left
       .map(ConstructError.from(_, "Int", s))
@@ -94,7 +94,7 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
 
   implicit def forLong: YamlDecoder[Long] = YamlDecoder { case s @ ScalarNode(value, _) =>
     val normalizedValue =
-      if value.startsWith("0o") then value.stripPrefix("0o").prepended('0') else value
+      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
 
     Try(java.lang.Long.decode(normalizedValue.replaceAll("_", "")).toLong).toEither.left
       .map(ConstructError.from(_, "Long", s))
@@ -105,40 +105,44 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
   private val nanRegex = """(\.nan|\.NaN|\.NAN)""".r
 
   implicit def forDouble: YamlDecoder[Double] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    infinityRegex.findFirstMatchIn(value) match
+    infinityRegex.findFirstMatchIn(value) match {
       case Some(m) =>
-        Right(m.group(1) match
+        Right(m.group(1) match {
           case "-" => Double.NegativeInfinity
           case _   => Double.PositiveInfinity
-        )
+        })
       case None =>
-        nanRegex.findFirstMatchIn(value) match
+        nanRegex.findFirstMatchIn(value) match {
           case Some(_) =>
             Right(Double.NaN)
           case None =>
             Try(java.lang.Double.parseDouble(value.replaceAll("_", ""))).toEither.left
               .map(ConstructError.from(_, "Double", s))
+        }
+    }
   }
 
   implicit def forFloat: YamlDecoder[Float] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    infinityRegex.findFirstMatchIn(value) match
+    infinityRegex.findFirstMatchIn(value) match {
       case Some(m) =>
-        Right(m.group(1) match
+        Right(m.group(1) match {
           case "-" => Float.NegativeInfinity
           case _   => Float.PositiveInfinity
-        )
+        })
       case None =>
-        nanRegex.findFirstMatchIn(value) match
+        nanRegex.findFirstMatchIn(value) match {
           case Some(_) =>
             Right(Float.NaN)
           case None =>
             Try(java.lang.Float.parseFloat(value.replaceAll("_", ""))).toEither.left
               .map(ConstructError.from(_, "Float", s))
+        }
+    }
   }
 
   implicit def forShort: YamlDecoder[Short] = YamlDecoder { case s @ ScalarNode(value, _) =>
     val normalizedValue =
-      if value.startsWith("0o") then value.stripPrefix("0o").prepended('0') else value
+      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
 
     Try(java.lang.Short.decode(normalizedValue.replaceAll("_", "")).toShort).toEither.left
       .map(ConstructError.from(_, "Short", s))
