@@ -11,6 +11,7 @@ object ScalarStyle {
   def escapeSpecialCharacter(scalar: String, scalarStyle: ScalarStyle): String =
     scalarStyle match {
       case ScalarStyle.DoubleQuoted => scalar
+      case ScalarStyle.SingleQuoted => scalar
       case ScalarStyle.Literal      => scalar
       case _ =>
         scalar.flatMap { char =>
