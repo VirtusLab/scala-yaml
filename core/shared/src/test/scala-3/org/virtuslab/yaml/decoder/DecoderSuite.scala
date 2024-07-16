@@ -1,6 +1,6 @@
 package org.virtuslab.yaml.decoder
 
-import org.virtuslab.yaml.Node.ScalarNode
+import org.virtuslab.yaml.Node.*
 import org.virtuslab.yaml.*
 
 class DecoderSuite extends munit.FunSuite:
@@ -358,4 +358,23 @@ class DecoderSuite extends munit.FunSuite:
          |""".stripMargin.as[List[Option[Foo]]]
 
     assertEquals(foo, Right(List(Some(Foo(1, "1")), None)))
+  }
+
+  test("issue 281 - parse multiline string") {
+    case class Data(description: String) derives YamlCodec
+
+    val yaml = """|description: |-
+                  |  Hi
+                  |  my name
+                  |  is John""".stripMargin
+
+    val expectedStr = """Hi
+                        |my name
+                        |is John""".stripMargin
+
+    yaml.as[Data] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(data) =>
+        assertEquals(data.description, expectedStr)
   }
