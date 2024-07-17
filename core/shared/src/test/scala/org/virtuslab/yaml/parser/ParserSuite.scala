@@ -154,4 +154,29 @@ class ParserSuite extends BaseYamlSuite {
 
     assertEquals(yaml.events, Right(expectedEvents))
   }
+
+  test("issue 313 - parsing elipsis in plain scalar") {
+    val yaml = """|P: 
+                  |  e: S...
+                  |  c: N
+                  |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("P"),
+      MappingStart(),
+      Scalar("e"),
+      Scalar("S..."),
+      Scalar("c"),
+      Scalar("N"),
+      MappingEnd,
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
 }
