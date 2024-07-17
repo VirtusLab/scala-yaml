@@ -5,6 +5,7 @@ import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind.MappingKey
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 
 class ParserSuite extends BaseYamlSuite {
 
@@ -122,5 +123,35 @@ class ParserSuite extends BaseYamlSuite {
     )
 
     assertEquals(yaml.asNode.left.map(_.msg), Left(errorMessage))
+  }
+
+  test("issue 86 - parsing key with empty value") {
+    val yaml = """|---
+                  |- { "single line", a: b}
+                  |- { "multi
+                  |  line", a: b}""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      SequenceStart(),
+      MappingStart(),
+      Scalar("single line", ScalarStyle.DoubleQuoted),
+      Scalar("", ScalarStyle.Plain, NodeEventMetadata.apply(Tag.nullTag)),
+      Scalar("a"),
+      Scalar("b"),
+      MappingEnd,
+      MappingStart(),
+      Scalar("multi line", ScalarStyle.DoubleQuoted),
+      Scalar("", ScalarStyle.Plain, NodeEventMetadata.apply(Tag.nullTag)),
+      Scalar("a"),
+      Scalar("b"),
+      MappingEnd,
+      SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 }
