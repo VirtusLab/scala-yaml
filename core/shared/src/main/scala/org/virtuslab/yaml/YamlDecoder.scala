@@ -85,27 +85,52 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
   )
 
   implicit def forInt: YamlDecoder[Int] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Integer.decode(value.replaceAll("_", "")).toInt).toEither.left
+    val normalizedValue =
+      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
+
+    Try(java.lang.Integer.decode(normalizedValue.replaceAll("_", "")).toInt).toEither.left
       .map(ConstructError.from(_, "Int", s))
   }
 
   implicit def forLong: YamlDecoder[Long] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Long.decode(value.replaceAll("_", "")).toLong).toEither.left
+    val normalizedValue =
+      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
+
+    Try(java.lang.Long.decode(normalizedValue.replaceAll("_", "")).toLong).toEither.left
       .map(ConstructError.from(_, "Long", s))
   }
 
   implicit def forDouble: YamlDecoder[Double] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Double.parseDouble(value.replaceAll("_", ""))).toEither.left
-      .map(ConstructError.from(_, "Double", s))
+    val lowercased = value.toLowerCase
+    if (lowercased.endsWith("inf")) {
+      if (value.startsWith("-")) Right(Double.NegativeInfinity)
+      else Right(Double.PositiveInfinity)
+    } else if (lowercased.endsWith("nan")) {
+      Right(Double.NaN)
+    } else {
+      Try(java.lang.Double.parseDouble(value.replaceAll("_", ""))).toEither.left
+        .map(ConstructError.from(_, "Double", s))
+    }
   }
 
   implicit def forFloat: YamlDecoder[Float] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Float.parseFloat(value.replaceAll("_", ""))).toEither.left
-      .map(ConstructError.from(_, "Float", s))
+    val lowercased = value.toLowerCase
+    if (lowercased.endsWith("inf")) {
+      if (value.startsWith("-")) Right(Float.NegativeInfinity)
+      else Right(Float.PositiveInfinity)
+    } else if (lowercased.endsWith("nan")) {
+      Right(Float.NaN)
+    } else {
+      Try(java.lang.Float.parseFloat(value.replaceAll("_", ""))).toEither.left
+        .map(ConstructError.from(_, "Float", s))
+    }
   }
 
   implicit def forShort: YamlDecoder[Short] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Short.decode(value.replaceAll("_", "")).toShort).toEither.left
+    val normalizedValue =
+      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
+
+    Try(java.lang.Short.decode(normalizedValue.replaceAll("_", "")).toShort).toEither.left
       .map(ConstructError.from(_, "Short", s))
   }
 
