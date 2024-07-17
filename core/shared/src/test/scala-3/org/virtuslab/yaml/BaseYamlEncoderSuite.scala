@@ -169,3 +169,9 @@ class YamlEncoderSuite extends munit.FunSuite:
 
     assertEquals(data.asYaml, expected)
   }
+
+  test("encoding of non-printable characters") {
+    // yaml ends with newline
+    assertEquals(Char.MinValue.toString.asYaml, "\\u0000\n")
+    assertEquals(Char.MaxValue.toString.asYaml, "\\uFFFF\n")
+  }

@@ -12,6 +12,27 @@ trait YamlEncoder[T] { self =>
 }
 
 object YamlEncoder extends YamlEncoderCrossCompanionCompat {
+  // Define the allowed exceptions in the otherwise disallowed ranges
+  private val allowedExceptions = Set('\u0009', '\u000A', '\u000D', '\u0085')
+
+  def isCharNonPrintable(c: Char): Boolean = {
+    if (allowedExceptions.contains(c)) false
+    else {
+      (c >= '\u0000' && c <= '\u001F') || // C0 control block (except allowed exceptions above)
+      c == '\u007F' ||                    // DEL
+      (c >= '\u0080' && c <= '\u009F') || // C1 control block (except for NEL \u0085)
+      (c >= '\uD800' && c <= '\uDFFF') || // Surrogate block
+      c == '\uFFFE' || c == '\uFFFF'      // Disallowed specific characters
+    }
+  }
+
+  def escapeSpecialCharacters(scalar: String): String =
+    scalar.flatMap { char =>
+      if (isCharNonPrintable(char))
+        f"\\u${char.toInt}%04X"
+      else
+        char.toString
+    }
 
   def apply[T](implicit self: YamlEncoder[T]): YamlEncoder[T] = self
 
@@ -23,7 +44,7 @@ object YamlEncoder extends YamlEncoderCrossCompanionCompat {
   implicit def forFloat: YamlEncoder[Float]     = v => Node.ScalarNode(v.toString)
   implicit def forDouble: YamlEncoder[Double]   = v => Node.ScalarNode(v.toString)
   implicit def forBoolean: YamlEncoder[Boolean] = v => Node.ScalarNode(v.toString)
-  implicit def forString: YamlEncoder[String]   = v => Node.ScalarNode(v)
+  implicit def forString: YamlEncoder[String]   = v => Node.ScalarNode(escapeSpecialCharacters(v))
 
   implicit def forOption[T](implicit encoder: YamlEncoder[T]): YamlEncoder[Option[T]] = {
     case Some(t) => encoder.asNode(t)
