@@ -438,3 +438,41 @@ class DecoderSuite extends munit.FunSuite:
       case Right(s) => assertEquals(s, raw"hello\there")
       case Left(e)  => fail(s"error ${e.msg}", e)
   }
+
+  test("issue 86 - parsing key with empty value") {
+    case class Foo(
+        `single line`: Option[Int] = None,
+        `multi line`: Option[Int] = None,
+        a: String
+    ) derives YamlCodec
+
+    val yaml = """|---
+                  |- { "single line", a: b}
+                  |- { "multi
+                  |  line", a: b}
+                  |- { "single line": 23, a: c}
+                  |- { "multi
+                  |  line": 42, a: c}""".stripMargin
+
+    yaml.as[List[Foo]] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foos) =>
+        assert(foos.size == 4)
+        val foo1 = foos(0)
+        val foo2 = foos(1)
+        val foo3 = foos(2)
+        val foo4 = foos(3)
+        assertEquals(foo1.`single line`, None)
+        assertEquals(foo1.`multi line`, None)
+        assertEquals(foo1.a, "b")
+        assertEquals(foo2.`single line`, None)
+        assertEquals(foo2.`multi line`, None)
+        assertEquals(foo2.a, "b")
+        assertEquals(foo3.`single line`, Some(23))
+        assertEquals(foo3.`multi line`, None)
+        assertEquals(foo3.a, "c")
+        assertEquals(foo4.`single line`, None)
+        assertEquals(foo4.`multi line`, Some(42))
+        assertEquals(foo4.a, "c")
+  }
