@@ -476,3 +476,13 @@ class DecoderSuite extends munit.FunSuite:
         assertEquals(foo4.`multi line`, Some(42))
         assertEquals(foo4.a, "c")
   }
+
+  test("issue 314 - decoding doubles as Any loses precision") {
+    val yaml = "value: 0.018256052173961423"
+
+    yaml.as[Any] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(value) =>
+        assertEquals(value, Map("value" -> 0.018256052173961423))
+  }
