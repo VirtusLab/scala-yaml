@@ -553,12 +553,12 @@ private class StringTokenizer(str: String) extends Tokenizer {
     def readScalar(): String = {
       val peeked = in.peek()
       peeked match {
-        case Reader.nullTerminator                                 => sb.result()
-        case ':' if in.isNextWhitespace                            => sb.result()
-        case ':' if in.peekNext() == ',' && ctx.isInFlowCollection => sb.result()
-        case char if !ctx.isAllowedSpecialCharacter(char)          => sb.result()
-        case _ if isDocumentEnd || isDocumentStart                 => sb.result()
-        case ' ' if in.peekNext() == '#'                           => sb.result()
+        case Reader.nullTerminator                                       => sb.result()
+        case ':' if in.isNextWhitespace                                  => sb.result()
+        case ':' if in.peekNext() == ',' && ctx.isInFlowCollection       => sb.result()
+        case char if !ctx.isAllowedSpecialCharacter(char)                => sb.result()
+        case _ if (isDocumentEnd || isDocumentStart) && ctx.indent == -1 => sb.result()
+        case ' ' if in.peekNext() == '#'                                 => sb.result()
         case _ if in.isNewline =>
           ctx.isPlainKeyAllowed = true
           if (in.isNextNewline) chompedEmptyLines()
