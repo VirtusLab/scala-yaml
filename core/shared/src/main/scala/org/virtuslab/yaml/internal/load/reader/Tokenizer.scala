@@ -472,7 +472,10 @@ private class StringTokenizer(str: String) extends Tokenizer {
       }
 
     @tailrec
-    def readFolded(): String =
+    def readFolded(
+        prevCharWasNewline: Boolean = false,
+        thisLineIsIndented: Boolean = false
+    ): String = {
       in.peek() match {
         case Reader.nullTerminator => sb.result()
         case _ if in.isNewline =>
@@ -483,22 +486,69 @@ private class StringTokenizer(str: String) extends Tokenizer {
               in.skipCharacter()
               skipUntilNextIndent(foldedIndent)
             }
-            readFolded()
-          } else {
-            in.skipCharacter()
-            skipUntilNextIndent(foldedIndent)
+
             if (in.column != foldedIndent || in.peek() == Reader.nullTerminator) {
-              sb.append("\n")
+              if (chompingIndicator == BlockChompingIndicator.Keep) sb.append("\n")
               sb.result()
             } else {
-              sb.append(" ")
-              readFolded()
+              readFolded(prevCharWasNewline = true)
+            }
+          } else {
+            in.skipCharacter() // skip newline
+
+            skipUntilNextIndent(foldedIndent)
+
+            if (in.column != foldedIndent || in.peek() == Reader.nullTerminator) {
+              chompingIndicator match {
+                case Keep => // if keep, strip all trailing newlines and spaces but count them and append counted amount of newlines
+                  var count    = 1
+                  var lastChar = sb.apply(sb.length - 1)
+                  while (lastChar == '\n' || lastChar == ' ') {
+                    sb.deleteCharAt(sb.length - 1)
+                    lastChar = sb.apply(sb.length - 1)
+                    count += 1
+                  }
+                  sb.append("\n" * count)
+                case Strip => // if strip, strip all trailing newlines and spaces
+                  var lastChar = sb.apply(sb.length - 1)
+                  while (lastChar == '\n' || lastChar == ' ') {
+                    sb.deleteCharAt(sb.length - 1)
+                    lastChar = sb.apply(sb.length - 1)
+                  }
+                case Clip => // if clip, strip all trailing newlines and spaces and append a single newline
+                  var lastChar = sb.apply(sb.length - 1)
+                  while (lastChar == '\n' || lastChar == ' ') {
+                    sb.deleteCharAt(sb.length - 1)
+                    lastChar = sb.apply(sb.length - 1)
+                  }
+                  sb.append('\n')
+              }
+
+              sb.result() // final result
+            } else {
+              if (prevCharWasNewline || thisLineIsIndented) {
+                sb.append("\n")
+              } else {
+                sb.append(" ")
+              }
+
+              readFolded(prevCharWasNewline = true)
             }
           }
+
+        case ' ' if in.column == foldedIndent => // beginning of a line that is indented
+          if (prevCharWasNewline) {      // we are at the beginning of a line that is indented
+            sb.update(sb.size - 1, '\n') // replace last space with a newline
+          }
+
+          sb.append(in.read())
+          readFolded(thisLineIsIndented = true)
+
         case char =>
           sb.append(in.read())
-          readFolded()
+          readFolded(thisLineIsIndented = thisLineIsIndented)
       }
+    }
 
     val scalar        = readFolded()
     val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(scalar)

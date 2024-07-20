@@ -326,6 +326,36 @@ class ScalarSpec extends BaseYamlSuite {
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
+  test("issue 60 - parsing final break style in folded scalar") {
+    val yaml = """|certificate: >+
+                    |  -----BEGIN CERTIFICATE-----
+                    |  0MTk0MVoXDenkKThvP7IS9q
+                    |  +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w=
+                    |  -----END CERTIFICATE----
+                    |
+                    |
+                    |kind: v1""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("certificate"),
+      Scalar(
+        // should preserve line breaks and not consume next mapping (kind: v1)
+        "-----BEGIN CERTIFICATE----- 0MTk0MVoXDenkKThvP7IS9q +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w= -----END CERTIFICATE----\\n\\n\\n",
+        ScalarStyle.Folded
+      ),
+      Scalar("kind"),
+      Scalar("v1"),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
   test("folded indent scalar") {
     val yaml = s"""|--- >
                    |line1
@@ -507,5 +537,217 @@ class ScalarSpec extends BaseYamlSuite {
       obj.isInstanceOf[java.lang.String]
     }
     assertEquals(isStringType, Seq.fill(isStringType.length)(true))
+  }
+
+  // from https://yaml-multiline.info/
+
+  /**
+    * example: >\n
+    * ··Several lines of text,\n
+    * ··with some "quotes" of various 'types',\n
+    * ··and also a blank line:\n
+    * ··\n
+    * ··and two blank lines:\n
+    * ··\n
+    * ··\n
+    * ··and some text with\n
+    * ····extra indentation\n
+    * ··on the next line,\n
+    * ··plus another line at the end.\n
+    * ··\n
+    * ··\n
+    */
+  def yamlInput(indicator: String) = s"""example: $indicator
+                                        |  Several lines of text,
+                                        |  with some "quotes" of various 'types',
+                                        |  and also a blank line:
+                                        |
+                                        |  and two blank lines:
+                                        |
+                                        |  
+                                        |  and some text with
+                                        |    extra indentation
+                                        |  on the next line,
+                                        |  plus another line at the end.
+                                        |  
+                                        |  
+                                        |""".stripMargin
+
+  test("block scalars: folded style with clip indicator") {
+    val yaml = yamlInput(">")
+
+    // expected:
+    // Several lines of text, with some "quotes" of various 'types', and also a blank line:\n
+    // and two blank lines:\n\n
+    // and some text with\n
+    //   extra indentation\n
+    // on the next line, plus another line at the end.\n
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("example"),
+      Scalar(
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.\\n",
+        ScalarStyle.Folded
+      ),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("block scalars: folded style with strip indicator") {
+    val yaml = yamlInput(">-")
+
+    // expected:
+    // Several lines of text, with some "quotes" of various 'types', and also a blank line:\n
+    // and two blank lines:\n\n
+    // and some text with\n
+    //   extra indentation\n
+    // on the next line, plus another line at the end.
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("example"),
+      Scalar(
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.",
+        ScalarStyle.Folded
+      ),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("block scalars: folded style with keep indicator") {
+    val yaml = yamlInput(">+")
+
+    // expected:
+    // Several lines of text, with some "quotes" of various 'types', and also a blank line:\n
+    // and two blank lines:\n\n
+    // and some text with\n
+    //   extra indentation\n
+    // on the next line, plus another line at the end.\n
+    // \n
+    // \n
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("example"),
+      Scalar(
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.\\n\\n\\n",
+        ScalarStyle.Folded
+      ),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("block scalars: literal style with clip indicator") {
+    val yaml = yamlInput("|")
+
+    // expected:
+    // Several lines of text,\n
+    // with some "quotes" of various 'types',\n
+    // and also a blank line:\n
+    // \n
+    // and two blank lines:\n
+    // \n
+    // \n
+    // and some text with\n
+    //   extra indentation\n
+    // on the next line,\n
+    // plus another line at the end.\n
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("example"),
+      Scalar(
+        "Several lines of text,\nwith some \"quotes\" of various 'types',\nand also a blank line:\n\nand two blank lines:\n\n\nand some text with\n  extra indentation\non the next line,\nplus another line at the end.\n",
+        ScalarStyle.Literal
+      ),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("block scalars: literal style with strip indicator") {
+    val yaml = yamlInput("|-")
+
+    // expected:
+    // Several lines of text,\n
+    // with some "quotes" of various 'types',\n
+    // and also a blank line:\n
+    // \n
+    // and two blank lines:\n
+    // \n
+    // \n
+    // and some text with\n
+    //   extra indentation\n
+    // on the next line,\n
+    // plus another line at the end.
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("example"),
+      Scalar(
+        "Several lines of text,\nwith some \"quotes\" of various 'types',\nand also a blank line:\n\nand two blank lines:\n\n\nand some text with\n  extra indentation\non the next line,\nplus another line at the end.",
+        ScalarStyle.Literal
+      ),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("block scalars: literal style with keep indicator") {
+    val yaml = yamlInput("|+")
+
+    // expected:
+    // Several lines of text,\n
+    // with some "quotes" of various 'types',\n
+    // and also a blank line:\n
+    // \n
+    // and two blank lines:\n
+    // \n
+    // \n
+    // and some text with\n
+    //   extra indentation\n
+    // on the next line,\n
+    // plus another line at the end.\n
+    // \n
+    // \n
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("example"),
+      Scalar(
+        "Several lines of text,\nwith some \"quotes\" of various 'types',\nand also a blank line:\n\nand two blank lines:\n\n\nand some text with\n  extra indentation\non the next line,\nplus another line at the end.\n\n\n",
+        ScalarStyle.Literal
+      ),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
   }
 }
