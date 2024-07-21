@@ -67,11 +67,19 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
       override def construct(
           node: Node
       )(implicit settings: LoadSettings = LoadSettings.empty): Either[ConstructError, T] =
-        if (pf.isDefinedAt(node)) pf(node)
+        if (node.tag == Tag.nullTag)
+          Left(
+            ConstructError.from(
+              s"""|Could't construct ${classTag.runtimeClass.getName} from null (${node.tag.value})
+                  |${node.pos.map(_.errorMsg).getOrElse("")}
+                  |""".stripMargin
+            )
+          )
+        else if (pf.isDefinedAt(node)) pf(node)
         else
           Left(
             ConstructError.from(
-              s"""|Could't construct ${classTag.runtimeClass.getName} from ${node.tag}
+              s"""|Could't construct ${classTag.runtimeClass.getName} from ${node.tag.value}
                   |${node.pos.map(_.errorMsg).getOrElse("")}
                   |""".stripMargin
             )
@@ -198,11 +206,14 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
     }
   }
 
-  implicit def forOption[T](implicit c: YamlDecoder[T]): YamlDecoder[Option[T]] = YamlDecoder.from {
-    node =>
-      if (node.tag == Tag.nullTag) Right(None)
-      else c.construct(node).map(Option(_))
-  }
+  implicit def forOption[T](implicit c: YamlDecoder[T]): YamlDecoder[Option[T]] =
+    new YamlDecoder[Option[T]] {
+      override def construct(
+          node: Node
+      )(implicit settings: LoadSettings): Either[ConstructError, Option[T]] =
+        if (node.tag == Tag.nullTag) Right(None)
+        else c.construct(node).map(Option(_))
+    }
 
   private def constructFromNodes[T](nodes: Seq[Node])(implicit
       c: YamlDecoder[T]

@@ -486,3 +486,19 @@ class DecoderSuite extends munit.FunSuite:
       case Right(value) =>
         assertEquals(value, Map("value" -> 0.018256052173961423))
   }
+
+  test("issue 120 - fail conversion of !!null to non-optional types") {
+    case class Foo(key1: Int, key2: Int) derives YamlDecoder
+
+    val yaml =
+      """|key1: 1
+         |key2: !!null
+         |""".stripMargin
+
+    val bar = yaml.as[Foo]
+
+    bar match
+      case Left(error: YamlError) =>
+        assert(error.msg.contains("Could't construct int from null (tag:yaml.org,2002:null)"))
+      case Right(data) => fail(s"expected failure, but got: $data")
+  }
