@@ -169,9 +169,8 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
           .orElse(forBigInt.widen)
           .construct(node)
       case node @ ScalarNode(_, Tag.float) =>
-        forFloat
+        forDouble
           .widen[Any]
-          .orElse(forDouble.widen)
           .orElse(forBigDecimal.widen)
           .construct(node)
       case ScalarNode(value, Tag.str) =>
