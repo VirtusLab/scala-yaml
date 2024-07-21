@@ -67,7 +67,7 @@ lazy val integration = project
       Deps.munit,
       Deps.osLib,
       Deps.pprint
-    )
+    ),
+    Compile / doc / sources := Seq.empty
   )
-  .settings(docsSettings)
   .enablePlugins(NoPublishPlugin)
