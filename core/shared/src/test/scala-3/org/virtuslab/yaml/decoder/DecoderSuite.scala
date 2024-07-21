@@ -321,7 +321,7 @@ class DecoderSuite extends munit.FunSuite:
       123      -> 321,
       "string" -> "aezakmi",
       true     -> false,
-      5.5f     -> 55.55f
+      5.5f     -> 55.55d
     )
 
     assertEquals(yaml.as[Map[Any, Any]], Right(expected))
