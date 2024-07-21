@@ -502,3 +502,19 @@ class DecoderSuite extends munit.FunSuite:
         assert(error.msg.contains("Could't construct int from null (tag:yaml.org,2002:null)"))
       case Right(data) => fail(s"expected failure, but got: $data")
   }
+
+  test("default parameters for case classes can be used when decoding") {
+    case class Foo(a: Int = 1, b: String = "test", c: Option[Int] = None, d: Double)
+        derives YamlCodec
+
+    val yaml = """d: 1.0""".stripMargin
+
+    yaml.as[Foo] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foo) =>
+        assertEquals(foo.a, 1)
+        assertEquals(foo.b, "test")
+        assertEquals(foo.c, None)
+        assertEquals(foo.d, 1.0)
+  }
