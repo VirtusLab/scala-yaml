@@ -26,13 +26,13 @@ do
 
 done
 
-mkdir ./test-suite/jvm/src/it/resources/yaml/configs/
-find ./repositories -name '*.yaml' -exec cp -prv '{}' './test-suite/jvm/src/it/resources/yaml/configs/' ';'
+mkdir -p ./src/test/resources/yaml/configs/
+find ./repositories -name '*.yaml' -exec cp -prv '{}' './src/test/resources/yaml/configs/' ';'
 
 LIB_YAML_PATH="" # Set the path to libyaml
 
 # In downloaded repositories contains some invalid yaml, below instructions can remove this yaml
-for f in ./test-suite/jvm/src/it/resources/yaml/configs/*.yaml; do
+for f in ./src/test/resources/yaml/configs/*.yaml; do
     cat $f | $LIB_YAML_PATH >/dev/null
 
     # if libyaml return error exit code, these means, that yaml is invalid
