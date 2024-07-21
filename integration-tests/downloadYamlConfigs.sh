@@ -29,7 +29,8 @@ done
 mkdir -p ./src/test/resources/yaml/configs/
 find ./repositories -name '*.yaml' -exec cp -prv '{}' './src/test/resources/yaml/configs/' ';'
 
-LIB_YAML_PATH="" # Set the path to libyaml
+# lbialy: I think the process used here is 'yamlpp-events' so `which yamlpp-events` should be used
+LIB_YAML_PATH=`which yamlpp-events` # Set the path to libyaml
 
 # In downloaded repositories contains some invalid yaml, below instructions can remove this yaml
 for f in ./src/test/resources/yaml/configs/*.yaml; do
