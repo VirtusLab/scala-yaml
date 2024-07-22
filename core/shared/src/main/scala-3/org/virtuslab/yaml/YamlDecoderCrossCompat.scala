@@ -43,7 +43,7 @@ object DecoderMacros {
   protected def constructValues[T](
       instances: List[(String, YamlDecoder[?], Boolean)],
       valuesMap: Map[String, Node],
-      defaultParams: Map[String, Any],
+      defaultParams: Map[String, () => Any],
       p: Mirror.ProductOf[T],
       parentNode: Node
   ): Either[ConstructError, T] = {
@@ -52,7 +52,10 @@ object DecoderMacros {
         case Some(value) => c.construct(value)
         case None =>
           if (isOptional) Right(None)
-          else if (defaultParams.contains(label)) Right(defaultParams(label))
+          else if (defaultParams.contains(label))
+            val defaultParamCreator = defaultParams(label)
+            val defaultParamValue   = defaultParamCreator()
+            Right(defaultParamValue)
           else Left(ConstructError.from(s"Key $label doesn't exist in parsed document", parentNode))
     }
     val (left, right) = values.partitionMap(identity)
@@ -143,11 +146,14 @@ object DecoderMacros {
           }
         }
 
-  protected def findDefaultParams[T](using quotes: Quotes, tpe: Type[T]): Expr[Map[String, Any]] =
+  protected def findDefaultParams[T](using
+      quotes: Quotes,
+      tpe: Type[T]
+  ): Expr[Map[String, () => Any]] =
     import quotes.reflect.*
 
     TypeRepr.of[T].classSymbol match
-      case None => '{ Map.empty[String, Any] }
+      case None => '{ Map.empty[String, () => Any] }
       case Some(sym) =>
         val comp = sym.companionClass
         try
@@ -165,14 +171,18 @@ object DecoderMacros {
               if name.startsWith("$lessinit$greater$default")
             yield mod.select(deff.symbol)
           val typeArgs = TypeRepr.of[T].typeArgs
-          val identsExpr: Expr[List[Any]] =
-            if typeArgs.isEmpty then Expr.ofList(idents.map(_.asExpr))
-            else Expr.ofList(idents.map(_.appliedToTypes(typeArgs).asExpr))
+          val identsExpr: Expr[List[() => Any]] =
+            if typeArgs.isEmpty then
+              Expr.ofList(idents.map(_.asExpr).map { case '{ $x } => '{ () => $x } })
+            else
+              Expr.ofList(
+                idents.map(_.appliedToTypes(typeArgs).asExpr).map { case '{ $x } => '{ () => $x } }
+              )
 
           '{ $namesExpr.zip($identsExpr).toMap }
         catch // TODO drop after https://github.com/lampepfl/dotty/issues/19732 (after bump to 3.3.4)
           case cce: ClassCastException =>
             '{
-              Map.empty[String, Any]
+              Map.empty[String, () => Any]
             }
 }

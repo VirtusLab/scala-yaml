@@ -518,3 +518,30 @@ class DecoderSuite extends munit.FunSuite:
         assertEquals(foo.c, None)
         assertEquals(foo.d, 1.0)
   }
+
+  test("default parameters for case classes are evaluated lazily") {
+    var times = 0
+    def createB = {
+      times += 1
+      s"test-${times}"
+    }
+    case class Foo(a: Int, b: String = createB) derives YamlCodec
+
+    val yaml = """a: 1""".stripMargin
+
+    yaml.as[Foo] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foo) =>
+        assertEquals(foo.a, 1)
+        assertEquals(foo.b, "test-1")
+
+    yaml.as[Foo] // skip test-2
+
+    yaml.as[Foo] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foo) =>
+        assertEquals(foo.a, 1)
+        assertEquals(foo.b, "test-3")
+  }
