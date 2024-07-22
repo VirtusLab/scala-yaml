@@ -29,6 +29,12 @@ object SerializerImpl extends Serializer {
   }
 
   private def convertScalarNode(node: Node.ScalarNode): Seq[EventKind] =
-    Seq(Scalar(node.value, metadata = NodeEventMetadata(tag = node.tag)))
+    Seq(
+      Scalar(
+        node.value,
+        style = node.style.toParserStyle,
+        metadata = NodeEventMetadata(tag = node.tag)
+      )
+    )
 
 }

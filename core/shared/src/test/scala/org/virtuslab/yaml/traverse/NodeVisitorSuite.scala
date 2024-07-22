@@ -27,7 +27,7 @@ class NodeVisitorSuite extends munit.FunSuite {
     val modifiedYaml = modifiedNode.asYaml
 
     val exptectedYaml =
-      s"""version: 3.9
+      s"""version: "3.9"
          |services: 
          |  web: 
          |    build: .
@@ -35,9 +35,9 @@ class NodeVisitorSuite extends munit.FunSuite {
          |      - .:/code
          |      - logvolume01:/var/log
          |    ports: 
-         |      - 6000:6000
+         |      - "6000:6000"
          |  redis: 
-         |    image: redis:alpine
+         |    image: "redis:alpine"
          |""".stripMargin
 
     assertEquals(modifiedYaml, exptectedYaml)
@@ -71,7 +71,7 @@ class NodeVisitorSuite extends munit.FunSuite {
     val modifiedYaml = modifiedNode.asYaml
 
     val exptectedYaml =
-      s"""version: 3.9
+      s"""version: "3.9"
          |services: 
          |  web: 
          |    build: .
@@ -79,9 +79,9 @@ class NodeVisitorSuite extends munit.FunSuite {
          |      - .:/code
          |      - logvolume01:/var/log
          |    ports: 
-         |      - 5000:5000:6000
+         |      - "5000:5000:6000"
          |  redis: 
-         |    image: redis:alpine:latest
+         |    image: "redis:alpine:latest"
          |""".stripMargin
 
     assertEquals(modifiedYaml, exptectedYaml)
@@ -115,7 +115,7 @@ class NodeVisitorSuite extends munit.FunSuite {
     val modifiedYaml = modifiedNode.asYaml
 
     val exptectedYaml =
-      s"""version: 3.9
+      s"""version: "3.9"
          |services: 
          |  web: 
          |    build: .

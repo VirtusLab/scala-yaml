@@ -5,6 +5,7 @@ case class TestMlEntry(
     from: String,
     tags: String,
     inYaml: String,
+    outYaml: Option[String],
     seqEvent: String
 )
 
@@ -22,6 +23,21 @@ case object TestMlEntry {
       }
       .toList
       .head
+  }
+
+  private def extractOutYaml(testMl: String): Option[String] = {
+    val patternOut =
+      raw"--- out-yaml(\(<\)|\(\+\)|\(<\+\)|)(([^\n]*\n+)+?)--- (in-json|error|emit-yaml|test-event)".r
+
+    patternOut
+      .findAllIn(testMl)
+      .matchData
+      .map { m =>
+        m.group(2)
+      }
+      .toList
+      .headOption
+      .map(_.strip())
   }
 
   private def extractSeqEvent(testMl: String): String = {
@@ -42,6 +58,7 @@ case object TestMlEntry {
       from = "",
       tags = "",
       inYaml = extractInYaml(content),
+      outYaml = extractOutYaml(content),
       seqEvent = extractSeqEvent(content)
     )
   }

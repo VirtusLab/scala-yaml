@@ -8,6 +8,7 @@ import org.virtuslab.yaml.Tag
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 object PresenterImpl extends Presenter {
   override def asString(events: Seq[EventKind]): String = {
@@ -30,11 +31,18 @@ object PresenterImpl extends Presenter {
               insertSequencePadding()
               pushAndIncreaseIndent(SequenceStart())
               parseSequence(tail)
-            case Scalar(value, _, NodeEventMetadata(_, tag)) =>
+            case Scalar(value, style, NodeEventMetadata(_, tag)) =>
               insertSequencePadding()
               // todo escape string using doublequotes
               if (tag.contains(Tag.nullTag)) sb.append("!!null")
-              else sb.append(value)
+              else
+                style match {
+                  case ScalarStyle.Plain        => sb.append(value)
+                  case ScalarStyle.DoubleQuoted => sb.append(s"\"$value\"")
+                  case ScalarStyle.SingleQuoted => sb.append(s"'$value'")
+                  case ScalarStyle.Folded       => sb.append(value)
+                  case ScalarStyle.Literal      => sb.append(value)
+                }
               sb.append(newline)
               tail
             case DocumentStart(_) => parseNode(tail)
@@ -50,8 +58,8 @@ object PresenterImpl extends Presenter {
         case MappingEnd :: tail =>
           popAndDecreaseIndent()
           tail
-        case Scalar(value, _, _) :: tail =>
-          appendKey(value)
+        case Scalar(value, style, _) :: tail =>
+          appendKey(value, style)
           val rest = parseNode(tail)
           parseMapping(rest)
         case _ => events
@@ -69,9 +77,15 @@ object PresenterImpl extends Presenter {
           parseSequence(rest)
       }
 
-    def appendKey(value: String) = {
+    def appendKey(value: String, style: ScalarStyle) = {
       sb.append(" " * indent)
-      sb.append(value)
+      style match {
+        case ScalarStyle.Plain        => sb.append(value)
+        case ScalarStyle.DoubleQuoted => sb.append(s"\"$value\"")
+        case ScalarStyle.SingleQuoted => sb.append(s"'$value'")
+        case ScalarStyle.Folded       => sb.append(value)
+        case ScalarStyle.Literal      => sb.append(value)
+      }
       sb.append(": ")
     }
 

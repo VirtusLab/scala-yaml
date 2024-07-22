@@ -23,11 +23,45 @@ sealed trait Node {
 }
 
 object Node {
-  final case class ScalarNode private[yaml] (value: String, tag: Tag, pos: Option[Range] = None)
-      extends Node
+
+  import org.virtuslab.yaml.internal.load.reader.token.{ScalarStyle => ParserScalarStyle}
+
+  sealed abstract class ScalarStyle(indicator: Char) {
+    def toParserStyle: ParserScalarStyle = this match {
+      case ScalarStyle.Plain        => ParserScalarStyle.Plain
+      case ScalarStyle.DoubleQuoted => ParserScalarStyle.DoubleQuoted
+      case ScalarStyle.SingleQuoted => ParserScalarStyle.SingleQuoted
+      case ScalarStyle.Folded       => ParserScalarStyle.Folded
+      case ScalarStyle.Literal      => ParserScalarStyle.Literal
+    }
+  }
+  object ScalarStyle {
+
+    def fromParserStyle(style: ParserScalarStyle): ScalarStyle = style match {
+      case ParserScalarStyle.Plain        => ScalarStyle.Plain
+      case ParserScalarStyle.DoubleQuoted => ScalarStyle.DoubleQuoted
+      case ParserScalarStyle.SingleQuoted => ScalarStyle.SingleQuoted
+      case ParserScalarStyle.Folded       => ScalarStyle.Folded
+      case ParserScalarStyle.Literal      => ScalarStyle.Literal
+    }
+
+    case object Plain        extends ScalarStyle(' ')
+    case object DoubleQuoted extends ScalarStyle('"')
+    case object SingleQuoted extends ScalarStyle('\'')
+    case object Folded       extends ScalarStyle('>')
+    case object Literal      extends ScalarStyle('|')
+  }
+
+  final case class ScalarNode private[yaml] (
+      value: String,
+      tag: Tag,
+      style: ScalarStyle,
+      pos: Option[Range] = None
+  ) extends Node
 
   object ScalarNode {
-    def apply(value: String): ScalarNode = new ScalarNode(value, Tag.resolveTag(value))
+    def apply(value: String): ScalarNode =
+      new ScalarNode(value, style = ScalarStyle.Plain, tag = Tag.resolveTag(value))
     def unapply(node: ScalarNode): Option[(String, Tag)] = Some((node.value, node.tag))
   }
 
