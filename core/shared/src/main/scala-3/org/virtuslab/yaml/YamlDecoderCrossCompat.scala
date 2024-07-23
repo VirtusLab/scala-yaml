@@ -146,6 +146,8 @@ object DecoderMacros {
           }
         }
 
+  private val DefaultParamPrefix = "$lessinit$greater$default"
+
   protected def findDefaultParams[T](using
       quotes: Quotes,
       tpe: Type[T]
@@ -158,28 +160,36 @@ object DecoderMacros {
         val comp = sym.companionClass
         try
           val mod = Ref(sym.companionModule)
-          val names =
-            for p <- sym.caseFields if p.flags.is(Flags.HasDefault)
-            yield p.name
-          val namesExpr: Expr[List[String]] =
-            Expr.ofList(names.map(Expr(_)))
+          val fieldMetadata =
+            for (p, idx) <- sym.caseFields.zipWithIndex
+              // +1 because the names are generated starting from 1
+            yield (p.name, idx + 1)
 
           val body = comp.tree.asInstanceOf[ClassDef].body
-          val idents: List[Ref] =
+
+          val idents: List[(String, Ref)] =
             for
+              (fieldName, idx) <- fieldMetadata
               case deff @ DefDef(name, _, _, _) <- body
-              if name.startsWith("$lessinit$greater$default")
-            yield mod.select(deff.symbol)
+              if name.startsWith(DefaultParamPrefix) && name.endsWith(idx.toString)
+            yield fieldName -> mod.select(deff.symbol)
+
           val typeArgs = TypeRepr.of[T].typeArgs
-          val identsExpr: Expr[List[() => Any]] =
+          val defaultsExpr: Expr[List[(String, () => Any)]] =
             if typeArgs.isEmpty then
-              Expr.ofList(idents.map(_.asExpr).map { case '{ $x } => '{ () => $x } })
+              Expr.ofList(
+                idents.map(t => t._1 -> t._2.asExpr).map { case (name, '{ $x }) =>
+                  '{ (${ Expr(name) }, () => $x) }
+                }
+              )
             else
               Expr.ofList(
-                idents.map(_.appliedToTypes(typeArgs).asExpr).map { case '{ $x } => '{ () => $x } }
+                idents.map(t => t._1 -> t._2.appliedToTypes(typeArgs).asExpr).map {
+                  case (name, '{ $x }) => '{ (${ Expr(name) }, () => $x) }
+                }
               )
 
-          '{ $namesExpr.zip($identsExpr).toMap }
+          '{ $defaultsExpr.toMap }
         catch // TODO drop after https://github.com/lampepfl/dotty/issues/19732 (after bump to 3.3.4)
           case cce: ClassCastException =>
             '{
