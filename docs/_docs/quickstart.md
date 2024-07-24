@@ -3,7 +3,7 @@ Then you're able to use following extension methods:
 - **`as[T]`** yields `Either[YamlError, T]` trying to convert String instance to the provided type `T`
 - **`asYaml`** converts your datatype into yaml-formatted String
 
-```scala sc:compile
+```scala 
 import org.virtuslab.yaml.*
 
 case class Address(city: String, zipcode: String) derives YamlCodec

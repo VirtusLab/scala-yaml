@@ -28,7 +28,7 @@ key3:
 
 (there is an [issue](YamlDecoder) with deriving YamlEncoder instance for Option datatype hence `YamlDecoder` instead `YamlCodec`)  
 
-```scala sc:compile
+```scala 
 import org.virtuslab.yaml.*
 
 case class Keys(key1: String, key2: Option[String], key3: Option[String]) derives YamlDecoder 

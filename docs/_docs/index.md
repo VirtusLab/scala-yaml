@@ -17,7 +17,7 @@ Take part in our [discussions](https://github.com/VirtusLab/scala-yaml/discussio
 
 # Usage
 
-```scala sc:compile
+```scala 
 import org.virtuslab.yaml.*
 
 case class Address(city: String, zipcode: String) derives YamlCodec
