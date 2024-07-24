@@ -146,7 +146,7 @@ object DecoderMacros {
           }
         }
 
-  private val DefaultParamPrefix = "$lessinit$greater$default"
+  private val DefaultParamPrefix = "$lessinit$greater$default$"
 
   protected def findDefaultParams[T](using
       quotes: Quotes,
@@ -156,40 +156,41 @@ object DecoderMacros {
 
     TypeRepr.of[T].classSymbol match
       case None => '{ Map.empty[String, () => Any] }
-      case Some(sym) =>
-        val comp = sym.companionClass
+      case Some(sym: Symbol) =>
         try
-          val mod = Ref(sym.companionModule)
-          val fieldMetadata =
-            for (p, idx) <- sym.caseFields.zipWithIndex
-              // +1 because the names are generated starting from 1
+          val comp = sym.companionClass
+          val mod  = Ref(sym.companionModule)
+          val paramWithDefaultMeta =
+            for (p, idx) <- sym.caseFields.zipWithIndex if p.flags.is(Flags.HasDefault)
+            // +1 because the names are generated starting from 1
             yield (p.name, idx + 1)
 
-          val body = comp.tree.asInstanceOf[ClassDef].body
-
           val idents: List[(String, Ref)] =
-            for
-              (fieldName, idx) <- fieldMetadata
-              case deff @ DefDef(name, _, _, _) <- body
-              if name.startsWith(DefaultParamPrefix) && name.endsWith(idx.toString)
-            yield fieldName -> mod.select(deff.symbol)
+            for (paramName, idx) <- paramWithDefaultMeta
+            yield paramName -> mod.select(
+              // head is safe here because we know there has to be a getter for the default value
+              // because we checked for HasDefault flag
+              comp.methodMember(DefaultParamPrefix + idx.toString).head
+            )
 
           val typeArgs = TypeRepr.of[T].typeArgs
-          val defaultsExpr: Expr[List[(String, () => Any)]] =
+
+          // we create an expression of a list of tuples of name and thunks that return the default value for a given parameter
+          val defaultsThunksExpr: Expr[List[(String, () => Any)]] =
             if typeArgs.isEmpty then
               Expr.ofList(
-                idents.map(t => t._1 -> t._2.asExpr).map { case (name, '{ $x }) =>
+                idents.map { case (name, ref) => name -> ref.asExpr }.map { case (name, '{ $x }) =>
                   '{ (${ Expr(name) }, () => $x) }
                 }
               )
-            else
+            else // if there are type parameters, we need to apply the type parameters to accessors
               Expr.ofList(
-                idents.map(t => t._1 -> t._2.appliedToTypes(typeArgs).asExpr).map {
+                idents.map { case (name, ref) => name -> ref.appliedToTypes(typeArgs).asExpr }.map {
                   case (name, '{ $x }) => '{ (${ Expr(name) }, () => $x) }
                 }
               )
 
-          '{ $defaultsExpr.toMap }
+          '{ $defaultsThunksExpr.toMap }
         catch // TODO drop after https://github.com/lampepfl/dotty/issues/19732 (after bump to 3.3.4)
           case cce: ClassCastException =>
             '{
