@@ -502,3 +502,66 @@ class DecoderSuite extends munit.FunSuite:
         assert(error.msg.contains("Could't construct int from null (tag:yaml.org,2002:null)"))
       case Right(data) => fail(s"expected failure, but got: $data")
   }
+
+  test("default parameters for case classes can be used when decoding") {
+    case class Foo(a: Int = 1, b: String = "test", c: Option[Int] = None, d: Double)
+        derives YamlCodec
+
+    val yaml = """d: 1.0""".stripMargin
+
+    yaml.as[Foo] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foo) =>
+        assertEquals(foo.a, 1)
+        assertEquals(foo.b, "test")
+        assertEquals(foo.c, None)
+        assertEquals(foo.d, 1.0)
+  }
+
+  test("default parameters for case classes are evaluated lazily") {
+    var times = 0
+    def createB = {
+      times += 1
+      s"test-${times}"
+    }
+    case class Foo(a: Int, b: String = createB) derives YamlCodec
+
+    val yaml = """a: 1""".stripMargin
+
+    yaml.as[Foo] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foo) =>
+        assertEquals(foo.a, 1)
+        assertEquals(foo.b, "test-1")
+
+    yaml.as[Foo] // skip test-2
+
+    yaml.as[Foo] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foo) =>
+        assertEquals(foo.a, 1)
+        assertEquals(foo.b, "test-3")
+  }
+
+  test("default parameters are not evaluated when they are provided in yaml") {
+    var evaluated = false
+    def createB = {
+      evaluated = true
+      "default"
+    }
+    case class Foo(a: Int, b: String = createB) derives YamlCodec
+
+    val yaml = """a: 1
+                 |b: from yaml""".stripMargin
+
+    yaml.as[Foo] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foo) =>
+        assertEquals(foo.a, 1)
+        assertEquals(foo.b, "from yaml")
+        assert(!evaluated)
+  }
