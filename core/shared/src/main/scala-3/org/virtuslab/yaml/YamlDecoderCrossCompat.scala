@@ -6,39 +6,50 @@ import scala.compiletime.*
 import scala.quoted.*
 import scala.deriving.Mirror
 
-private[yaml] trait YamlDecoderCompanionCrossCompat extends DecoderMacros {
-  inline def derived[T](using m: Mirror.Of[T]): YamlDecoder[T] = inline m match
-    case p: Mirror.ProductOf[T] => deriveProduct(p)
-    case s: Mirror.SumOf[T]     => sumOf(s)
-}
-
-private[yaml] trait DecoderMacros {
-
-  protected inline def deriveProduct[T](p: Mirror.ProductOf[T]) = ${
-    DecoderMacros.deriveProductImpl[T]('p)
-  }
-
-  protected inline def sumOf[T](s: Mirror.SumOf[T]) =
-    val instances = summonSumOf[s.MirroredElemTypes].asInstanceOf[List[YamlDecoder[T]]]
-    new YamlDecoder[T]:
-      override def construct(
-          node: Node
-      )(using constructor: LoadSettings = LoadSettings.empty): Either[ConstructError, T] = LazyList
-        .from(instances)
-        .map(c => c.construct(node))
-        .collectFirst { case r @ Right(_) => r }
-        .getOrElse(Left(ConstructError.from(s"Cannot parse $node", node)))
-
-  protected inline def summonSumOf[T <: Tuple]: List[YamlDecoder[_]] = inline erasedValue[T] match
-    case _: (t *: ts) =>
-      summonFrom { case p: Mirror.ProductOf[`t`] =>
-        deriveProduct(p) :: summonSumOf[ts]
-      }
-    case _: EmptyTuple => Nil
-
+private[yaml] trait YamlDecoderCompanionCrossCompat {
+  inline def derived[T](using m: Mirror.Of[T]): YamlDecoder[T] = ${ DecoderMacros.derivedImpl('m) }
 }
 
 object DecoderMacros {
+
+  def derivedImpl[T: Type](m: Expr[Mirror.Of[T]])(using Quotes): Expr[YamlDecoder[T]] =
+    m match
+      case '{ $m: Mirror.ProductOf[T] } => deriveProduct(m)
+      case '{ $m: Mirror.SumOf[T] }     => deriveSum(m)
+
+  protected def summonSumOf[T <: Tuple: Type](using q: Quotes): List[Expr[YamlDecoder[_]]] =
+    import q.reflect.report.*
+    Type.of[T] match
+      case '[t *: ts] =>
+        Expr.summon[Mirror.ProductOf[t]] match
+          case Some(p) => deriveProduct[t](p) :: summonSumOf[ts]
+          case None =>
+            Expr.summon[YamlDecoder[t]] match
+              case Some(d) => d :: summonSumOf[ts]
+              case None => errorAndAbort(s"Missing given instance of YamlDecoder[${Type.show[t]}]")
+      case '[EmptyTuple] => Nil
+
+  def deriveSum[T: Type](s: Expr[Mirror.SumOf[T]])(using Quotes): Expr[YamlDecoder[T]] =
+    s match
+      case '{
+            type elementTypes <: Tuple;
+            $m: Mirror.SumOf[T] { type MirroredElemTypes = `elementTypes` }
+          } =>
+        val instancesExpr = Expr.ofList(summonSumOf[elementTypes])
+        '{
+          new YamlDecoder[T] {
+            private val instances = $instancesExpr.asInstanceOf[List[YamlDecoder[T]]]
+            override def construct(node: Node)(using
+                constructor: LoadSettings = LoadSettings.empty
+            ): Either[ConstructError, T] =
+              instances
+                .map(_.construct(node))
+                .collectFirst { case r @ Right(_) => r }
+                .getOrElse(
+                  Left(ConstructError.from(s"Cannot parse $node", node))
+                )
+          }
+        }
 
   protected def constructValues[T](
       instances: List[(String, YamlDecoder[?], Boolean)],
@@ -80,7 +91,7 @@ object DecoderMacros {
     else Right(valuesSeq.toMap)
   }
 
-  def deriveProductImpl[T: Type](p: Expr[Mirror.ProductOf[T]])(using
+  def deriveProduct[T: Type](p: Expr[Mirror.ProductOf[T]])(using
       Quotes
   ): Expr[YamlDecoder[T]] =
 
