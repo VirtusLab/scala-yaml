@@ -20,6 +20,11 @@ object RunnerResult {
     else Error(eventsAsStr, error)
   }
 
+  case class InvalidOutYaml(eventsResult: RunnerResult, outYaml: String, expectedOutYaml: String)
+      extends RunnerResult {
+    override val isValid = false
+  }
+
   case class Success(events: String) extends RunnerResult {
     override val isValid = true
   }

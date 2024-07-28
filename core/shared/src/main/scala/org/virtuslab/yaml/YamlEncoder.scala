@@ -48,7 +48,7 @@ object YamlEncoder extends YamlEncoderCrossCompanionCompat {
 
   implicit def forOption[T](implicit encoder: YamlEncoder[T]): YamlEncoder[Option[T]] = {
     case Some(t) => encoder.asNode(t)
-    case None    => Node.ScalarNode("", Tag.nullTag)
+    case None    => Node.ScalarNode("", Tag.nullTag, Node.ScalarStyle.Plain)
   }
 
   implicit def forSet[T](implicit encoder: YamlEncoder[T]): YamlEncoder[Set[T]] = (nodes) =>

@@ -38,10 +38,13 @@ target/
 # test files
 *.tml
 *.yaml
-tests/repositories/
+integration-tests/repositories/
 
 #general
 *.class
 *.log
 
 generated-docs
+
+# java=17.0.9-graalce if you use sdkman
+.sdkmanrc 
