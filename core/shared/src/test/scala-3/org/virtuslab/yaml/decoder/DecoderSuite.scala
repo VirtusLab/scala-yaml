@@ -321,7 +321,7 @@ class DecoderSuite extends munit.FunSuite:
       123      -> 321,
       "string" -> "aezakmi",
       true     -> false,
-      5.5f     -> 55.55d
+      5.5f     -> 55.55f
     )
 
     assertEquals(yaml.as[Map[Any, Any]], Right(expected))
@@ -564,4 +564,14 @@ class DecoderSuite extends munit.FunSuite:
         assertEquals(foo.a, 1)
         assertEquals(foo.b, "from yaml")
         assert(!evaluated)
+  }
+
+  test("Fails decoding -XXXinf as Float") {
+    val yaml = "-XXXinf"
+
+    yaml.as[Float] match
+      case Left(e: ConstructError) =>
+        assertEquals(e.expected, Some("Float"))
+      case Right(value) =>
+        fail(s"Should fail, but got $value")
   }

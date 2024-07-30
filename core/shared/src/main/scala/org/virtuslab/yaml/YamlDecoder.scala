@@ -92,67 +92,83 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
     tpe
   )
 
-  implicit def forInt: YamlDecoder[Int] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    val normalizedValue =
-      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
+  private def normalizeInt(string: String): String = {
+    val octal = if (string.startsWith("0o")) string.stripPrefix("0o").prepended('0') else string
+    octal.replaceAll("_", "")
+  }
 
-    Try(java.lang.Integer.decode(normalizedValue.replaceAll("_", "")).toInt).toEither.left
+  implicit def forInt: YamlDecoder[Int] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    Try(java.lang.Integer.decode(normalizeInt(value)).toInt).toEither.left
       .map(ConstructError.from(_, "Int", s))
   }
 
   implicit def forLong: YamlDecoder[Long] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    val normalizedValue =
-      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
-
-    Try(java.lang.Long.decode(normalizedValue.replaceAll("_", "")).toLong).toEither.left
+    Try(java.lang.Long.decode(normalizeInt(value)).toLong).toEither.left
       .map(ConstructError.from(_, "Long", s))
   }
 
   implicit def forDouble: YamlDecoder[Double] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    val lowercased = value.toLowerCase
-    if (lowercased.endsWith("inf")) {
-      if (value.startsWith("-")) Right(Double.NegativeInfinity)
-      else Right(Double.PositiveInfinity)
-    } else if (lowercased.endsWith("nan")) {
+    if (Tag.nan.matches(value)) {
       Right(Double.NaN)
+    } else if (Tag.plusInfinity.matches(value)) {
+      Right(Double.PositiveInfinity)
+    } else if (Tag.minusInfinity.matches(value)) {
+      Right(Double.NegativeInfinity)
     } else {
       Try(java.lang.Double.parseDouble(value.replaceAll("_", ""))).toEither.left
         .map(ConstructError.from(_, "Double", s))
     }
   }
 
+  def forDoublePrecise: YamlDecoder[Double] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    forDouble.construct(s).flatMap { n =>
+      val ns = n.toString
+      if (ns == value) Right(n) else Left(ConstructError.from(s"Double, decoded $ns", s))
+    }
+  }
+
   implicit def forFloat: YamlDecoder[Float] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    val lowercased = value.toLowerCase
-    if (lowercased.endsWith("inf")) {
-      if (value.startsWith("-")) Right(Float.NegativeInfinity)
-      else Right(Float.PositiveInfinity)
-    } else if (lowercased.endsWith("nan")) {
+    if (Tag.nan.matches(value)) {
       Right(Float.NaN)
+    } else if (Tag.plusInfinity.matches(value)) {
+      Right(Float.PositiveInfinity)
+    } else if (Tag.minusInfinity.matches(value)) {
+      Right(Float.NegativeInfinity)
     } else {
       Try(java.lang.Float.parseFloat(value.replaceAll("_", ""))).toEither.left
         .map(ConstructError.from(_, "Float", s))
     }
   }
 
-  implicit def forShort: YamlDecoder[Short] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    val normalizedValue =
-      if (value.startsWith("0o")) value.stripPrefix("0o").prepended('0') else value
+  def forFloatPrecise: YamlDecoder[Float] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    forFloat.construct(s).flatMap { n =>
+      val ns = n.toString
+      if (ns == value) Right(n) else Left(ConstructError.from(s"Float, decoded $ns", s))
+    }
+  }
 
-    Try(java.lang.Short.decode(normalizedValue.replaceAll("_", "")).toShort).toEither.left
+  implicit def forShort: YamlDecoder[Short] = YamlDecoder { case s @ ScalarNode(value, _) =>
+    Try(java.lang.Short.decode(normalizeInt(value)).toShort).toEither.left
       .map(ConstructError.from(_, "Short", s))
   }
 
   implicit def forByte: YamlDecoder[Byte] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(java.lang.Byte.decode(value.replaceAll("_", "")).toByte).toEither.left
+    Try(java.lang.Byte.decode(normalizeInt(value)).toByte).toEither.left
       .map(ConstructError.from(_, "Byte", s))
   }
 
   implicit def forBoolean: YamlDecoder[Boolean] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    value.toBooleanOption.toRight(cannotParse(value, "Boolean", s))
+    if (Tag.falsePattern.matches(value)) {
+      Right(false)
+    } else if (Tag.truePattern.matches(value)) {
+      Right(true)
+    } else {
+      Left(cannotParse(value, "Boolean", s))
+    }
   }
 
   implicit def forBigInt: YamlDecoder[BigInt] = YamlDecoder { case s @ ScalarNode(value, _) =>
-    Try(BigInt(value.replaceAll("_", ""))).toEither.left
+    Try(BigInt(normalizeInt(value))).toEither.left
       .map(ConstructError.from(_, "BigInt", s))
   }
 
@@ -177,8 +193,9 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
           .orElse(forBigInt.widen)
           .construct(node)
       case node @ ScalarNode(_, Tag.float) =>
-        forDouble
+        forFloatPrecise
           .widen[Any]
+          .orElse(forDoublePrecise.widen)
           .orElse(forBigDecimal.widen)
           .construct(node)
       case ScalarNode(value, Tag.str) =>
