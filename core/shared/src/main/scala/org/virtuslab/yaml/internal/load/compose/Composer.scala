@@ -2,6 +2,7 @@ package org.virtuslab.yaml.internal.load.compose
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.immutable.ListMap
 
 import org.virtuslab.yaml.ComposerError
 import org.virtuslab.yaml.Node
@@ -127,7 +128,7 @@ object ComposerImpl extends Composer {
     }
 
     parseMappings(events, Nil).map { case (Result(nodes, rest), pos) =>
-      val mapping = Node.MappingNode(nodes.toMap, Tag.map, pos)
+      val mapping = Node.MappingNode(ListMap.from(nodes), Tag.map, pos)
       anchorOpt.foreach(anchor => aliases.put(anchor, mapping))
       Result(
         mapping,

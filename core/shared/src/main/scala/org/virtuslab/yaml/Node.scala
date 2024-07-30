@@ -23,6 +23,7 @@ sealed trait Node {
 }
 
 object Node {
+
   final case class ScalarNode private[yaml] (value: String, tag: Tag, pos: Option[Range] = None)
       extends Node
 
