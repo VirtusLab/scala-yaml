@@ -23,6 +23,13 @@ sealed trait Node {
 }
 
 object Node {
+
+  // Only for MappingNode key order, only ScalarNodes can be keys.
+  implicit val nodeOrdering: Ordering[Node] = Ordering.by[Node, String] {
+    case ScalarNode(value, _) => value
+    case _                    => ""
+  }
+
   final case class ScalarNode private[yaml] (value: String, tag: Tag, pos: Option[Range] = None)
       extends Node
 

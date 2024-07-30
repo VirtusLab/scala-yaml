@@ -179,4 +179,19 @@ class ParserSuite extends BaseYamlSuite {
 
     assertEquals(yaml.events, Right(expectedEvents))
   }
+
+  test("parsing keeps order of keys") {
+    val yaml = """
+                 |P: 
+                 |  a: 0
+                 |  b: 1
+                 |  c: 2
+                 |  d: 3
+                 |  e: 4
+                 |""".stripMargin
+
+    val node = yaml.asNode.toOption.get
+
+    assertEquals(node.asYaml.trim, yaml.trim)
+  }
 }

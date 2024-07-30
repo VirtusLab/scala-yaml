@@ -572,6 +572,8 @@ class DecoderSuite extends munit.FunSuite:
     yaml.as[Float] match
       case Left(e: ConstructError) =>
         assertEquals(e.expected, Some("Float"))
+      case Left(e) =>
+        fail(s"Should fail, but got $e", e)
       case Right(value) =>
         fail(s"Should fail, but got $value")
   }
