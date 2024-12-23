@@ -9,7 +9,7 @@ import org.virtuslab.yaml.syntax.YamlPrimitive
   * ADT that corresponds to the YAML representation graph nodes https://yaml.org/spec/1.2/spec.html#id2764044
 */
 sealed trait Node {
-  private[yaml] def pos: Option[Range]
+  def pos: Option[Range]
   def tag: Tag
   def as[T](implicit
       c: YamlDecoder[T],
