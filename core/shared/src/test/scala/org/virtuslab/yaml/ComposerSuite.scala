@@ -149,4 +149,39 @@ class ComposerSuite extends munit.FunSuite {
 
     assertEquals(ComposerImpl.fromEvents(events), expected)
   }
+
+  test("multiple documents") {
+    val events = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("k1"),
+      Scalar("v1"),
+      MappingEnd,
+      DocumentEnd(explicit = true),
+      DocumentStart(explicit = true),
+      MappingStart(),
+      Scalar("k2"),
+      Scalar("v2"),
+      MappingEnd,
+      DocumentEnd(explicit = true),
+      DocumentStart(explicit = true),
+      MappingStart(),
+      Scalar("k3"),
+      Scalar("v3"),
+      MappingEnd,
+      DocumentEnd(explicit = true),
+      StreamEnd
+    ).map(Event(_, None))
+
+    val expected = Right(
+      List(
+        MappingNode(ScalarNode("k1") -> ScalarNode("v1")),
+        MappingNode(ScalarNode("k2") -> ScalarNode("v2")),
+        MappingNode(ScalarNode("k3") -> ScalarNode("v3"))
+      )
+    )
+
+    assertEquals(ComposerImpl.multipleFromEvents(events), expected)
+  }
 }
