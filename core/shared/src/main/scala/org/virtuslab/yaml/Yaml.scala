@@ -12,7 +12,7 @@ package object yaml {
   /**
     * Parse YAML from the given string.
     */
-  def parseYAML(str: String): Either[YamlError, Node] =
+  def parseYaml(str: String): Either[YamlError, Node] =
     for {
       events <- {
         val parser = ParserImpl(Tokenizer.make(str))
@@ -23,7 +23,7 @@ package object yaml {
 
   /** Parse multiple YAML documents from the given string.
     */
-  def parseAllYAMLs(str: String): Either[YamlError, List[Node]] =
+  def parseAllYamls(str: String): Either[YamlError, List[Node]] =
     for {
       events <- {
         val parser = ParserImpl(Tokenizer.make(str))
@@ -47,11 +47,11 @@ package object yaml {
         settings: LoadSettings = LoadSettings.empty
     ): Either[YamlError, T] =
       for {
-        node <- parseYAML(str)
+        node <- parseYaml(str)
         t    <- node.as[T]
       } yield t
 
-    def asNode: Either[YamlError, Node] = parseYAML(str)
+    def asNode: Either[YamlError, Node] = parseYaml(str)
   }
 
   implicit class AnyOps[T](val t: T) extends AnyVal {
