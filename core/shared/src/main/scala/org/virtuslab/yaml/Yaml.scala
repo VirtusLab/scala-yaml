@@ -6,6 +6,7 @@ import org.virtuslab.yaml.internal.load.compose.ComposerImpl
 import org.virtuslab.yaml.internal.load.parse.Parser
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 import org.virtuslab.yaml.internal.load.reader.Tokenizer
+import scala.annotation.tailrec
 
 package object yaml {
 
@@ -35,13 +36,13 @@ package object yaml {
   implicit class StringOps(val str: String) extends AnyVal {
 
     /**
-   * Parse YAML from the given [[String]], returning either [[YamlError]] or [[T]].
-   *
-   * According to the specification:
-   * - [[Parser]] takes input string and produces sequence of events
-   * - then [[Composer]] produces a representation graph from events
-   * - finally [[YamlDecoder]] (construct phase from the YAML spec) constructs data type [[T]] from the YAML representation.
-   */
+     * Parse YAML from the given [[String]], returning either [[YamlError]] or [[T]].
+     *
+     * According to the specification:
+     * - [[Parser]] takes input string and produces sequence of events
+     * - then [[Composer]] produces a representation graph from events
+     * - finally [[YamlDecoder]] (construct phase from the YAML spec) constructs data type [[T]] from the YAML representation.
+     */
     def as[T](implicit
         c: YamlDecoder[T],
         settings: LoadSettings = LoadSettings.empty
@@ -50,6 +51,29 @@ package object yaml {
         node <- parseYaml(str)
         t    <- node.as[T]
       } yield t
+
+    /**
+     * Parse YAML from the given [[String]], returning either [[YamlError]] or a list of [[T]].
+     * The error will be the first failure in parsing or converting to [[T]].
+     */
+    def asMany[T](implicit
+        c: YamlDecoder[T],
+        settings: LoadSettings = LoadSettings.empty
+    ): Either[YamlError, List[T]] =
+      parseAllYamls(str).flatMap { nodes =>
+        @tailrec
+        def parseNodes(n: List[Node], out: List[T]): Either[YamlError, List[T]] =
+          n match {
+            case Nil => Right(out.reverse)
+            case head :: tail =>
+              head.as[T] match {
+                case Left(error)  => Left(error)
+                case Right(value) => parseNodes(tail, value :: out)
+              }
+          }
+
+        parseNodes(nodes, Nil)
+      }
 
     def asNode: Either[YamlError, Node] = parseYaml(str)
   }
