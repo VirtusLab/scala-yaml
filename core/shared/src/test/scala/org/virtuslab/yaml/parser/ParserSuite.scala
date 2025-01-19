@@ -207,7 +207,7 @@ class ParserSuite extends BaseYamlSuite {
     assertEquals(parseYaml(yaml).toOption.get.asYaml, yaml)
   }
 
-  test("parseAllYamls produces a node for each document") {
+  test("parseManyYamls produces a node for each document") {
     val yaml =
       """one: ah ha ha
         |---
@@ -216,7 +216,7 @@ class ParserSuite extends BaseYamlSuite {
         |three: ah ha ha
         |""".stripMargin
 
-    val nodes = parseAllYamls(yaml).toOption.get
+    val nodes = parseManyYamls(yaml).toOption.get
 
     val actual = nodes.map(_.asYaml).mkString("---\n")
 
