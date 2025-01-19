@@ -156,7 +156,7 @@ class ParserSuite extends BaseYamlSuite {
   }
 
   test("issue 313 - parsing elipsis in plain scalar") {
-    val yaml = """|P: 
+    val yaml = """|P:
                   |  e: S...
                   |  c: N
                   |""".stripMargin
@@ -182,7 +182,7 @@ class ParserSuite extends BaseYamlSuite {
 
   test("parsing keeps order of keys") {
     val yaml = """
-                 |P: 
+                 |P:
                  |  a: 0
                  |  b: 1
                  |  c: 2
@@ -199,7 +199,7 @@ class ParserSuite extends BaseYamlSuite {
     val yaml =
       """name: John Wick
         |age: 40
-        |address: 
+        |address:
         |  - Anywhere
         |  - 12-345
         |""".stripMargin

@@ -32,10 +32,10 @@ class YamlEncoderSuite extends munit.FunSuite:
     )
 
     val expected =
-      s"""- 
+      s"""-
          |  int: 1
          |  double: 1.997
-         |- 
+         |-
          |  int: 2
          |  double: 2.997
          |""".stripMargin
@@ -50,10 +50,10 @@ class YamlEncoderSuite extends munit.FunSuite:
     )
 
     val expected =
-      s"""- 
+      s"""-
          |  - 1
          |  - 2
-         |- 
+         |-
          |  - 3
          |  - 4
          |""".stripMargin
@@ -67,10 +67,10 @@ class YamlEncoderSuite extends munit.FunSuite:
     val data = Data(Nested(1, "one"), Nested(2, "two"))
 
     val expected =
-      s"""first: 
+      s"""first:
          |  a: 1
          |  b: one
-         |second: 
+         |second:
          |  a: 2
          |  b: two
          |""".stripMargin
@@ -115,9 +115,9 @@ class YamlEncoderSuite extends munit.FunSuite:
 
     val data = Person(Address("Anytown"), Seq(1, 2))
     val expected =
-      s"""address: 
+      s"""address:
          |  city: Anytown
-         |ints: 
+         |ints:
          |  - 1
          |  - 2
          |""".stripMargin
@@ -155,15 +155,15 @@ class YamlEncoderSuite extends munit.FunSuite:
       )
     )
     val expected = """version: 3.9
-                     |services: 
-                     |  web: 
+                     |services:
+                     |  web:
                      |    build: .
-                     |    ports: 
+                     |    ports:
                      |      - 5000:5000
-                     |    volumes: 
+                     |    volumes:
                      |      - .:/code
                      |      - logvolume01:/var/log
-                     |  redis: 
+                     |  redis:
                      |    image: redis:alpine
                      |""".stripMargin
 
