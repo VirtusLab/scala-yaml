@@ -24,7 +24,7 @@ package object yaml {
 
   /** Parse multiple YAML documents from the given string.
     */
-  def parseAllYamls(str: String): Either[YamlError, List[Node]] =
+  def parseManyYamls(str: String): Either[YamlError, List[Node]] =
     for {
       events <- {
         val parser = ParserImpl(Tokenizer.make(str))
@@ -32,6 +32,46 @@ package object yaml {
       }
       nodes <- ComposerImpl.multipleFromEvents(events)
     } yield nodes
+
+  /**
+   * Parse a YAML document from the given [[String]], returning either [[YamlError]] or [[T]].
+   *
+   * According to the specification:
+   * - [[Parser]] takes input string and produces sequence of events
+   * - then [[Composer]] produces a representation graph from events
+   * - finally [[YamlDecoder]] (construct phase from the YAML spec) constructs data type [[T]] from the YAML representation.
+   */
+  def decodeYaml[T](str: String)(implicit
+      c: YamlDecoder[T],
+      settings: LoadSettings = LoadSettings.empty
+  ): Either[YamlError, T] =
+    for {
+      node <- parseYaml(str)
+      t    <- node.as[T]
+    } yield t
+
+  /**
+   * Decode all YAML documents from the given [[String]], returning either [[YamlError]] or a list of [[T]].
+   * The error will be the first failure in parsing or converting to [[T]].
+   */
+  def decodeManyYamls[T](str: String)(implicit
+      c: YamlDecoder[T],
+      settings: LoadSettings = LoadSettings.empty
+  ): Either[YamlError, List[T]] =
+    parseManyYamls(str).flatMap { nodes =>
+      @tailrec
+      def parseNodes(n: List[Node], out: List[T]): Either[YamlError, List[T]] =
+        n match {
+          case Nil => Right(out.reverse)
+          case head :: tail =>
+            head.as[T] match {
+              case Left(error)  => Left(error)
+              case Right(value) => parseNodes(tail, value :: out)
+            }
+        }
+
+      parseNodes(nodes, Nil)
+    }
 
   implicit class StringOps(val str: String) extends AnyVal {
 
@@ -46,11 +86,7 @@ package object yaml {
     def as[T](implicit
         c: YamlDecoder[T],
         settings: LoadSettings = LoadSettings.empty
-    ): Either[YamlError, T] =
-      for {
-        node <- parseYaml(str)
-        t    <- node.as[T]
-      } yield t
+    ): Either[YamlError, T] = decodeYaml[T](str)
 
     /**
      * Parse YAML from the given [[String]], returning either [[YamlError]] or a list of [[T]].
@@ -59,21 +95,7 @@ package object yaml {
     def asMany[T](implicit
         c: YamlDecoder[T],
         settings: LoadSettings = LoadSettings.empty
-    ): Either[YamlError, List[T]] =
-      parseAllYamls(str).flatMap { nodes =>
-        @tailrec
-        def parseNodes(n: List[Node], out: List[T]): Either[YamlError, List[T]] =
-          n match {
-            case Nil => Right(out.reverse)
-            case head :: tail =>
-              head.as[T] match {
-                case Left(error)  => Left(error)
-                case Right(value) => parseNodes(tail, value :: out)
-              }
-          }
-
-        parseNodes(nodes, Nil)
-      }
+    ): Either[YamlError, List[T]] = decodeManyYamls[T](str)
 
     def asNode: Either[YamlError, Node] = parseYaml(str)
   }

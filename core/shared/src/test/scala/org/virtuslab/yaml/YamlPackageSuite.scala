@@ -25,11 +25,13 @@ class YamlPackageSuite extends BaseYamlSuite {
                |123
                |---
                |42
+               |---
+               |256
                |""".stripMargin
 
     val actual = yaml.asMany[Int]
     assert(actual.isRight)
     val ints = actual.right.get
-    assertEquals(ints, List(123, 42))
+    assertEquals(ints, List(123, 42, 256))
   }
 }
