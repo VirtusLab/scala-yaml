@@ -20,6 +20,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 8
+      - uses: sbt/setup-sbt@v1
       - run: sbt scalafmtCheckAll
 
   test:
@@ -34,6 +35,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 8
+      - uses: sbt/setup-sbt@v1
       - name: JVM tests
         if: matrix.platform == 'jvm'
         run: sbt +core/test
@@ -59,6 +61,7 @@ jobs:
       - uses: olafurpg/setup-gpg@v3
       - name: Create docs directory
         run: mkdir generated-docs
+      - uses: sbt/setup-sbt@v1
       - name: Release
         run: sbt ci-release
         env:
@@ -77,6 +80,7 @@ jobs:
         with:
           distribution: 'adopt'
           java-version: 8
+      - uses: sbt/setup-sbt@v1
       - name: Create docs directory
         run: mkdir generated-docs
       - name: Generate Website
