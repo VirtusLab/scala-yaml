@@ -21,7 +21,7 @@ trait BaseYamlSuite extends munit.FunSuite {
       case Right(tokens) => assertEquals(tokens, expectedTokens)
     }
 
-  implicit class StringOps(val yaml: String) {
+  implicit class InternalStringOps(val yaml: String) {
     def events: Either[YamlError, List[EventKind]] = {
       val tokenizer = Tokenizer.make(yaml)
       ParserImpl(tokenizer).getEvents().map(_.map(_.kind))
@@ -37,8 +37,6 @@ trait BaseYamlSuite extends munit.FunSuite {
 
       loop(Nil)
     }
-
-    def asNode: Either[YamlError, Node] = new org.virtuslab.yaml.StringOps(yaml).asNode
 
     def debugTokens: Unit = pprint.pprintln(tokens)
   }
