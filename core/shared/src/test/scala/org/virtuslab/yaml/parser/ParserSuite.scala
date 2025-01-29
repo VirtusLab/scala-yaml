@@ -194,4 +194,32 @@ class ParserSuite extends BaseYamlSuite {
 
     assertEquals(node.asYaml.trim, yaml.trim)
   }
+
+  test("parseYaml produces yaml node of document") {
+    val yaml =
+      """name: John Wick
+        |age: 40
+        |address: 
+        |  - Anywhere
+        |  - 12-345
+        |""".stripMargin
+
+    assertEquals(parseYaml(yaml).toOption.get.asYaml, yaml)
+  }
+
+  test("parseManyYamls produces a node for each document") {
+    val yaml =
+      """one: ah ha ha
+        |---
+        |two: ah ha ha
+        |---
+        |three: ah ha ha
+        |""".stripMargin
+
+    val nodes = parseManyYamls(yaml).toOption.get
+
+    val actual = nodes.map(_.asYaml).mkString("---\n")
+
+    assertEquals(actual, yaml)
+  }
 }
