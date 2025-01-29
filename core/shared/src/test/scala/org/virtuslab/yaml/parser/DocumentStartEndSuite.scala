@@ -54,7 +54,7 @@ class DocumentStartEndSpec extends BaseYamlSuite {
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  test("implicit document start") {
+  test("implicit document end") {
     val yaml =
       s"""|k1: v1
           |""".stripMargin

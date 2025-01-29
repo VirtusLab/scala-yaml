@@ -15,10 +15,11 @@ object PresenterImpl extends Presenter {
     val stack   = new mutable.Stack[EventKind]
     val newline = System.lineSeparator()
 
-    var toplevelNode = true // toplevel node should't insert newline and increase indent
-    var indent       = 0
+    var toplevelNode           = true // toplevel node should't insert newline and increase indent
+    var indent                 = 0
+    var requirePreceedingSpace = false
 
-    def parseNode(events: List[EventKind]): List[EventKind] =
+    def parseNode(events: List[EventKind], priorContentThisLine: Boolean): List[EventKind] =
       events match {
         case head :: tail =>
           head match {
@@ -33,12 +34,15 @@ object PresenterImpl extends Presenter {
             case Scalar(value, _, NodeEventMetadata(_, tag)) =>
               insertSequencePadding()
               // todo escape string using doublequotes
+              if (priorContentThisLine) {
+                sb.append(" ")
+              }
               if (tag.contains(Tag.nullTag)) sb.append("!!null")
               else sb.append(value)
               sb.append(newline)
               tail
-            case DocumentStart(_) => parseNode(tail)
-            case DocumentEnd(_)   => parseNode(tail)
+            case DocumentStart(_) => parseNode(tail, priorContentThisLine = false)
+            case DocumentEnd(_)   => parseNode(tail, priorContentThisLine = false)
             case _                => events
           }
         case Nil => Nil
@@ -52,7 +56,7 @@ object PresenterImpl extends Presenter {
           tail
         case Scalar(value, _, _) :: tail =>
           appendKey(value)
-          val rest = parseNode(tail)
+          val rest = parseNode(tail, priorContentThisLine = true)
           parseMapping(rest)
         case _ => events
       }
@@ -65,20 +69,20 @@ object PresenterImpl extends Presenter {
           popAndDecreaseIndent()
           tail
         case _ =>
-          val rest = parseNode(events)
+          val rest = parseNode(events, priorContentThisLine = true)
           parseSequence(rest)
       }
 
     def appendKey(value: String) = {
       sb.append(" " * indent)
       sb.append(value)
-      sb.append(": ")
+      sb.append(":")
     }
 
     def insertSequencePadding() = stack.headOption match {
       case Some(_: SequenceStart) =>
         sb.append(" " * indent)
-        sb.append("- ")
+        sb.append("-")
       case _ => ()
     }
 
@@ -96,7 +100,7 @@ object PresenterImpl extends Presenter {
       stack.pop()
     }
 
-    parseNode(events.toList)
+    parseNode(events.toList, priorContentThisLine = false)
     sb.result()
   }
 }
