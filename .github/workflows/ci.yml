@@ -15,8 +15,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: 8
+          cache: 'sbt'
       - uses: sbt/setup-sbt@v1
       - run: sbt scalafmtCheckAll
 
@@ -30,8 +31,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: 8
+          cache: 'sbt'
       - uses: sbt/setup-sbt@v1
       - name: JVM tests
         if: matrix.platform == 'jvm'
@@ -52,12 +54,13 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-      - uses: coursier/cache-action@v6.4
-      - name: coursier-setup
-        uses: laughedelic/coursier-setup@v1
-      - uses: olafurpg/setup-gpg@v3
       - name: Create docs directory
         run: mkdir generated-docs
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 8
+          cache: 'sbt'
       - uses: sbt/setup-sbt@v1
       - name: Release
         run: sbt ci-release
@@ -75,8 +78,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with:
-          distribution: 'adopt'
+          distribution: 'temurin'
           java-version: 8
+          cache: 'sbt'
       - uses: sbt/setup-sbt@v1
       - name: Create docs directory
         run: mkdir generated-docs
