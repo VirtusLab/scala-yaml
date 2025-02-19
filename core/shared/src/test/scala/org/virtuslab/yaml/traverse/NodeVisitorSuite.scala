@@ -28,15 +28,15 @@ class NodeVisitorSuite extends munit.FunSuite {
 
     val exptectedYaml =
       s"""version: 3.9
-         |services: 
-         |  web: 
+         |services:
+         |  web:
          |    build: .
-         |    volumes: 
+         |    volumes:
          |      - .:/code
          |      - logvolume01:/var/log
-         |    ports: 
+         |    ports:
          |      - 6000:6000
-         |  redis: 
+         |  redis:
          |    image: redis:alpine
          |""".stripMargin
 
@@ -72,15 +72,15 @@ class NodeVisitorSuite extends munit.FunSuite {
 
     val exptectedYaml =
       s"""version: 3.9
-         |services: 
-         |  web: 
+         |services:
+         |  web:
          |    build: .
-         |    volumes: 
+         |    volumes:
          |      - .:/code
          |      - logvolume01:/var/log
-         |    ports: 
+         |    ports:
          |      - 5000:5000:6000
-         |  redis: 
+         |  redis:
          |    image: redis:alpine:latest
          |""".stripMargin
 
@@ -91,10 +91,10 @@ class NodeVisitorSuite extends munit.FunSuite {
 
     val yaml =
       s"""version: "3.9"
-         |services: 
-         |  web: 
+         |services:
+         |  web:
          |    build: .
-         |    volumes: 
+         |    volumes:
          |      - .:/code
          |      - logvolume01:/var/log
          |    ports:
@@ -116,13 +116,13 @@ class NodeVisitorSuite extends munit.FunSuite {
 
     val exptectedYaml =
       s"""version: 3.9
-         |services: 
-         |  web: 
+         |services:
+         |  web:
          |    build: .
-         |    volumes: 
+         |    volumes:
          |      - .:/code
          |      - logvolume01:/var/log
-         |    ports: 
+         |    ports:
          |""".stripMargin
 
     assertEquals(modifiedYaml, exptectedYaml)
