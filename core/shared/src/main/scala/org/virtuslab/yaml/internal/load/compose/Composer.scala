@@ -17,12 +17,13 @@ import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.internal.load.parse.ParserImpl
 
 /**
- * Composing takes a series of serialization events and produces a representation graph. 
+ * Composing takes a series of serialization events and produces a representation graph.
  * It can fail due to any of several reasons e.g. unexpected event.
- * Returns either [[YamlError]] or [[Node]]
+ * Returns either [[YamlError]] or [[Node]](s)
  */
 trait Composer {
   def fromEvents(events: List[Event]): Either[YamlError, Node]
+  def multipleFromEvents(events: List[Event]): Either[YamlError, List[Node]]
 }
 
 object ComposerImpl extends Composer {
@@ -34,6 +35,26 @@ object ComposerImpl extends Composer {
   override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match {
     case Nil => Left(ComposerError("No events available"))
     case _   => composeNode(events, mutable.Map.empty).map(_.node)
+  }
+
+  override def multipleFromEvents(events: List[Event]): Either[YamlError, List[Node]] = {
+    val aliases = mutable.Map.empty[Anchor, Node]
+
+    @tailrec
+    def go(out: List[Node], remaining: List[Event]): Either[YamlError, List[Node]] =
+      remaining.headOption.map(_.kind) match {
+        case None | Some(EventKind.StreamEnd) =>
+          Right(out.reverse)
+        case Some(_: EventKind.DocumentEnd) =>
+          go(out, remaining.tail)
+        case _ =>
+          composeNode(remaining, aliases) match {
+            case Right(Result(node, tail)) => go(node :: out, tail)
+            case Left(error)               => Left(error)
+          }
+      }
+
+    go(List.empty, events)
   }
 
   private def composeNode(
