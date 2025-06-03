@@ -2,6 +2,8 @@
 
 ![Example](./docs/_assets/Scala_YAML_red.svg)
 
+[![scala-yaml Scala version support](https://index.scala-lang.org/virtuslab/scala-yaml/scala-yaml/latest-by-scala-version.svg?platform=jvm)](https://index.scala-lang.org/virtuslab/scala-yaml/scala-yaml)
+
 Scala Yaml is a dependency-free Scala library that allows you to work with [YAML](https://yaml.org/spec/1.2.2/).  
 
 The goal of this project is to create an idiomatic library which:
