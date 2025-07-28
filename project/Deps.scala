@@ -5,5 +5,5 @@ object Deps {
 
   lazy val osLib = "com.lihaoyi" %% "os-lib" % "0.11.4"
 
-  lazy val pprint = "com.lihaoyi" %% "pprint" % "0.9.1"
+  lazy val pprint = "com.lihaoyi" %% "pprint" % "0.9.3"
 }
