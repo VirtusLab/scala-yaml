@@ -1,7 +1,7 @@
 import sbt._
 
 object Deps {
-  lazy val munit = "org.scalameta" %% "munit" % "1.2.2"
+  lazy val munit = "org.scalameta" %% "munit" % "1.2.3"
 
   lazy val osLib = "com.lihaoyi" %% "os-lib" % "0.11.8"
 
