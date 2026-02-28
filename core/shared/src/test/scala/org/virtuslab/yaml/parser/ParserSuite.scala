@@ -232,6 +232,9 @@ class ParserSuite extends BaseYamlSuite {
     val Node.ScalarNode(value, tag) = nodes.head: @unchecked
     assertEquals(value, "1")
     assertEquals(tag, Tag.int)
+    val Node.ScalarNode(nullValue, nullTag) = nodes(1): @unchecked
+    assertEquals(nullValue, "")
+    assertEquals(nullTag, Tag.nullTag)
   }
 
   test("parseManyYamls handles scalar followed by ... at end of input") {
