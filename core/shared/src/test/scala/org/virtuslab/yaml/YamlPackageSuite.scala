@@ -34,4 +34,27 @@ class YamlPackageSuite extends BaseYamlSuite {
     val ints = actual.right.get
     assertEquals(ints, List(123, 42, 256))
   }
+
+  test("asMany handles scalar followed by --- at end of input") {
+    val yaml = "123\n---"
+    val nodes = parseManyYamls(yaml)
+    assert(nodes.isRight, s"parseManyYamls failed: $nodes")
+    assertEquals(nodes.toOption.get.length, 2)
+    val firstDoc = nodes.toOption.get.head.as[Int]
+    assertEquals(firstDoc, Right(123))
+  }
+
+  test("asMany handles scalar followed by ... at end of input") {
+    val yaml = "hello\n..."
+    val actual = yaml.asMany[String]
+    assert(actual.isRight, s"asMany failed: $actual")
+    assertEquals(actual.toOption.get, List("hello"))
+  }
+
+  test("asMany handles multiple documents without trailing newline") {
+    val yaml = "a\n---\nb\n---\nc"
+    val actual = yaml.asMany[String]
+    assert(actual.isRight, s"asMany failed: $actual")
+    assertEquals(actual.toOption.get, List("a", "b", "c"))
+  }
 }

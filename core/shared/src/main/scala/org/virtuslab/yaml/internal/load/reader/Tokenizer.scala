@@ -1,25 +1,13 @@
 package org.virtuslab.yaml.internal.load.reader
 
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
+import org.virtuslab.yaml.{Range, ScannerError, YamlError}
+import org.virtuslab.yaml.internal.load.{TagHandle, TagPrefix, TagValue}
+import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator._
+import org.virtuslab.yaml.internal.load.reader.token.{BlockChompingIndicator, ScalarStyle, Token, TokenKind}
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind._
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
-import scala.util.Try
-
-import org.virtuslab.yaml.Range
-import org.virtuslab.yaml.ScannerError
-import org.virtuslab.yaml.YamlError
-import org.virtuslab.yaml.internal.load.TagHandle
-import org.virtuslab.yaml.internal.load.TagPrefix
-import org.virtuslab.yaml.internal.load.TagSuffix
-import org.virtuslab.yaml.internal.load.TagValue
-import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator
-import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator._
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
-import org.virtuslab.yaml.internal.load.reader.token.Token
-import org.virtuslab.yaml.internal.load.reader.token.TokenKind
-import org.virtuslab.yaml.internal.load.reader.token.TokenKind._
 
 trait Tokenizer {
   def peekToken(): Either[YamlError, Token]
@@ -97,19 +85,23 @@ private class StringTokenizer(str: String) extends Tokenizer {
     closedTokens ++ tokens
   }
 
-  private def isDocumentStart =
-    in.peekN(3) == "---" && in.peek(3).isWhitespace
+  private def isDocumentStart = {
+    val charAfterMarker = in.peek(3)
+    in.peekN(3) == "---" && (charAfterMarker.isWhitespace || charAfterMarker == Reader.nullTerminator)
+  }
 
   private def parseDocumentStart() = {
-    in.skipN(4)
+    if (in.peek(3) == Reader.nullTerminator) in.skipN(3) else in.skipN(4)
     ctx.parseDocumentStart(in.column)
   }
 
-  private def isDocumentEnd =
-    in.peekN(3) == "..." && in.peek(3).isWhitespace
+  private def isDocumentEnd = {
+    val charAfterMarker = in.peek(3)
+    in.peekN(3) == "..." && (charAfterMarker.isWhitespace || charAfterMarker == Reader.nullTerminator)
+  }
 
   private def parseDocumentEnd() = {
-    in.skipN(4)
+    if (in.peek(3) == Reader.nullTerminator) in.skipN(3) else in.skipN(4)
     ctx.parseDocumentEnd()
   }
 

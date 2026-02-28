@@ -222,4 +222,54 @@ class ParserSuite extends BaseYamlSuite {
 
     assertEquals(actual, yaml)
   }
+
+  test("parseManyYamls handles scalar followed by --- at end of input") {
+    val yaml = "1\n---"
+    val result = parseManyYamls(yaml)
+    assert(result.isRight, s"parseManyYamls failed: $result")
+    val nodes = result.toOption.get
+    assertEquals(nodes.length, 2)
+    val Node.ScalarNode(value, tag) = nodes.head: @unchecked
+    assertEquals(value, "1")
+    assertEquals(tag, Tag.int)
+  }
+
+  test("parseManyYamls handles scalar followed by ... at end of input") {
+    val yaml = "1\n..."
+    val result = parseManyYamls(yaml)
+    assert(result.isRight, s"parseManyYamls failed: $result")
+    val nodes = result.toOption.get
+    assertEquals(nodes.length, 1)
+    val Node.ScalarNode(value, tag) = nodes.head: @unchecked
+    assertEquals(value, "1")
+    assertEquals(tag, Tag.int)
+  }
+
+  test("parseManyYamls handles --- without trailing newline") {
+    val yaml = "---"
+    val result = parseManyYamls(yaml)
+    assert(result.isRight, s"parseManyYamls failed: $result")
+    val nodes = result.toOption.get
+    assertEquals(nodes.length, 1)
+  }
+
+  test("parseManyYamls handles multiple --- without trailing newlines") {
+    val yaml = "a\n---\nb\n---\nc"
+    val result = parseManyYamls(yaml)
+    assert(result.isRight, s"parseManyYamls failed: $result")
+    val nodes = result.toOption.get
+    assertEquals(nodes.length, 3)
+    nodes.zip(List("a", "b", "c")).foreach { case (node, expected) =>
+      val Node.ScalarNode(value, _) = node: @unchecked
+      assertEquals(value, expected)
+    }
+  }
+
+  test("parseManyYamls handles mapping followed by --- at end of input") {
+    val yaml = "k: v\n---"
+    val result = parseManyYamls(yaml)
+    assert(result.isRight, s"parseManyYamls failed: $result")
+    val nodes = result.toOption.get
+    assertEquals(nodes.length, 2)
+  }
 }
