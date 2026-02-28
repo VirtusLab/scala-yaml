@@ -40,13 +40,11 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
   test("property: ... at end of input produces no documents") {
     val yaml = "..."
     // standalone ... without prior content is treated as an empty stream (no documents)
-    // parseYaml/parseManyYamls may return Left since there's no node to compose,
-    // but it should never throw an exception
+    // parseManyYamls is expected to successfully parse this as an empty stream and return Right(Nil)
     val result = parseManyYamls(yaml)
-    result match {
-      case Right(nodes) => assertEquals(nodes.length, 0)
-      case Left(_)      => () // acceptable: no document to compose
-    }
+    assert(result.isRight, s"Failed for input: $yaml => $result")
+    val nodes = result.toOption.get
+    assertEquals(nodes.length, 0, s"Expected no documents for input: $yaml")
   }
 
   // --- Property: parseManyYamls document count should be consistent ---
