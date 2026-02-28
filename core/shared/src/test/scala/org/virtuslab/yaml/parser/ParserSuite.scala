@@ -274,5 +274,7 @@ class ParserSuite extends BaseYamlSuite {
     assert(result.isRight, s"parseManyYamls failed: $result")
     val nodes = result.toOption.get
     assertEquals(nodes.length, 2)
+    val Node.ScalarNode(_, tag) = nodes(1): @unchecked
+    assertEquals(tag, Tag.null)
   }
 }
