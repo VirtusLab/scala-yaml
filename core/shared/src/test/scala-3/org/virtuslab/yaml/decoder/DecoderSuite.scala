@@ -577,3 +577,39 @@ class DecoderSuite extends munit.FunSuite:
       case Right(value) =>
         fail(s"Should fail, but got $value")
   }
+
+  test("Recursive case class".only) {
+    sealed trait Tree derives YamlDecoder
+    object Tree:
+      final case class Branch(left: Tree, right: Tree) extends Tree
+      final case class Leaf(value: Int) extends Tree
+    
+    val yaml = """type: Branch
+                 |left:
+                 |  type: Leaf
+                 |  value: 1
+                 |right:
+                 |  type: Branch
+                 |  left:
+                 |    type: Leaf
+                 |    value: 2
+                 |  right:
+                 |    type: Leaf
+                 |    value: 3""".stripMargin
+
+    val node = yaml.asNode
+
+    yaml.as[Tree] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(foo) =>
+        val expected =
+          Tree.Branch(
+            left = Tree.Leaf(1),
+            right = Tree.Branch(
+              left = Tree.Leaf(2),
+              right = Tree.Leaf(3)
+            )
+          )
+        assertEquals(foo, expected)
+  }
