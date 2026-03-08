@@ -45,7 +45,7 @@ object ComposerImpl extends Composer {
       remaining.headOption.map(_.kind) match {
         case None | Some(EventKind.StreamEnd) =>
           Right(out.reverse)
-        case Some(_: EventKind.DocumentEnd) =>
+        case Some(EventKind.StreamStart) | Some(_: EventKind.DocumentEnd) =>
           go(out, remaining.tail)
         case _ =>
           composeNode(remaining, aliases) match {

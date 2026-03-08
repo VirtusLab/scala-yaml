@@ -224,7 +224,7 @@ class ParserSuite extends BaseYamlSuite {
   }
 
   test("parseManyYamls handles scalar followed by --- at end of input") {
-    val yaml = "1\n---"
+    val yaml   = "1\n---"
     val result = parseManyYamls(yaml)
     assert(result.isRight, s"parseManyYamls failed: $result")
     val nodes = result.toOption.get
@@ -238,7 +238,7 @@ class ParserSuite extends BaseYamlSuite {
   }
 
   test("parseManyYamls handles scalar followed by ... at end of input") {
-    val yaml = "1\n..."
+    val yaml   = "1\n..."
     val result = parseManyYamls(yaml)
     assert(result.isRight, s"parseManyYamls failed: $result")
     val nodes = result.toOption.get
@@ -249,7 +249,7 @@ class ParserSuite extends BaseYamlSuite {
   }
 
   test("parseManyYamls handles --- without trailing newline") {
-    val yaml = "---"
+    val yaml   = "---"
     val result = parseManyYamls(yaml)
     assert(result.isRight, s"parseManyYamls failed: $result")
     val nodes = result.toOption.get
@@ -257,7 +257,7 @@ class ParserSuite extends BaseYamlSuite {
   }
 
   test("parseManyYamls handles multiple --- without trailing newlines") {
-    val yaml = "a\n---\nb\n---\nc"
+    val yaml   = "a\n---\nb\n---\nc"
     val result = parseManyYamls(yaml)
     assert(result.isRight, s"parseManyYamls failed: $result")
     val nodes = result.toOption.get
@@ -269,7 +269,7 @@ class ParserSuite extends BaseYamlSuite {
   }
 
   test("parseManyYamls handles mapping followed by --- at end of input") {
-    val yaml = "k: v\n---"
+    val yaml   = "k: v\n---"
     val result = parseManyYamls(yaml)
     assert(result.isRight, s"parseManyYamls failed: $result")
     val nodes = result.toOption.get

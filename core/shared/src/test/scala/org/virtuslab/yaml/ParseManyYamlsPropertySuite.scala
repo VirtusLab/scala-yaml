@@ -13,7 +13,7 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
 
   test("property: scalar + newline + --- (no trailing newline) always parses") {
     for (s <- scalars) {
-      val yaml = s"$s\n---"
+      val yaml   = s"$s\n---"
       val result = parseManyYamls(yaml)
       assert(result.isRight, s"Failed for input: ${yaml.replace("\n", "\\n")} => $result")
       val nodes = result.toOption.get
@@ -23,7 +23,7 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
 
   test("property: scalar + newline + ... (no trailing newline) always parses") {
     for (s <- scalars) {
-      val yaml = s"$s\n..."
+      val yaml   = s"$s\n..."
       val result = parseManyYamls(yaml)
       assert(result.isRight, s"Failed for input: ${yaml.replace("\n", "\\n")} => $result")
       val nodes = result.toOption.get
@@ -32,7 +32,7 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
   }
 
   test("property: --- at end of input always produces a document") {
-    val yaml = "---"
+    val yaml   = "---"
     val result = parseManyYamls(yaml)
     assert(result.isRight, s"Failed for input: $yaml => $result")
   }
@@ -51,8 +51,8 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
 
   test("property: N documents separated by --- produce N nodes") {
     for (n <- 1 to 5) {
-      val docs = (1 to n).map(i => s"doc$i")
-      val yaml = docs.mkString("\n---\n")
+      val docs   = (1 to n).map(i => s"doc$i")
+      val yaml   = docs.mkString("\n---\n")
       val result = parseManyYamls(yaml)
       assert(result.isRight, s"Failed for $n docs: $result")
       val nodes = result.toOption.get
@@ -62,8 +62,8 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
 
   test("property: N documents separated by --- with trailing newline produce N nodes") {
     for (n <- 1 to 5) {
-      val docs = (1 to n).map(i => s"doc$i")
-      val yaml = docs.mkString("\n---\n") + "\n"
+      val docs   = (1 to n).map(i => s"doc$i")
+      val yaml   = docs.mkString("\n---\n") + "\n"
       val result = parseManyYamls(yaml)
       assert(result.isRight, s"Failed for $n docs: $result")
       val nodes = result.toOption.get
@@ -75,10 +75,10 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
 
   test("property: trailing newline does not change document count for scalar + ---") {
     for (s <- scalars) {
-      val yamlNoNewline = s"$s\n---"
+      val yamlNoNewline   = s"$s\n---"
       val yamlWithNewline = s"$s\n---\n"
-      val resultNo = parseManyYamls(yamlNoNewline)
-      val resultWith = parseManyYamls(yamlWithNewline)
+      val resultNo        = parseManyYamls(yamlNoNewline)
+      val resultWith      = parseManyYamls(yamlWithNewline)
       assert(resultNo.isRight, s"Failed without newline: $resultNo")
       assert(resultWith.isRight, s"Failed with newline: $resultWith")
       assertEquals(
@@ -91,10 +91,10 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
 
   test("property: trailing newline does not change document count for scalar + ...") {
     for (s <- scalars) {
-      val yamlNoNewline = s"$s\n..."
+      val yamlNoNewline   = s"$s\n..."
       val yamlWithNewline = s"$s\n...\n"
-      val resultNo = parseManyYamls(yamlNoNewline)
-      val resultWith = parseManyYamls(yamlWithNewline)
+      val resultNo        = parseManyYamls(yamlNoNewline)
+      val resultWith      = parseManyYamls(yamlWithNewline)
       assert(resultNo.isRight, s"Failed without newline: $resultNo")
       assert(resultWith.isRight, s"Failed with newline: $resultWith")
       assertEquals(
@@ -109,7 +109,7 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
 
   test("property: first document scalar value is preserved when followed by ---") {
     for (s <- scalars) {
-      val yaml = s"$s\n---"
+      val yaml   = s"$s\n---"
       val result = parseManyYamls(yaml)
       assert(result.isRight)
       val firstNode = result.toOption.get.head
@@ -124,7 +124,7 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
 
   test("property: first document scalar value is preserved when followed by ...") {
     for (s <- scalars) {
-      val yaml = s"$s\n..."
+      val yaml   = s"$s\n..."
       val result = parseManyYamls(yaml)
       assert(result.isRight)
       val firstNode = result.toOption.get.head
@@ -142,7 +142,7 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
   test("property: mappings followed by --- at end of input") {
     val mappings = List("a: 1", "key: value", "x: y")
     for (m <- mappings) {
-      val yaml = s"$m\n---"
+      val yaml   = s"$m\n---"
       val result = parseManyYamls(yaml)
       assert(result.isRight, s"Failed for input: ${yaml.replace("\n", "\\n")} => $result")
       assertEquals(result.toOption.get.length, 2)
@@ -152,11 +152,10 @@ class ParseManyYamlsPropertySuite extends BaseYamlSuite {
   test("property: mappings followed by ... at end of input") {
     val mappings = List("a: 1", "key: value", "x: y")
     for (m <- mappings) {
-      val yaml = s"$m\n..."
+      val yaml   = s"$m\n..."
       val result = parseManyYamls(yaml)
       assert(result.isRight, s"Failed for input: ${yaml.replace("\n", "\\n")} => $result")
       assertEquals(result.toOption.get.length, 1)
     }
   }
 }
-

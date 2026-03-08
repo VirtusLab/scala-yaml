@@ -36,7 +36,7 @@ class YamlPackageSuite extends BaseYamlSuite {
   }
 
   test("asMany handles scalar followed by --- at end of input") {
-    val yaml = "123\n---"
+    val yaml   = "123\n---"
     val actual = yaml.asMany[Option[Int]]
     assert(actual.isRight, s"asMany failed: $actual")
     val values = actual.toOption.get
@@ -46,14 +46,14 @@ class YamlPackageSuite extends BaseYamlSuite {
   }
 
   test("asMany handles scalar followed by ... at end of input") {
-    val yaml = "hello\n..."
+    val yaml   = "hello\n..."
     val actual = yaml.asMany[String]
     assert(actual.isRight, s"asMany failed: $actual")
     assertEquals(actual.toOption.get, List("hello"))
   }
 
   test("asMany handles multiple documents without trailing newline") {
-    val yaml = "a\n---\nb\n---\nc"
+    val yaml   = "a\n---\nb\n---\nc"
     val actual = yaml.asMany[String]
     assert(actual.isRight, s"asMany failed: $actual")
     assertEquals(actual.toOption.get, List("a", "b", "c"))
