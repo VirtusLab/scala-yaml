@@ -2,6 +2,8 @@ package org.virtuslab.yaml
 package parser
 
 import org.virtuslab.yaml.internal.load.parse.EventKind._
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
+import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class DocumentStartEndSpec extends BaseYamlSuite {
 
@@ -155,6 +157,93 @@ class DocumentStartEndSpec extends BaseYamlSuite {
       Scalar("k2"),
       Scalar("v2"),
       MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("document start marker at end of input without trailing newline") {
+    val yaml = "1\n---"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("1"),
+      DocumentEnd(),
+      DocumentStart(explicit = true),
+      Scalar("", ScalarStyle.Plain, NodeEventMetadata.apply(Tag.nullTag)),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("document end marker at end of input without trailing newline") {
+    val yaml = "1\n..."
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("1"),
+      DocumentEnd(explicit = true),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("standalone document start marker without trailing newline") {
+    val yaml = "---"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(explicit = true),
+      Scalar("", ScalarStyle.Plain, NodeEventMetadata.apply(Tag.nullTag)),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("standalone document end marker without trailing newline") {
+    val yaml = "..."
+
+    val expectedEvents = List(
+      StreamStart,
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("scalar followed by document start at end of input is two documents") {
+    val yaml = "hello\n---"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      Scalar("hello"),
+      DocumentEnd(),
+      DocumentStart(explicit = true),
+      Scalar("", ScalarStyle.Plain, NodeEventMetadata.apply(Tag.nullTag)),
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("mapping followed by document start at end of input") {
+    val yaml = "k: v\n---"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("k"),
+      Scalar("v"),
+      MappingEnd,
+      DocumentEnd(),
+      DocumentStart(explicit = true),
+      Scalar("", ScalarStyle.Plain, NodeEventMetadata.apply(Tag.nullTag)),
       DocumentEnd(),
       StreamEnd
     )

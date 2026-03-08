@@ -97,19 +97,27 @@ private class StringTokenizer(str: String) extends Tokenizer {
     closedTokens ++ tokens
   }
 
-  private def isDocumentStart =
-    in.peekN(3) == "---" && in.peek(3).isWhitespace
+  private def isDocumentStart = {
+    val charAfterMarker = in.peek(3)
+    in.peekN(
+      3
+    ) == "---" && (charAfterMarker.isWhitespace || charAfterMarker == Reader.nullTerminator)
+  }
 
   private def parseDocumentStart() = {
-    in.skipN(4)
+    if (in.peek(3) == Reader.nullTerminator) in.skipN(3) else in.skipN(4)
     ctx.parseDocumentStart(in.column)
   }
 
-  private def isDocumentEnd =
-    in.peekN(3) == "..." && in.peek(3).isWhitespace
+  private def isDocumentEnd = {
+    val charAfterMarker = in.peek(3)
+    in.peekN(
+      3
+    ) == "..." && (charAfterMarker.isWhitespace || charAfterMarker == Reader.nullTerminator)
+  }
 
   private def parseDocumentEnd() = {
-    in.skipN(4)
+    if (in.peek(3) == Reader.nullTerminator) in.skipN(3) else in.skipN(4)
     ctx.parseDocumentEnd()
   }
 
