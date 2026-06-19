@@ -120,10 +120,14 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
     }
   }
 
+  private def isNonFiniteFloat(value: String): Boolean =
+    Tag.nan.matches(value) || Tag.plusInfinity.matches(value) || Tag.minusInfinity.matches(value)
+
   def forDoublePrecise: YamlDecoder[Double] = YamlDecoder { case s @ ScalarNode(value, _) =>
     forDouble.construct(s).flatMap { n =>
       val ns = n.toString
-      if (ns == value) Right(n) else Left(ConstructError.from(s"Double, decoded $ns", s))
+      if (ns == value || isNonFiniteFloat(value)) Right(n)
+      else Left(ConstructError.from(s"Double, decoded $ns", s))
     }
   }
 
@@ -143,7 +147,8 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
   def forFloatPrecise: YamlDecoder[Float] = YamlDecoder { case s @ ScalarNode(value, _) =>
     forFloat.construct(s).flatMap { n =>
       val ns = n.toString
-      if (ns == value) Right(n) else Left(ConstructError.from(s"Float, decoded $ns", s))
+      if (ns == value || isNonFiniteFloat(value)) Right(n)
+      else Left(ConstructError.from(s"Float, decoded $ns", s))
     }
   }
 
