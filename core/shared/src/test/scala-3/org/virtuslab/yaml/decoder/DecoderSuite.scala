@@ -487,6 +487,30 @@ class DecoderSuite extends munit.FunSuite:
         assertEquals(value, Map("value" -> 0.018256052173961423))
   }
 
+  test("decode non-finite floats as Any") {
+    val yaml = "values: [.inf, -.Inf, +.INF, .NAN, .nan, .NaN]"
+
+    yaml.as[Any] match
+      case Left(error: YamlError) =>
+        fail(s"failed with YamlError: $error")
+      case Right(value) =>
+        val values = value.asInstanceOf[Map[String, List[Any]]]("values")
+        val expected = List(
+          Float.PositiveInfinity,
+          Float.NegativeInfinity,
+          Float.PositiveInfinity,
+          Float.NaN,
+          Float.NaN,
+          Float.NaN
+        )
+        values.zipAll(expected, 0f, 0f).foreach {
+          case (actual: Float, expected) =>
+            assertEqualsFloat(actual, expected, 0f)
+          case (actual, _) =>
+            fail(s"Expected Float, got ${actual.getClass.getName}: $actual")
+        }
+  }
+
   test("issue 120 - fail conversion of !!null to non-optional types") {
     case class Foo(key1: Int, key2: Int) derives YamlDecoder
 
