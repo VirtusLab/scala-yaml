@@ -1,4 +1,4 @@
-import BuildHelper._
+import BuildHelper.*
 
 def scala3Version        = "3.3.8"
 def scala2Version        = "2.13.18"
@@ -11,7 +11,7 @@ enablePlugins(NoPublishPlugin)
 inThisBuild(
   List(
     organization       := "org.virtuslab",
-    crossScalaVersions := Seq(scala2Version, scala3Version),
+    crossScalaVersions := Seq(scala3Version, scala2Version),
     scalaVersion       := scala3Version,
     version ~= { dynVer =>
       if (isCI) dynVer
@@ -34,7 +34,8 @@ inThisBuild(
         "kamilpodsiadlo44@gmail.com",
         url("https://github.com/kpodsiad")
       )
-    )
+    ),
+    testFrameworks += new TestFramework("munit.Framework")
   )
 )
 
@@ -67,6 +68,18 @@ lazy val integration = project
       Deps.munit,
       Deps.osLib,
       Deps.pprint
+    ),
+    Compile / doc / sources := Seq.empty
+  )
+  .enablePlugins(NoPublishPlugin)
+
+lazy val benchmark = project
+  .enablePlugins(JmhPlugin)
+  .dependsOn(core.jvm)
+  .settings(
+    crossScalaVersions := Seq(scala3Version),
+    libraryDependencies ++= List(
+      Deps.munit,
     ),
     Compile / doc / sources := Seq.empty
   )

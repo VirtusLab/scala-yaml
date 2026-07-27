@@ -6,15 +6,13 @@ import org.virtuslab.yaml.Node.*
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.syntax.YamlPrimitive
 
-class NodeCreationSuite extends munit.FunSuite:
-
+class NodeCreationSuite extends munit.FunSuite {
   test("mapping node") {
     val node = MappingNode(
       "hr"   -> "65",
       "avg"  -> "0.278",
       "blob" -> "nostradamus"
     )
-
     assertEquals(
       node.asYaml,
       s"""|hr: 65
@@ -30,7 +28,6 @@ class NodeCreationSuite extends munit.FunSuite:
       "66",
       "aezakmi"
     )
-
     assertEquals(
       node.asYaml,
       s"""|- 65
@@ -54,19 +51,17 @@ class NodeCreationSuite extends munit.FunSuite:
       ),
       "standalone value"
     )
-
     assertEquals(
       node.asYaml,
-      """|- 
+      """|-
          |  key: value
-         |- 
+         |-
          |  key2: value2
-         |  seq: 
+         |  seq:
          |    - v1
          |    - v2
          |- standalone value
          |""".stripMargin
     )
   }
-
-end NodeCreationSuite
+}

@@ -1,0 +1,104 @@
+version: "3.8"
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+services:
+  frontend:
+    image: nginx:1.25-alpine
+    container_name: web-frontend
+    ports:
+      - "80:80"
+    networks:
+      - public_net
+    depends_on:
+      - api
+    restart: unless-stopped
+    logging: *default-logging
+  api:
+    image: node:20-alpine
+    container_name: backend-api
+    command: ["node", "-e", "console.log('API Started'); setInterval(() => {}, 1000);"]
+    environment:
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    ports:
+      - "8080:8080"
+    networks:
+      - public_net
+      - private_net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+    logging: *default-logging
+  postgres:
+    image: postgres:16-alpine
+    container_name: main-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secure_password_123
+      POSTGRES_DB: application_db
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - private_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d application_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+  redis:
+    image: redis:7-alpine
+    container_name: session-cache
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - cache_data:/data
+    networks:
+      - private_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    logging: *default-logging
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: message-broker
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "15672:15672"
+    volumes:
+      - mq_data:/var/lib/rabbitmq
+    networks:
+      - private_net
+    logging: *default-logging
+networks:
+  public_net:
+    driver: bridge
+  private_net:
+    driver: bridge
+    internal: true
+volumes:
+  db_data:
+    driver: local
+  cache_data:
+    driver: local
+  mq_data:
+    driver: local

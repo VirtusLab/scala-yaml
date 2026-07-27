@@ -1,34 +1,41 @@
 package org.virtuslab.yaml.internal.dump.serialize
 
+import scala.collection.mutable.Builder
 import org.virtuslab.yaml.Node
-import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.internal.load.parse.EventKind
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 
+import scala.collection.immutable.ArraySeq
+
 object SerializerImpl extends Serializer {
-  override def toEvents(node: Node): Seq[EventKind] =
-    Seq(DocumentStart()) ++ convertNode(node) ++ Seq(DocumentEnd())
-
-  private def convertNode(node: Node) = node match {
-    case scalar: Node.ScalarNode     => convertScalarNode(scalar)
-    case mapping: Node.MappingNode   => convertMappingNode(mapping)
-    case sequence: Node.SequenceNode => convertSequenceNode(sequence)
+  override def toEvents(node: Node): Seq[EventKind] = {
+    val builder = ArraySeq.newBuilder[EventKind]
+    builder.addOne(DocumentStart())
+    convertNode(node, builder)
+    builder.addOne(DocumentEnd())
+    builder.result()
   }
 
-  private def convertMappingNode(node: Node.MappingNode): Seq[EventKind] = {
-    val events = node.mappings.toSeq.flatMap { case (k, v) =>
-      Seq(convertNode(k), convertNode(v))
-    }.flatten
-    Seq(MappingStart()) ++ events ++ Seq(MappingEnd)
-  }
-
-  private def convertSequenceNode(node: Node.SequenceNode): Seq[EventKind] = {
-    val events = node.nodes.map(convertNode(_)).flatten
-    Seq(SequenceStart()) ++ events ++ Seq(SequenceEnd)
-  }
-
-  private def convertScalarNode(node: Node.ScalarNode): Seq[EventKind] =
-    Seq(Scalar(node.value, metadata = NodeEventMetadata(tag = node.tag)))
-
+  private def convertNode(node: Node, builder: Builder[EventKind, Seq[EventKind]]): Unit =
+    node match {
+      case scalar: Node.ScalarNode =>
+        builder.addOne(new Scalar(scalar.value, metadata = NodeEventMetadata(tag = scalar.tag)))
+      case mapping: Node.MappingNode =>
+        builder.addOne(MappingStart())
+        val it = mapping.mappings.iterator
+        while (it.hasNext) {
+          val kv = it.next()
+          convertNode(kv._1, builder)
+          convertNode(kv._2, builder)
+        }
+        builder.addOne(MappingEnd)
+      case sequence: Node.SequenceNode =>
+        builder.addOne(SequenceStart())
+        val it = sequence.nodes.iterator
+        while (it.hasNext) {
+          convertNode(it.next(), builder)
+        }
+        builder.addOne(SequenceEnd)
+    }
 }

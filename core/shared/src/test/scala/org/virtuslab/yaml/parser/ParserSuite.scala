@@ -182,16 +182,14 @@ class ParserSuite extends BaseYamlSuite {
 
   test("parsing keeps order of keys") {
     val yaml = """
-                 |P: 
+                 |P:
                  |  a: 0
                  |  b: 1
                  |  c: 2
                  |  d: 3
                  |  e: 4
                  |""".stripMargin
-
     val node = yaml.asNode.toOption.get
-
     assertEquals(node.asYaml.trim, yaml.trim)
   }
 
@@ -199,11 +197,10 @@ class ParserSuite extends BaseYamlSuite {
     val yaml =
       """name: John Wick
         |age: 40
-        |address: 
+        |address:
         |  - Anywhere
         |  - 12-345
         |""".stripMargin
-
     assertEquals(parseYaml(yaml).toOption.get.asYaml, yaml)
   }
 
