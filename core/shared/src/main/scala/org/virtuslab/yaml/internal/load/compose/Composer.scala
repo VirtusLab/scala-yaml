@@ -89,7 +89,7 @@ object ComposerImpl extends Composer {
           aliases.get(a.id) match {
             case Some(node) => node
             case None =>
-              throw ComposerException(ComposerError(s"There is no anchor for ${a.id} alias"))
+              throw ComposerException(ComposerError(s"There is no anchor for ${a.id.anchor} alias"))
           }
         case _: EventKind.StreamStart.type | _: EventKind.DocumentStart =>
           composeNode(ctx, aliases)
