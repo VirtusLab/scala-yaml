@@ -6,6 +6,7 @@ import org.virtuslab.yaml.internal.load.compose.ComposerImpl
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind._
+import org.virtuslab.yaml.internal.load.parse.NodeEventMetadata
 import org.virtuslab.yaml.syntax.YamlPrimitive._
 
 /** Examples taken from https://yaml.org/spec/1.2/spec.html#id2759963
@@ -198,6 +199,28 @@ class ComposerSuite extends munit.FunSuite {
     assertEquals(
       ComposerImpl.fromEvents(events),
       Left(ComposerError("There is no anchor for missing alias"))
+    )
+  }
+
+  test("alias nested inside its own anchor reports the anchor name") {
+    // `a: &x [*x]` - a collection's anchor is registered only after its children
+    // are composed, so the nested alias finds no registered anchor yet.
+    val events = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("a"),
+      SequenceStart(NodeEventMetadata(Anchor("x"))),
+      Alias(Anchor("x")),
+      SequenceEnd,
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    ).map(Event(_, None))
+
+    assertEquals(
+      ComposerImpl.fromEvents(events),
+      Left(ComposerError("There is no anchor for x alias"))
     )
   }
 }
