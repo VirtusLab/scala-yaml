@@ -3,6 +3,7 @@ package org.virtuslab.yaml
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Node._
 import org.virtuslab.yaml.internal.load.compose.ComposerImpl
+import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.syntax.YamlPrimitive._
@@ -183,5 +184,20 @@ class ComposerSuite extends munit.FunSuite {
     )
 
     assertEquals(ComposerImpl.multipleFromEvents(events), expected)
+  }
+
+  test("alias without a matching anchor reports the anchor name") {
+    val events = List(
+      StreamStart,
+      DocumentStart(),
+      Alias(Anchor("missing")),
+      DocumentEnd(),
+      StreamEnd
+    ).map(Event(_, None))
+
+    assertEquals(
+      ComposerImpl.fromEvents(events),
+      Left(ComposerError("There is no anchor for missing alias"))
+    )
   }
 }
