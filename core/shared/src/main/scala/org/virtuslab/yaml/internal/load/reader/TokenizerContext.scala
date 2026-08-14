@@ -35,7 +35,7 @@ private[reader] case class TokenizerContext(reader: Reader) {
   def checkIndents(current: Int): List[Token] =
     if (current < indent) {
       indentations.removeLast()
-      Token(BlockEnd, reader.range) +: checkIndents(current)
+      new Token(BlockEnd, reader.range) :: checkIndents(current)
     } else Nil
 
   def enterFlowSequence: Unit = flowSequenceLevel += 1
@@ -56,12 +56,12 @@ private[reader] case class TokenizerContext(reader: Reader) {
   def isInBlockCollection: Boolean = !isInFlowCollection
 
   def parseDocumentStart(indent: Int): List[Token] =
-    checkIndents(-1) ++ List(Token(DocumentStart, reader.range))
+    checkIndents(-1) :+ new Token(DocumentStart, reader.range)
 
   def parseDocumentEnd(): List[Token] =
-    popPotentialKeys() ++ checkIndents(-1) ++ List(Token(DocumentEnd, reader.range))
+    popPotentialKeys() ++ checkIndents(-1) :+ new Token(DocumentEnd, reader.range)
 }
 
 private[reader] object TokenizerContext {
-  def apply(in: String): TokenizerContext = TokenizerContext(new StringReader(in))
+  def apply(in: String): TokenizerContext = new TokenizerContext(new StringReader(in))
 }
