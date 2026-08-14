@@ -36,10 +36,7 @@ object TokenKind {
   case class Scalar private (value: String, scalarStyle: ScalarStyle) extends TokenKind
 
   object Scalar {
-    def apply(scalar: String, scalarStyle: ScalarStyle = ScalarStyle.Plain) = {
-      val escapedScalar = ScalarStyle.escapeSpecialCharacter(scalar, scalarStyle)
-      new Scalar(escapedScalar, scalarStyle)
-    }
+    def apply(scalar: String, scalarStyle: ScalarStyle = ScalarStyle.Plain) =
+      new Scalar(ScalarStyle.escapeSpecialCharacter(scalar, scalarStyle), scalarStyle)
   }
-
 }

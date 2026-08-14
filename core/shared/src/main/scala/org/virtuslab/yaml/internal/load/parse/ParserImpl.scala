@@ -366,28 +366,28 @@ final class ParserImpl private (in: Tokenizer) extends Parser {
         in.popToken()
         productions.prepend(ParseMappingEnd)
         productions.prepend(ParseMappingEntry)
-        Event(EventKind.MappingStart(metadata), nextToken.range)
+        Event(new EventKind.MappingStart(metadata), nextToken.range)
       case _: TokenKind.SequenceStart.type if couldParseBlockCollection =>
         in.popToken()
         productions.prepend(ParseSequenceEnd)
         productions.prepend(ParseSequenceEntry)
-        Event(EventKind.SequenceStart(metadata), nextToken.range)
+        Event(new EventKind.SequenceStart(metadata), nextToken.range)
       case _: TokenKind.FlowMappingStart.type =>
         in.popToken()
         productions.prepend(ParseFlowMappingEnd)
         productions.prepend(ParseFlowMappingEntryOpt)
-        Event(EventKind.MappingStart(metadata), nextToken.range)
+        Event(new EventKind.MappingStart(metadata), nextToken.range)
       case _: TokenKind.FlowSequenceStart.type =>
         in.popToken()
         productions.prepend(ParseFlowSeqEnd)
         productions.prepend(ParseFlowSeqEntryOpt)
-        Event(EventKind.SequenceStart(metadata), nextToken.range)
+        Event(new EventKind.SequenceStart(metadata), nextToken.range)
       case s: TokenKind.Scalar =>
         in.popToken()
-        Event(EventKind.Scalar(s.value, s.scalarStyle, metadata), nextToken.range)
+        Event(new EventKind.Scalar(s.value, s.scalarStyle, metadata), nextToken.range)
       case _ =>
         Event(
-          EventKind.Scalar("", ScalarStyle.Plain, metadata.withTag(Tag.nullTag)),
+          new EventKind.Scalar("", ScalarStyle.Plain, metadata.withTag(Tag.nullTag)),
           nextToken.range
         )
     }
