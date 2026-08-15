@@ -28,11 +28,11 @@ object PresenterImpl extends Presenter {
             tail
           case _: MappingStart =>
             insertSequencePadding()
-            pushAndIncreaseIndent(MappingStart())
+            pushAndIncreaseIndent(new MappingStart())
             serializeMapping(tail)
           case _: SequenceStart =>
             insertSequencePadding()
-            pushAndIncreaseIndent(SequenceStart())
+            pushAndIncreaseIndent(new SequenceStart())
             serializeSequence(tail)
           case _ => serializeNode(tail)
         }

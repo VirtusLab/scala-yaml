@@ -1,18 +1,17 @@
 package org.virtuslab.yaml.internal.load.reader
 
 import scala.annotation.{switch, tailrec}
-import org.virtuslab.yaml.Range
 import org.virtuslab.yaml.ScannerError
 import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.TagHandle
 import org.virtuslab.yaml.internal.load.TagPrefix
 import org.virtuslab.yaml.internal.load.TagValue
 import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator
-import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator.*
+import org.virtuslab.yaml.internal.load.reader.token.BlockChompingIndicator._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 import org.virtuslab.yaml.internal.load.reader.token.Token
 import org.virtuslab.yaml.internal.load.reader.token.TokenKind
-import org.virtuslab.yaml.internal.load.reader.token.TokenKind.*
+import org.virtuslab.yaml.internal.load.reader.token.TokenKind._
 
 import scala.collection.mutable
 
@@ -465,8 +464,8 @@ private final class StringTokenizer(str: String) extends Tokenizer {
               c == '\u0000' ||
               c == ':' && (in.isNextWhitespace || in.peek(1) == ',' && ctx.isInFlowCollection) ||
               c == ' ' && in.peek(1) == '#' ||
-              c == '.' && ctx.indent == -1 && isDocumentEnd ||
-              c == '-' && ctx.indent == -1 && isDocumentStart ||
+              c == '.' && ctx.hasNoIndent && isDocumentEnd ||
+              c == '-' && ctx.hasNoIndent && isDocumentStart ||
               !ctx.isAllowedSpecialCharacter(c)
             ) sb.toString
             else if (c == '\n' || c == '\r' && in.peek(1) == '\n') {
@@ -481,8 +480,8 @@ private final class StringTokenizer(str: String) extends Tokenizer {
               if (in.column > ctx.indent) readScalar()
               else sb.toString
             } else {
-              in.skipCharacter()
               sb.append(c)
+              in.skipCharacter()
               readScalar()
             }
           }

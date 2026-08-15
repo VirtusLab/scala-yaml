@@ -494,7 +494,7 @@ class DecoderSuite extends munit.FunSuite:
       case Left(error: YamlError) =>
         fail(s"failed with YamlError: $error")
       case Right(value) =>
-        val values = value.asInstanceOf[Map[String, List[Any]]]("values")
+        val values = value.asInstanceOf[Map[String, Seq[Any]]]("values")
         val expected = List(
           Float.PositiveInfinity,
           Float.NegativeInfinity,
