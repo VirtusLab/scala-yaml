@@ -44,11 +44,11 @@ object Reader {
 }
 
 private[yaml] class StringReader(in: String) extends Reader {
-  private val len = in.length
-  var line: Int   = 0
-  var column: Int = 0
-  var offset: Int = 0
-  val lines       = in.split("\n", -1).toVector
+  private[this] val len = in.length
+  var line: Int         = 0
+  var column: Int       = 0
+  var offset: Int       = 0
+  val lines             = in.split("\n", -1).toVector
 
   override def pos = new Position(offset, line, column)
 
