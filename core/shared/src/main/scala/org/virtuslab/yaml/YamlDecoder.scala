@@ -217,10 +217,10 @@ object YamlDecoder extends YamlDecoderCompanionCrossCompat {
           case None =>
             Left(
               ConstructError.from(
-                s"""|Could't construct runtime instance of ${node.tag}
+                s"""|Could't construct runtime instance of ${node.tag.value}
                     |${node.pos.map(_.errorMsg).getOrElse("")}
                     |If you're using custom datatype consider using yaml.as[MyType] instead of Any
-                    |Or define LoadSettings where you'll specify how to construct ${node.tag}
+                    |Or define LoadSettings where you'll specify how to construct ${node.tag.value}
                     |""".stripMargin
               )
             )
