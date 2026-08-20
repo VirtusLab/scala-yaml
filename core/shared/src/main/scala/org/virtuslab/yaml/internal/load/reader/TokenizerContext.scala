@@ -14,7 +14,7 @@ private[reader] case class TokenizerContext(reader: Reader) {
   private[this] var flowSequenceLevel = 0
   private[this] var flowMappingLevel  = 0
 
-  def hasNoIndent: Boolean = indentationSize == 0
+  def hasNoIndent: Boolean = indentationSize == 0 || indentations(indentationSize - 1) == 0
   def indent: Int          = if (indentationSize == 0) -1 else indentations(indentationSize - 1)
   def addIndent(newIndent: Int): Unit = {
     val i = indentationSize
