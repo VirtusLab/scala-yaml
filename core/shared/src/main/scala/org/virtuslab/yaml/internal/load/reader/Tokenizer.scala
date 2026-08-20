@@ -451,7 +451,7 @@ private final class StringTokenizer(str: String) extends Tokenizer {
           }
           in.skipCharacter() // skip '-'
           queue.appendAll(ctx.popPotentialKeys()).append(new Token(SequenceValue, in.range))
-        } else if (c == '.' && isDocumentEnd) {
+        } else if (c == '.' && ctx.hasNoIndent && isDocumentEnd) {
           in.skipN(if (in.peek(3) == '\u0000') 3 else 4)
           queue.appendAll(ctx.parseDocumentEnd())
         } else {
