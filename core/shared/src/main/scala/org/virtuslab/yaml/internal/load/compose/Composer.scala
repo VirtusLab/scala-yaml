@@ -1,7 +1,7 @@
 package org.virtuslab.yaml.internal.load.compose
 
 import scala.annotation.tailrec
-import scala.collection.mutable
+import scala.collection.{AbstractMapView, mutable}
 import scala.collection.immutable.ListMap
 import org.virtuslab.yaml.ComposerError
 import org.virtuslab.yaml.Node
@@ -11,6 +11,8 @@ import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind
+
+import scala.jdk.CollectionConverters.MapHasAsScala
 
 /**
  * Composing takes a series of serialization events and produces a representation graph.
@@ -140,22 +142,33 @@ object ComposerImpl extends Composer {
 
     @tailrec
     def go(
-        mappings: mutable.Builder[(Node, Node), ListMap[Node, Node]],
+        mappings: mutable.ListBuffer[(Node, Node)],
         firstChildPos: Option[Range]
     ): Node.MappingNode = ctx.events match {
       case e :: tail =>
         if (e.kind eq EventKind.MappingEnd) {
           ctx.events = tail
-          val mapping = new Node.MappingNode(mappings.result(), Tag.map, firstChildPos)
+          val mapping = new Node.MappingNode(
+            ListMap
+              .newBuilder[Node, Node]
+              .addAll(new AbstractMapView[Node, Node] {
+                override def iterator: Iterator[(Node, Node)] = mappings.iterator
+                override def get(key: Node): Option[Node]     = None // only iterator will be used
+              })
+              .result(),
+            Tag.map,
+            firstChildPos
+          )
           if (anchorOpt.isDefined) ctx.getAliases.put(anchorOpt.get, mapping)
           mapping
         } else {
           val keyNode = composeNode(ctx)
-          go(mappings.addOne((keyNode, composeNode(ctx))), keyNode.pos)
+          mappings.addOne((keyNode, composeNode(ctx)))
+          go(mappings, keyNode.pos)
         }
       case _ => throw new ComposerError("Not found MappingEnd event for mapping")
     }
 
-    go(ListMap.newBuilder[Node, Node], None)
+    go(new mutable.ListBuffer[(Node, Node)], None)
   }
 }
