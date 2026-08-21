@@ -1,10 +1,8 @@
 package org.virtuslab.yaml.internal.load.compose
 
 import scala.annotation.tailrec
-import scala.collection.mutable
+import scala.collection.{AbstractMapView, mutable}
 import scala.collection.immutable.ListMap
-import scala.util.control.NoStackTrace
-
 import org.virtuslab.yaml.ComposerError
 import org.virtuslab.yaml.Node
 import org.virtuslab.yaml.Range
@@ -13,6 +11,8 @@ import org.virtuslab.yaml.YamlError
 import org.virtuslab.yaml.internal.load.parse.Anchor
 import org.virtuslab.yaml.internal.load.parse.Event
 import org.virtuslab.yaml.internal.load.parse.EventKind
+
+import scala.jdk.CollectionConverters.MapHasAsScala
 
 /**
  * Composing takes a series of serialization events and produces a representation graph.
@@ -26,23 +26,27 @@ trait Composer {
 
 object ComposerImpl extends Composer {
   // A lightweight mutable wrapper avoiding `Result` allocation per event.
-  private class Context(var events: List[Event])
-
-  // Internal exception used to fast-fail without paying the stack-trace generation cost
-  private case class ComposerException(err: YamlError) extends RuntimeException with NoStackTrace
-
-  override def fromEvents(events: List[Event]): Either[YamlError, Node] = events match {
-    case Nil => new Left(ComposerError("No events available"))
-    case _ =>
-      try new Right(composeNode(new Context(events), mutable.Map.empty))
-      catch {
-        case ComposerException(err) => new Left(err)
-      }
+  private class Context(
+      var events: List[Event],
+      private[this] var aliases: java.util.HashMap[Anchor, Node] = null
+  ) {
+    def getAliases: java.util.HashMap[Anchor, Node] = {
+      if (aliases eq null) aliases = new java.util.HashMap[Anchor, Node]
+      aliases
+    }
   }
 
+  override def fromEvents(events: List[Event]): Either[YamlError, Node] =
+    if (events eq Nil) new Left(new ComposerError("No events available"))
+    else {
+      try new Right(composeNode(new Context(events)))
+      catch {
+        case err: ComposerError => new Left(err)
+      }
+    }
+
   override def multipleFromEvents(events: List[Event]): Either[YamlError, List[Node]] = {
-    val aliases = mutable.Map.empty[Anchor, Node]
-    val ctx     = new Context(events)
+    val ctx = new Context(events)
 
     @tailrec
     def go(out: mutable.ListBuffer[Node]): List[Node] =
@@ -56,117 +60,115 @@ object ComposerImpl extends Composer {
               ctx.events = tail
               go(out)
             case _ =>
-              out.addOne(composeNode(ctx, aliases))
-              go(out)
+              go(out.addOne(composeNode(ctx)))
           }
-        case Nil => out.toList
+        case _ => out.toList
       }
 
     try new Right(go(new mutable.ListBuffer[Node]))
     catch {
-      case ComposerException(err) => new Left(err)
+      case err: ComposerError => new Left(err)
     }
   }
 
+  @tailrec
   private def composeNode(
-      ctx: Context,
-      aliases: mutable.Map[Anchor, Node]
+      ctx: Context
   ): Node = ctx.events match {
     case head :: tail =>
       // Advance the pointer so that recursive calls see the remaining sequence
       ctx.events = tail
       head.kind match {
         case s: EventKind.Scalar =>
-          val tag: Tag = s.metadata.tag.getOrElse(Tag.resolveTag(s.value, Some(s.style)))
-          val node     = new Node.ScalarNode(s.value, tag, head.pos)
-          s.metadata.anchor.foreach(anchor => aliases.put(anchor, node))
+          val tag = s.metadata.tag match {
+            case Some(t) => t
+            case _       => Tag.resolveTag(s.value, new Some(s.style))
+          }
+          val node = new Node.ScalarNode(s.value, tag, head.pos)
+          s.metadata.anchor match {
+            case Some(a) => ctx.getAliases.put(a, node)
+            case _       =>
+          }
           node
         case ss: EventKind.SequenceStart =>
-          composeSequenceNode(ctx, ss.metadata.anchor, aliases)
+          composeSequenceNode(ctx, ss.metadata.anchor)
         case ms: EventKind.MappingStart =>
-          composeMappingNode(ctx, ms.metadata.anchor, aliases)
+          composeMappingNode(ctx, ms.metadata.anchor)
         case a: EventKind.Alias =>
-          aliases.get(a.id) match {
-            case Some(node) => node
-            case None =>
-              throw ComposerException(ComposerError(s"There is no anchor for ${a.id} alias"))
-          }
+          val node = ctx.getAliases.get(a.id)
+          if (node eq null) throw new ComposerError(s"There is no anchor for ${a.id} alias")
+          node
         case _: EventKind.StreamStart.type | _: EventKind.DocumentStart =>
-          composeNode(ctx, aliases)
-        case event =>
-          throw ComposerException(ComposerError(s"Expected YAML node, but found: $event"))
+          composeNode(ctx)
+        case event => throw new ComposerError(s"Expected YAML node, but found: $event")
       }
-    case Nil => throw ComposerException(ComposerError("No events available"))
+    case _ => throw new ComposerError("No events available")
   }
 
   private def composeSequenceNode(
       ctx: Context,
-      anchorOpt: Option[Anchor],
-      aliases: mutable.Map[Anchor, Node]
+      anchorOpt: Option[Anchor]
   ): Node.SequenceNode = {
 
     @tailrec
-    def parseChildren(
+    def go(
         children: mutable.ListBuffer[Node],
-        firstChildPos: Option[Range] = None
-    ): Node.SequenceNode = {
-      ctx.events match {
-        case e :: tail =>
-          e.kind match {
-            case _: EventKind.SequenceEnd.type =>
-              ctx.events = tail
-              val sequence = new Node.SequenceNode(children.toList, Tag.seq, firstChildPos)
-              if (anchorOpt.isDefined) aliases.put(anchorOpt.get, sequence)
-              sequence
-            case _ =>
-              val node = composeNode(ctx, aliases)
-              children.addOne(node)
-              val nextPos =
-                if (firstChildPos.isEmpty) node.pos
-                else firstChildPos
-              parseChildren(children, nextPos)
-          }
-        case Nil =>
-          throw ComposerException(ComposerError("Not found SequenceEnd event for sequence"))
-      }
+        firstChildPos: Option[Range]
+    ): Node.SequenceNode = ctx.events match {
+      case e :: tail =>
+        if (e.kind eq EventKind.SequenceEnd) {
+          ctx.events = tail
+          val sequence = new Node.SequenceNode(children.result(), Tag.seq, firstChildPos)
+          if (anchorOpt.isDefined) ctx.getAliases.put(anchorOpt.get, sequence)
+          sequence
+        } else {
+          val node = composeNode(ctx)
+          val nextPos =
+            if (firstChildPos eq None) node.pos
+            else firstChildPos
+          go(children.addOne(node), nextPos)
+        }
+      case _ =>
+        throw new ComposerError("Not found SequenceEnd event for sequence")
     }
 
-    parseChildren(new mutable.ListBuffer[Node]())
+    go(new mutable.ListBuffer[Node], None)
   }
 
   private def composeMappingNode(
       ctx: Context,
-      anchorOpt: Option[Anchor],
-      aliases: mutable.Map[Anchor, Node]
+      anchorOpt: Option[Anchor]
   ): Node.MappingNode = {
 
     @tailrec
-    def parseMappings(
-        mappingsBuffer: mutable.ArrayBuffer[(Node, Node)],
-        firstChildPos: Option[Range] = None
+    def go(
+        mappings: mutable.ListBuffer[(Node, Node)],
+        firstChildPos: Option[Range]
     ): Node.MappingNode = ctx.events match {
       case e :: tail =>
-        e.kind match {
-          case _: EventKind.MappingEnd.type =>
-            ctx.events = tail
-            val mapping =
-              new Node.MappingNode(ListMap.from(mappingsBuffer), Tag.map, firstChildPos)
-            if (anchorOpt.isDefined) aliases.put(anchorOpt.get, mapping)
-            mapping
-          case _: EventKind.StreamStart.type | _: EventKind.StreamEnd.type |
-              _: EventKind.DocumentStart | _: EventKind.DocumentEnd =>
-            throw ComposerException(
-              ComposerError(s"Invalid event, got: ${e.kind}, expected Node")
-            )
-          case _ =>
-            val keyNode   = composeNode(ctx, aliases)
-            val valueNode = composeNode(ctx, aliases)
-            mappingsBuffer.addOne((keyNode, valueNode))
-            parseMappings(mappingsBuffer, keyNode.pos)
+        if (e.kind eq EventKind.MappingEnd) {
+          ctx.events = tail
+          val mapping = new Node.MappingNode(
+            ListMap
+              .newBuilder[Node, Node]
+              .addAll(new AbstractMapView[Node, Node] {
+                override def iterator: Iterator[(Node, Node)] = mappings.iterator
+                override def get(key: Node): Option[Node]     = None // only iterator will be used
+              })
+              .result(),
+            Tag.map,
+            firstChildPos
+          )
+          if (anchorOpt.isDefined) ctx.getAliases.put(anchorOpt.get, mapping)
+          mapping
+        } else {
+          val keyNode = composeNode(ctx)
+          mappings.addOne((keyNode, composeNode(ctx)))
+          go(mappings, keyNode.pos)
         }
-      case Nil => throw ComposerException(ComposerError("Not found MappingEnd event for mapping"))
+      case _ => throw new ComposerError("Not found MappingEnd event for mapping")
     }
 
-    parseMappings(new mutable.ArrayBuffer[(Node, Node)])
+    go(new mutable.ListBuffer[(Node, Node)], None)
   }
 }
