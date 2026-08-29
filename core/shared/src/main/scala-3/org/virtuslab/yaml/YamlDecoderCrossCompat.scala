@@ -17,34 +17,51 @@ object DecoderMacros {
       case '{ $m: Mirror.ProductOf[T] } => deriveProduct(m)
       case '{ $m: Mirror.SumOf[T] }     => deriveSum(m)
 
-  protected def summonSumOf[T <: Tuple: Type](using q: Quotes): List[Expr[YamlDecoder[_]]] =
+  protected def summonSumOf[T <: Tuple: Type](using q: Quotes): List[Expr[YamlDecoder[_]]] = {
     import q.reflect.report.*
     Type.of[T] match
       case '[t *: ts] =>
-        Expr.summon[Mirror.ProductOf[t]] match
-          case Some(p) => deriveProduct[t](p) :: summonSumOf[ts]
+        Expr.summon[YamlDecoder[t]] match
+          case Some(decoder) => 
+            '{ 
+              new YamlDecoder[Any] {
+                override def construct(node: Node)(using settings: LoadSettings): Either[ConstructError, Any] =
+                  $decoder.construct(node)
+              }
+            } :: summonSumOf[ts]
           case None =>
-            Expr.summon[YamlDecoder[t]] match
-              case Some(d) => d :: summonSumOf[ts]
-              case None => errorAndAbort(s"Missing given instance of YamlDecoder[${Type.show[t]}]")
-      case '[EmptyTuple] => Nil
+            Expr.summon[Mirror.ProductOf[t]] match
+              case Some(p) =>
+                val derived = deriveProduct[t](p)
+                '{ 
+                  new YamlDecoder[Any] {
+                    override def construct(node: Node)(using settings: LoadSettings): Either[ConstructError, Any] =
+                      $derived.construct(node)
+                  }
+                } :: summonSumOf[ts]
+              case None =>
+                errorAndAbort(s"Missing given instance of YamlDecoder[${Type.show[t]}]")
+      case '[EmptyTuple] =>
+        Nil
+  }
+
 
   def deriveSum[T: Type](s: Expr[Mirror.SumOf[T]])(using Quotes): Expr[YamlDecoder[T]] =
     s match
       case '{
-            type elementTypes <: Tuple;
+            type elementTypes <: Tuple
             $m: Mirror.SumOf[T] { type MirroredElemTypes = `elementTypes` }
           } =>
         val instancesExpr = Expr.ofList(summonSumOf[elementTypes])
         '{
           new YamlDecoder[T] {
-            private val instances = $instancesExpr.asInstanceOf[List[YamlDecoder[T]]]
+            private val instances = $instancesExpr.asInstanceOf[List[YamlDecoder[Any]]]
             override def construct(node: Node)(using
                 constructor: LoadSettings = LoadSettings.empty
             ): Either[ConstructError, T] =
               instances
                 .map(_.construct(node))
-                .collectFirst { case r @ Right(_) => r }
+                .collectFirst { case Right(value) => Right(value.asInstanceOf[T]) }
                 .getOrElse(
                   Left(ConstructError.from(s"Cannot parse $node", node))
                 )
