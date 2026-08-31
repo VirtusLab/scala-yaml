@@ -218,15 +218,57 @@ private final class StringTokenizer(str: String) extends Tokenizer {
       case '"' =>
         val sb = new java.lang.StringBuilder
 
+        def hexValue(c: Char): Int =
+          if (c >= '0' && c <= '9') c - 48
+          else if (c >= 'a' && c <= 'f') c - 87
+          else if (c >= 'A' && c <= 'F') c - 55
+          else -1
+
         @tailrec
         def readScalar(): String = in.peek() match {
           case '"' =>
             in.skipCharacter()
             sb.toString
-          case '\\' if in.peek(1) == '"' =>
-            in.skipN(2)
-            sb.append('"')
-            readScalar()
+          case '\\' =>
+            in.peek(1) match {
+              case 'n' =>
+                in.skipN(2)
+                sb.append('\n')
+                readScalar()
+              case 'r' =>
+                in.skipN(2)
+                sb.append('\r')
+                readScalar()
+              case 't' =>
+                in.skipN(2)
+                sb.append('\t')
+                readScalar()
+              case '"' =>
+                in.skipN(2)
+                sb.append('"')
+                readScalar()
+              case '\\' =>
+                in.skipN(2)
+                sb.append('\\')
+                readScalar()
+              case 'u' =>
+                val h1 = hexValue(in.peek(2))
+                val h2 = hexValue(in.peek(3))
+                val h3 = hexValue(in.peek(4))
+                val h4 = hexValue(in.peek(5))
+                if ((h1 | h2 | h3 | h4) >= 0) {
+                  in.skipN(6)
+                  sb.append(((h1 << 12) | (h2 << 8) | (h3 << 4) | h4).toChar)
+                } else {
+                  in.skipN(2)
+                  sb.append('u')
+                }
+                readScalar()
+              case c =>
+                in.skipN(2)
+                sb.append(c)
+                readScalar()
+            }
           case '\u0000' =>
             sb.toString
           case c =>
@@ -480,8 +522,8 @@ private final class StringTokenizer(str: String) extends Tokenizer {
               if (in.column > ctx.indent) readScalar()
               else sb.toString
             } else {
-              sb.append(c)
               in.skipCharacter()
+              sb.append(c)
               readScalar()
             }
           }

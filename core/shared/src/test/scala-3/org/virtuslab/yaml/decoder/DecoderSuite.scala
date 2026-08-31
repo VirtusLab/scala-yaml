@@ -4,7 +4,22 @@ import org.virtuslab.yaml.Node.*
 import org.virtuslab.yaml.*
 
 class DecoderSuite extends munit.FunSuite:
-
+  test("strings ") {
+    assertEquals(""""x\ny"""".as[String], Right("x\ny"))
+    assertEquals(""""x\ry"""".as[String], Right("x\ry"))
+    assertEquals(""""x\ty"""".as[String], Right("x\ty"))
+    assertEquals(""""x\\y"""".as[String], Right("x\\y"))
+    assertEquals(""""x\"y"""".as[String], Right("x\"y"))
+    assertEquals(""""x\u0041y"""".as[String], Right("xAy"))
+    assertEquals(""""x\u263Ay"""".as[String], Right("x☺y"))
+    assertEquals("""'x\ny'""".as[String], Right("x\\ny"))
+    assertEquals("""'x\ry'""".as[String], Right("x\\ry"))
+    assertEquals("""'x\ty'""".as[String], Right("x\\ty"))
+    assertEquals("""x\y""".as[String], Right("x\\y"))
+    assertEquals("""x\ny""".as[String], Right("x\\ny"))
+    assertEquals("""x\ry""".as[String], Right("x\\ry"))
+    assertEquals("""x\ty""".as[String], Right("x\\ty"))
+  }
   test("numbers") {
 
     case class ValueTypes(
