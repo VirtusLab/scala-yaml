@@ -37,6 +37,6 @@ object TokenKind {
 
   object Scalar {
     def apply(scalar: String, scalarStyle: ScalarStyle = ScalarStyle.Plain) =
-      new Scalar(ScalarStyle.escapeSpecialCharacter(scalar, scalarStyle), scalarStyle)
+      new Scalar(scalar, scalarStyle)
   }
 }
