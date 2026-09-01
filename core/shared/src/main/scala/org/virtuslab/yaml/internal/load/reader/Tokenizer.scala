@@ -346,14 +346,39 @@ private final class StringTokenizer(str: String) extends Tokenizer {
               in.skipCharacter()
               sb.toString
             }
-          case '\n' =>
-            sb.append(' ')
-            skipUntilNextToken()
-            readScalar()
           case '\u0000' => sb.toString
           case c =>
-            in.skipCharacter()
-            sb.append(c)
+            if (c == '\n' || (c == '\r' && in.peek(1) == '\n')) {
+              if (c == '\n') in.skipCharacter()
+              else in.skipN(2)
+              var emptyLines = 0
+              var continue   = true
+              while (continue) {
+                in.peek() match {
+                  case ' ' | '\t' =>
+                    in.skipCharacter()
+                  case '\n' =>
+                    emptyLines += 1
+                    in.skipCharacter()
+                  case '\r' if in.peek(1) == '\n' =>
+                    emptyLines += 1
+                    in.skipN(2)
+                  case _ =>
+                    continue = false
+                }
+              }
+              if (emptyLines == 0) sb.append(' ')
+              else {
+                var i = 0
+                while (i < emptyLines) {
+                  sb.append('\n')
+                  i += 1
+                }
+              }
+            } else {
+              in.skipCharacter()
+              sb.append(c)
+            }
             readScalar()
         }
 
