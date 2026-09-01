@@ -40,6 +40,19 @@ class DecoderSuite extends munit.FunSuite:
         """one two
           |three""".stripMargin)
     )
+    assertEquals(
+      """'one two
+        |  three'""".stripMargin.as[String],
+      Right("one two three")
+    )
+    assertEquals(
+      """'one two
+        |
+        |  three'""".stripMargin.as[String],
+      Right(
+        """one two
+          |three""".stripMargin)
+    )
   }
   test("numbers") {
 
