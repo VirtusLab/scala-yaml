@@ -243,13 +243,32 @@ private final class StringTokenizer(str: String) extends Tokenizer {
                 in.skipN(2)
                 sb.append('\t')
                 readScalar()
-              case '"' =>
+              case 'b' =>
                 in.skipN(2)
-                sb.append('"')
+                sb.append('\b')
                 readScalar()
-              case '\\' =>
+              case 'f' =>
                 in.skipN(2)
-                sb.append('\\')
+                sb.append('\f')
+                readScalar()
+              case '\n' | '\r' =>
+                in.skipCharacter() // skip '\'
+                val c = in.peek()
+                if (c == '\r' && in.peek(1) == '\n') in.skipN(2)
+                else if (c == '\n') in.skipCharacter()
+                var done = false
+                while (!done) {
+                  in.peek() match {
+                    case ' ' | '\t' =>
+                      in.skipCharacter()
+                    case '\n' =>
+                      in.skipCharacter()
+                    case '\r' if in.peek(1) == '\n' =>
+                      in.skipN(2)
+                    case _ =>
+                      done = true
+                  }
+                }
                 readScalar()
               case 'u' =>
                 val h1 = hexValue(in.peek(2))
@@ -272,20 +291,43 @@ private final class StringTokenizer(str: String) extends Tokenizer {
           case '\u0000' =>
             sb.toString
           case c =>
-            if (c == '\n' || c == '\r' && in.peek(1) == '\n') {
-              skipUntilNextToken()
-              sb.append(' ')
-              readScalar()
+            if (c == '\n' || (c == '\r' && in.peek(1) == '\n')) {
+              if (c == '\n') in.skipCharacter()
+              else in.skipN(2)
+              var emptyLines = 0
+              var continue   = true
+              while (continue) {
+                in.peek() match {
+                  case ' ' | '\t' =>
+                    in.skipCharacter()
+                  case '\n' =>
+                    emptyLines += 1
+                    in.skipCharacter()
+                  case '\r' if in.peek(1) == '\n' =>
+                    emptyLines += 1
+                    in.skipN(2)
+                  case _ =>
+                    continue = false
+                }
+              }
+              if (emptyLines == 0) sb.append(' ')
+              else {
+                var i = 0
+                while (i < emptyLines) {
+                  sb.append('\n')
+                  i += 1
+                }
+              }
             } else {
               in.skipCharacter()
               sb.append(c)
-              readScalar()
             }
+            readScalar()
         }
 
         val isPlainKeyAllowed = ctx.isPlainKeyAllowed
         val range             = in.range
-        in.skipCharacter() // skip double quote
+        in.skipCharacter() // skip opening double quote
         val scalarToken =
           new Token(Scalar(readScalar(), ScalarStyle.DoubleQuoted), range.withEndPos(in.pos))
         if (isPlainKeyAllowed) ctx.addPotentialKey(scalarToken)
