@@ -36,8 +36,7 @@ class DecoderSuite extends munit.FunSuite:
       """"one two
         |
         |  three"""".stripMargin.as[String],
-      Right(
-        """one two
+      Right("""one two
           |three""".stripMargin)
     )
     assertEquals(
@@ -49,8 +48,7 @@ class DecoderSuite extends munit.FunSuite:
       """'one two
         |
         |  three'""".stripMargin.as[String],
-      Right(
-        """one two
+      Right("""one two
           |three""".stripMargin)
     )
   }
