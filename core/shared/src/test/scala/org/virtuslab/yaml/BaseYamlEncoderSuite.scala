@@ -17,11 +17,9 @@ class BaseYamlEncoderSuite extends munit.FunSuite {
       Seq(3, 4)
     )
     val expected =
-      s"""-
-         |  - 1
+      s"""- - 1
          |  - 2
-         |-
-         |  - 3
+         |- - 3
          |  - 4
          |""".stripMargin
     assertEquals(data.asYaml, expected)
