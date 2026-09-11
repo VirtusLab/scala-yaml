@@ -4,7 +4,54 @@ import org.virtuslab.yaml.Node.*
 import org.virtuslab.yaml.*
 
 class DecoderSuite extends munit.FunSuite:
-
+  test("strings ") {
+    assertEquals(""""x\by"""".as[String], Right("x\by"))
+    assertEquals(""""x\fy"""".as[String], Right("x\fy"))
+    assertEquals(""""x\ny"""".as[String], Right("x\ny"))
+    assertEquals(""""x\ry"""".as[String], Right("x\ry"))
+    assertEquals(""""x\ty"""".as[String], Right("x\ty"))
+    assertEquals(""""x\\y"""".as[String], Right("x\\y"))
+    assertEquals(""""x\"y"""".as[String], Right("x\"y"))
+    assertEquals(""""x\ y"""".as[String], Right("x y"))
+    assertEquals(""""x\u0041y"""".as[String], Right("xAy"))
+    assertEquals(""""x\u263Ay"""".as[String], Right("x☺y"))
+    assertEquals("""'x\ny'""".as[String], Right("x\\ny"))
+    assertEquals("""'x\ry'""".as[String], Right("x\\ry"))
+    assertEquals("""'x\ty'""".as[String], Right("x\\ty"))
+    assertEquals("""x\y""".as[String], Right("x\\y"))
+    assertEquals("""x\ny""".as[String], Right("x\\ny"))
+    assertEquals("""x\ry""".as[String], Right("x\\ry"))
+    assertEquals("""x\ty""".as[String], Right("x\\ty"))
+    assertEquals(
+      """"one two\
+        |  \ three"""".stripMargin.as[String],
+      Right("one two three")
+    )
+    assertEquals(
+      """"one two
+        |  three"""".stripMargin.as[String],
+      Right("one two three")
+    )
+    assertEquals(
+      """"one two
+        |
+        |  three"""".stripMargin.as[String],
+      Right("""one two
+          |three""".stripMargin)
+    )
+    assertEquals(
+      """'one two
+        |  three'""".stripMargin.as[String],
+      Right("one two three")
+    )
+    assertEquals(
+      """'one two
+        |
+        |  three'""".stripMargin.as[String],
+      Right("""one two
+          |three""".stripMargin)
+    )
+  }
   test("numbers") {
 
     case class ValueTypes(
@@ -494,7 +541,7 @@ class DecoderSuite extends munit.FunSuite:
       case Left(error: YamlError) =>
         fail(s"failed with YamlError: $error")
       case Right(value) =>
-        val values = value.asInstanceOf[Map[String, List[Any]]]("values")
+        val values = value.asInstanceOf[Map[String, Seq[Any]]]("values")
         val expected = List(
           Float.PositiveInfinity,
           Float.NegativeInfinity,

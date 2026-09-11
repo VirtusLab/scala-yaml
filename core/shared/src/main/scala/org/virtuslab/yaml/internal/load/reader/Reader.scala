@@ -1,13 +1,12 @@
 package org.virtuslab.yaml.internal.load.reader
 
-import scala.annotation.tailrec
 import org.virtuslab.yaml.Position
 import org.virtuslab.yaml.Range
 
 trait Reader {
 
   /** Read current character and advance by 1 position
-    * @return current character or '\u0000' in case there are no chars left
+    * @return current character
     */
   def read(): Char
 
@@ -28,8 +27,8 @@ trait Reader {
   def peekN(n: Int): String
 
   final def peekNext(): Char          = peek(1)
-  final def isWhitespace: Boolean     = peek().isWhitespace
-  final def isNextWhitespace: Boolean = peekNext().isWhitespace
+  final def isWhitespace: Boolean     = Character.isWhitespace(peek(0))
+  final def isNextWhitespace: Boolean = Character.isWhitespace(peek(1))
   final def isNewline: Boolean        = isNewlineN(0)
   final def isNextNewline: Boolean    = isNewlineN(1)
 
@@ -37,7 +36,7 @@ trait Reader {
     val c = peek(n)
     c == '\n' || isWindowsNewline(c)
   }
-  protected def isWindowsNewline(c: Char): Boolean = c == '\r' && peekNext() == '\n'
+  protected def isWindowsNewline(c: Char): Boolean = c == '\r' && peek(1) == '\n'
 }
 
 object Reader {
@@ -45,70 +44,100 @@ object Reader {
 }
 
 private[yaml] class StringReader(in: String) extends Reader {
-  private val len = in.length
-  var line: Int   = 0
-  var column: Int = 0
-  var offset: Int = 0
-  val lines       = in.split("\n", -1).toVector
+  private[this] val len = in.length
+  var line: Int         = 0
+  var column: Int       = 0
+  var offset: Int       = 0
+  val lines             = in.split("\n", -1).toVector
 
-  override def pos   = Position(offset, line, column)
-  override def range = Range(pos, lines)
+  override def pos = new Position(offset, line, column)
+
+  override def range = new Range(pos, lines)
 
   override def peek(n: Int = 0): Char = {
     val i = offset + n
     if (i < len) in.charAt(i)
-    else Reader.nullTerminator
+    else '\u0000'
   }
 
   override def peekN(n: Int): String = {
     val end = offset + n
     if (end <= len) in.substring(offset, end)
     else {
-      val available = math.max(0, len - offset)
-      val padding   = new String(Array.fill(n - available)(Reader.nullTerminator))
-      if (available > 0) in.substring(offset, len) + padding
+      val available = Math.max(len - offset, 0)
+      val padding   = new String(new Array[Char](n - available))
+      if (available > 0) in.substring(offset, len).concat(padding)
       else padding
     }
   }
 
-  private def nextLine(): Unit = { column = 0; line += 1 }
-
-  private def skipAndMaintainPosition() = {
-    val char = in.charAt(offset)
-    if (isWindowsNewline(char)) {
-      offset += 2
-      nextLine()
-      2
-    } else if (char == '\n') {
-      offset += 1
-      nextLine()
-      1
-    } else {
-      offset += 1
-      column += 1
-      1
-    }
-  }
-
   override def skipN(n: Int): Unit = {
-    @tailrec def loop(left: Int): Unit =
-      if (left <= 0) ()
-      else {
-        val skipped = skipAndMaintainPosition()
-        loop(left - skipped)
-      }
-    loop(n)
+    val limit = offset + n
+    while (offset < limit) skipCharacter()
   }
 
-  override def skipCharacter(): Unit = skipAndMaintainPosition()
+  override def skipCharacter(): Unit = {
+    var i = offset
+    var c = in.charAt(i)
+    i += 1
+    if (
+      c == '\n' || c == '\r' && {
+        i < len && {
+          c = in.charAt(i)
+          i += 1
+          c == '\n'
+        }
+      }
+    ) {
+      column = 0
+      line += 1
+    } else column += 1
+    offset = i
+  }
 
-  override def skipWhitespaces(): Unit =
-    while (isWhitespace)
-      skipCharacter()
+  override def skipWhitespaces(): Unit = {
+    var i       = offset
+    var c: Char = 0
+    while ({
+      i < len && {
+        c = in.charAt(i)
+        Character.isWhitespace(c)
+      }
+    }) {
+      i += 1
+      if (
+        c == '\n' || c == '\r' && {
+          i < len && {
+            c = in.charAt(i)
+            i += 1
+            c == '\n'
+          }
+        }
+      ) {
+        column = 0
+        line += 1
+      } else column += 1
+    }
+    offset = i
+  }
 
   override def read(): Char = {
-    skipCharacter()
-    in.charAt(offset - 1)
+    var i = offset
+    var c = in.charAt(i)
+    i += 1
+    if (
+      c == '\n' || c == '\r' && {
+        i < len && {
+          c = in.charAt(i)
+          i += 1
+          c == '\n'
+        }
+      }
+    ) {
+      column = 0
+      line += 1
+    } else column += 1
+    offset = i
+    c
   }
-
 }

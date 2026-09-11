@@ -9,12 +9,12 @@ import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 object PresenterImpl extends Presenter {
   override def asString(events: Seq[EventKind]): String = {
-    val sb      = new java.lang.StringBuilder
-    val stack   = new mutable.Stack[EventKind]
-    val newline = System.lineSeparator()
-
-    var toplevelNode = true // toplevel node should't insert newline and increase indent
-    var indent       = 0
+    val sb            = new java.lang.StringBuilder
+    val stack         = new mutable.Stack[EventKind]
+    val newline       = System.lineSeparator()
+    var indent        = 0
+    var toplevelNode  = true // toplevel node shouldn't insert newline and increase indent
+    var afterSequence = false
 
     @tailrec
     def serializeNode(events: List[EventKind]): List[EventKind] = events match {
@@ -23,16 +23,17 @@ object PresenterImpl extends Presenter {
           case s: Scalar =>
             insertSequencePadding()
             if (sb.length() > 0) sb.append(' ')
+            afterSequence = false
             serializeScalar(s)
             sb.append(newline)
             tail
           case _: MappingStart =>
             insertSequencePadding()
-            pushAndIncreaseIndent(MappingStart())
+            pushAndIncreaseIndent(new MappingStart())
             serializeMapping(tail)
           case _: SequenceStart =>
             insertSequencePadding()
-            pushAndIncreaseIndent(SequenceStart())
+            pushAndIncreaseIndent(new SequenceStart())
             serializeSequence(tail)
           case _ => serializeNode(tail)
         }
@@ -44,10 +45,15 @@ object PresenterImpl extends Presenter {
       case head :: tail =>
         head match {
           case s: Scalar =>
-            var n = indent
-            while (n > 0) {
+            if (afterSequence) {
               sb.append(' ')
-              n -= 1
+              afterSequence = false
+            } else {
+              var n = indent
+              while (n > 0) {
+                sb.append(' ')
+                n -= 1
+              }
             }
             serializeScalar(s)
             sb.append(':')
@@ -55,20 +61,26 @@ object PresenterImpl extends Presenter {
           case _: MappingEnd.type =>
             indent -= 2
             stack.pop()
+            afterSequence = false
             tail
           case _ =>
             // Complex key (e.g. Sequence or Mapping as a key)
-            var n = indent
-            while (n > 0) {
+            if (afterSequence) {
               sb.append(' ')
-              n -= 1
+              afterSequence = false
+            } else {
+              var n1 = indent
+              while (n1 > 0) {
+                sb.append(' ')
+                n1 -= 1
+              }
             }
             sb.append('?')
             val afterKey = serializeNode(events)
-            n = indent
-            while (n > 0) {
+            var n2       = indent
+            while (n2 > 0) {
               sb.append(' ')
-              n -= 1
+              n2 -= 1
             }
             sb.append(':')
             val afterValue = serializeNode(afterKey)
@@ -84,6 +96,7 @@ object PresenterImpl extends Presenter {
           case _: SequenceEnd.type =>
             indent -= 2
             stack.pop()
+            afterSequence = false
             tail
           case _ =>
             serializeSequence(serializeNode(events))
@@ -93,12 +106,18 @@ object PresenterImpl extends Presenter {
 
     def insertSequencePadding() = stack.headOption match {
       case Some(_: SequenceStart) =>
-        var n = indent
-        while (n > 0) {
+        if (afterSequence) {
           sb.append(' ')
-          n -= 1
+          afterSequence = false
+        } else {
+          var n = indent
+          while (n > 0) {
+            sb.append(' ')
+            n -= 1
+          }
         }
         sb.append('-')
+        afterSequence = true
       case _ => ()
     }
 
@@ -106,7 +125,7 @@ object PresenterImpl extends Presenter {
       if (toplevelNode) toplevelNode = false
       else {
         indent += 2
-        sb.append(newline)
+        if (!afterSequence) sb.append(newline)
       }
       stack.prepend(event)
     }
