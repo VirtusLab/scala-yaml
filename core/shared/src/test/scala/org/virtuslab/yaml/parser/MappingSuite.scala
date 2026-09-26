@@ -434,7 +434,7 @@ class MappingSuite extends BaseYamlSuite {
       DocumentStart(explicit = true),
       MappingStart(),
       Scalar("plain"),
-      Scalar("a b\\nc"),
+      Scalar("a b\nc"),
       MappingEnd,
       DocumentEnd(),
       StreamEnd
@@ -508,9 +508,9 @@ class MappingSuite extends BaseYamlSuite {
       DocumentStart(),
       MappingStart(),
       Scalar("key"),
-      Scalar("value\\n", style = ScalarStyle.Folded),
+      Scalar("value\n", style = ScalarStyle.Folded),
       Scalar("key2"),
-      Scalar("value2\\n", style = ScalarStyle.Folded),
+      Scalar("value2\n", style = ScalarStyle.Folded),
       MappingEnd,
       DocumentEnd(),
       StreamEnd

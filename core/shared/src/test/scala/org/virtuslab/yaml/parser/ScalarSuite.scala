@@ -4,7 +4,7 @@ package parser
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class ScalarSpec extends BaseYamlSuite {
+class ScalarSuite extends BaseYamlSuite {
 
   test("plain value") {
     val yaml =
@@ -14,7 +14,7 @@ class ScalarSpec extends BaseYamlSuite {
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("mnt\\\\#dd", ScalarStyle.Plain),
+      Scalar("mnt\\#dd", ScalarStyle.Plain),
       DocumentEnd(),
       StreamEnd
     )
@@ -62,7 +62,7 @@ class ScalarSpec extends BaseYamlSuite {
       StreamStart,
       DocumentStart(),
       SequenceStart(),
-      Scalar("block\\n", ScalarStyle.Folded),
+      Scalar("block\n", ScalarStyle.Folded),
       Scalar("plain again"),
       SequenceEnd,
       DocumentEnd(),
@@ -238,13 +238,13 @@ class ScalarSpec extends BaseYamlSuite {
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  test("dont escape in double quotes") {
+  test("escaping in double quotes") {
     val yaml = """ "double \n quote" """
 
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("""double \n quote""", ScalarStyle.DoubleQuoted),
+      Scalar("double \n quote", ScalarStyle.DoubleQuoted),
       DocumentEnd(),
       StreamEnd
     )
@@ -299,7 +299,7 @@ class ScalarSpec extends BaseYamlSuite {
       Scalar("command"),
       SequenceStart(),
       Scalar("bash"),
-      Scalar("set -e\\n\\ntest\\nyaml", ScalarStyle.Folded),
+      Scalar("set -e\n\ntest\nyaml", ScalarStyle.Folded),
       SequenceEnd,
       MappingEnd,
       DocumentEnd(),
@@ -319,7 +319,7 @@ class ScalarSpec extends BaseYamlSuite {
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("folded text\\n", ScalarStyle.Folded),
+      Scalar("folded text\n", ScalarStyle.Folded),
       DocumentEnd(),
       StreamEnd
     )
@@ -343,7 +343,7 @@ class ScalarSpec extends BaseYamlSuite {
       Scalar("certificate"),
       Scalar(
         // should preserve line breaks and not consume next mapping (kind: v1)
-        "-----BEGIN CERTIFICATE----- 0MTk0MVoXDenkKThvP7IS9q +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w= -----END CERTIFICATE----\\n\\n\\n",
+        "-----BEGIN CERTIFICATE----- 0MTk0MVoXDenkKThvP7IS9q +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w= -----END CERTIFICATE----\n\n\n",
         ScalarStyle.Folded
       ),
       Scalar("kind"),
@@ -367,7 +367,7 @@ class ScalarSpec extends BaseYamlSuite {
     val expectedEvents = List(
       StreamStart,
       DocumentStart(explicit = true),
-      Scalar("line1 line3\\n", ScalarStyle.Folded),
+      Scalar("line1 line3\n", ScalarStyle.Folded),
       DocumentEnd(),
       StreamEnd
     )
@@ -589,7 +589,7 @@ class ScalarSpec extends BaseYamlSuite {
       MappingStart(),
       Scalar("example"),
       Scalar(
-        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.\\n",
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\nand two blank lines:\n\nand some text with\n  extra indentation\non the next line, plus another line at the end.\n",
         ScalarStyle.Folded
       ),
       MappingEnd,
@@ -615,7 +615,7 @@ class ScalarSpec extends BaseYamlSuite {
       MappingStart(),
       Scalar("example"),
       Scalar(
-        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.",
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\nand two blank lines:\n\nand some text with\n  extra indentation\non the next line, plus another line at the end.",
         ScalarStyle.Folded
       ),
       MappingEnd,
@@ -643,7 +643,7 @@ class ScalarSpec extends BaseYamlSuite {
       MappingStart(),
       Scalar("example"),
       Scalar(
-        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.\\n\\n\\n",
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\nand two blank lines:\n\nand some text with\n  extra indentation\non the next line, plus another line at the end.\n\n\n",
         ScalarStyle.Folded
       ),
       MappingEnd,
