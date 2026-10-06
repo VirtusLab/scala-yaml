@@ -152,6 +152,9 @@ final class ParserImpl private (in: Tokenizer) extends Parser {
         directives.update(td.handle.value, td.prefix.value)
         in.popToken()
         productions.prepend(ParseDocumentStartOpt) // call self once again
+      case _: TokenKind.DocumentEnd.type => // document end marker without preceding document
+        in.popToken()
+        productions.prepend(ParseDocumentStartOpt) // call self once again
       case _: TokenKind.DocumentStart.type =>
         productions.prepend(ParseDocumentStartOpt).prepend(ParseDocumentStart)
       case _: TokenKind.MappingStart.type | _: TokenKind.Scalar | _: TokenKind.SequenceStart.type |

@@ -31,9 +31,10 @@ object Tokenizer {
 }
 
 private final class StringTokenizer(str: String) extends Tokenizer {
-
   private val ctx = TokenizerContext(str)
   private val in  = ctx.reader
+
+  private var documentStartLine = -1
 
   override def peekToken(): Either[YamlError, Token] = {
     val tokens = ctx.tokens
@@ -269,6 +270,7 @@ private final class StringTokenizer(str: String) extends Tokenizer {
                       done = true
                   }
                 }
+                checkNoDocumentMarkerInQuotedScalar()
                 readScalar()
               case 'u' =>
                 val h1 = hexValue(in.peek(2))
@@ -310,6 +312,7 @@ private final class StringTokenizer(str: String) extends Tokenizer {
                     continue = false
                 }
               }
+              checkNoDocumentMarkerInQuotedScalar()
               if (emptyLines == 0) sb.append(' ')
               else {
                 var i = 0
@@ -367,6 +370,7 @@ private final class StringTokenizer(str: String) extends Tokenizer {
                     continue = false
                 }
               }
+              checkNoDocumentMarkerInQuotedScalar()
               if (emptyLines == 0) sb.append(' ')
               else {
                 var i = 0
@@ -421,14 +425,14 @@ private final class StringTokenizer(str: String) extends Tokenizer {
                   in.skipCharacter()
                   skipUntilNextIndent(foldedIndent)
                 }
-                if (in.column != foldedIndent || in.peek() == '\u0000') {
+                if (in.column != foldedIndent || in.peek() == '\u0000' || isDocumentMarker) {
                   if (chompingIndicator eq BlockChompingIndicator.Keep) sb.append('\n')
                   sb.toString
                 } else readFolded(prevCharWasNewline = true)
               } else {
                 in.skipCharacter() // skip newline
                 skipUntilNextIndent(foldedIndent)
-                if (in.column != foldedIndent || in.peek() == '\u0000') {
+                if (in.column != foldedIndent || in.peek() == '\u0000' || isDocumentMarker) {
                   chompingIndicator match {
                     case _: Keep.type => // if keep, strip all trailing newlines and spaces but count them and append counted amount of newlines
                       var count = 1
@@ -477,7 +481,9 @@ private final class StringTokenizer(str: String) extends Tokenizer {
           }
         }
 
-        val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(readFolded())
+        val chompedScalar =
+          if (isDocumentMarker) ""
+          else chompingIndicator.removeBlankLinesAtEnd(readFolded())
         queue.append(new Token(Scalar(chompedScalar, ScalarStyle.Folded), range))
       case '|' =>
         val sb    = new java.lang.StringBuilder
@@ -501,14 +507,16 @@ private final class StringTokenizer(str: String) extends Tokenizer {
             sb.append(in.read())
             ctx.isPlainKeyAllowed = true
             skipUntilNextIndent(foldedIndent)
-            if (!in.isWhitespace && in.column != foldedIndent) sb.toString
+            if (!in.isWhitespace && in.column != foldedIndent || isDocumentMarker) sb.toString
             else readLiteral()
           } else {
             sb.append(in.read())
             readLiteral()
           }
 
-        val chompedScalar = chompingIndicator.removeBlankLinesAtEnd(readLiteral())
+        val chompedScalar =
+          if (isDocumentMarker) ""
+          else chompingIndicator.removeBlankLinesAtEnd(readLiteral())
         queue.append(new Token(Scalar(chompedScalar, ScalarStyle.Literal), range))
       case '*' =>
         val aliasToken = parseAnchorToken(true)
@@ -533,6 +541,12 @@ private final class StringTokenizer(str: String) extends Tokenizer {
             throw ScannerError.from("Not found expected key for value", mappingValueToken)
           )
           if (ctx.isInBlockCollection && ctx.indent < firstSimpleKey.start.column) {
+            if (firstSimpleKey.start.line == documentStartLine) {
+              throw ScannerError.from(
+                "Block mapping is not allowed on the document start line",
+                mappingValueToken
+              )
+            }
             ctx.addIndent(firstSimpleKey.start.column)
             queue.append(new Token(MappingStart, firstSimpleKey.range))
           }
@@ -546,7 +560,8 @@ private final class StringTokenizer(str: String) extends Tokenizer {
             .append(new Token(MappingKey, in.range))
             .appendAll(potentialKeys)
             .append(mappingValueToken)
-        } else if (c == '-' && isDocumentStart) {
+        } else if (c == '-' && in.column == 0 && isDocumentStart) {
+          documentStartLine = in.line
           in.skipN(if (in.peek(3) == '\u0000') 3 else 4)
           queue.appendAll(ctx.parseDocumentStart(in.column))
         } else if (c == '-' && in.isNextWhitespace) {
@@ -560,8 +575,16 @@ private final class StringTokenizer(str: String) extends Tokenizer {
           }
           in.skipCharacter() // skip '-'
           queue.appendAll(ctx.popPotentialKeys()).append(new Token(SequenceValue, in.range))
-        } else if (c == '.' && ctx.hasNoIndent && isDocumentEnd) {
-          in.skipN(if (in.peek(3) == '\u0000') 3 else 4)
+        } else if (c == '.' && in.column == 0 && isDocumentEnd) {
+          in.skipN(3)
+          var next = in.peek()
+          while (next == ' ' || next == '\t') {
+            in.skipCharacter()
+            next = in.peek()
+          }
+          if (next != '#' && next != '\u0000' && !in.isNewline) {
+            throw ScannerError.from(in.range, "Content is not allowed after document end marker")
+          }
           queue.appendAll(ctx.parseDocumentEnd())
         } else {
           val sb = new java.lang.StringBuilder
@@ -573,8 +596,8 @@ private final class StringTokenizer(str: String) extends Tokenizer {
               c == '\u0000' ||
               c == ':' && (in.isNextWhitespace || in.peek(1) == ',' && ctx.isInFlowCollection) ||
               c == ' ' && in.peek(1) == '#' ||
-              c == '.' && ctx.hasNoIndent && isDocumentEnd ||
-              c == '-' && ctx.hasNoIndent && isDocumentStart ||
+              c == '.' && in.column == 0 && isDocumentEnd ||
+              c == '-' && in.column == 0 && isDocumentStart ||
               !ctx.isAllowedSpecialCharacter(c)
             ) sb.toString
             else if (c == '\n' || c == '\r' && in.peek(1) == '\n') {
@@ -618,6 +641,19 @@ private final class StringTokenizer(str: String) extends Tokenizer {
     val c3 = in.peek(3)
     c1 == '.' && c2 == '.' && (Character.isWhitespace(c3) || c3 == '\u0000')
   }
+
+  /**
+   * Document markers are recognized only at the start of a line - https://yaml.org/spec/1.2.2/#912-document-markers
+   */
+  private def isDocumentMarker: Boolean = in.column == 0 && {
+    val c = in.peek()
+    c == '-' && isDocumentStart || c == '.' && isDocumentEnd
+  }
+
+  private def checkNoDocumentMarkerInQuotedScalar(): Unit =
+    if (isDocumentMarker) {
+      throw ScannerError.from(in.range, "Document marker is not allowed inside a quoted scalar")
+    }
 
   private def parseAnchorToken(isAlias: Boolean): Token = {
     val sb = new java.lang.StringBuilder
