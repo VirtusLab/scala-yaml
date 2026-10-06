@@ -33,8 +33,21 @@ private[reader] case class TokenizerContext(reader: Reader) {
     */
   val potentialKeys                     = mutable.ArrayDeque.empty[Token]
   def addPotentialKey(key: Token): Unit = potentialKeys.addOne(key)
-  def popPotentialKeys(): List[Token]   = potentialKeys.removeAll().toList
-  def potentialKeyOpt: Option[Token]    = potentialKeys.headOption
+  def popPotentialKeys(): List[Token] =
+    if (potentialKeys.isEmpty) Nil
+    else potentialKeys.removeAll().toList
+  def potentialKeyOpt: Option[Token] = potentialKeys.headOption
+
+  /**
+    * Moves potential keys to the given queue without intermediate collections.
+    */
+  def popPotentialKeysTo(queue: mutable.ArrayDeque[Token]): mutable.ArrayDeque[Token] = {
+    if (potentialKeys.nonEmpty) {
+      queue.addAll(potentialKeys)
+      potentialKeys.clear()
+    }
+    queue
+  }
 
   def needMoreTokens(): Boolean =
     tokens.isEmpty || potentialKeys.nonEmpty

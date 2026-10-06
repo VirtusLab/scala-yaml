@@ -71,6 +71,14 @@ private[yaml] class StringReader(in: String) extends Reader {
     }
   }
 
+  /**
+    * Skips n characters which are known to not contain line breaks.
+    */
+  def skipInLine(n: Int): Unit = {
+    offset += n
+    column += n
+  }
+
   override def skipN(n: Int): Unit = {
     val limit = offset + n
     while (offset < limit) skipCharacter()

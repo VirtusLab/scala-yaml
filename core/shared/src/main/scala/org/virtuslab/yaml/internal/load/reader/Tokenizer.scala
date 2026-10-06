@@ -31,8 +31,8 @@ object Tokenizer {
 }
 
 private final class StringTokenizer(str: String) extends Tokenizer {
-  private val ctx = TokenizerContext(str)
-  private val in  = ctx.reader
+  private val in  = new StringReader(str)
+  private val ctx = new TokenizerContext(in)
 
   private var documentStartLine = -1
 
@@ -58,33 +58,36 @@ private final class StringTokenizer(str: String) extends Tokenizer {
   /**
   * Plain keys have to be resolved in the same line they were created, otherwise they are ordinary tokens.
   */
-  private def shouldPopPlainKeys: Boolean =
-    ctx.isInBlockCollection && ctx.potentialKeyOpt
-      .exists(_.range.start.line != in.line)
+  private def shouldPopPlainKeys: Boolean = {
+    val potentialKeys = ctx.potentialKeys
+    ctx.isInBlockCollection && potentialKeys.nonEmpty &&
+    potentialKeys.head.range.start.line != in.line
+  }
 
   private def appendNextTokens(queue: mutable.ArrayDeque[Token]): Unit = {
     skipUntilNextToken()
     val closedBlockTokens = ctx.checkIndents(in.column)
-    if (closedBlockTokens.nonEmpty || shouldPopPlainKeys) queue.appendAll(ctx.popPotentialKeys())
-    queue.appendAll(closedBlockTokens)
+    if (closedBlockTokens ne Nil) {
+      ctx.popPotentialKeysTo(queue).appendAll(closedBlockTokens)
+    } else if (shouldPopPlainKeys) ctx.popPotentialKeysTo(queue)
     (in.peek(): @switch) match {
       case '[' =>
         in.skipCharacter()
         ctx.enterFlowSequence
-        queue.appendAll(ctx.popPotentialKeys()).append(new Token(FlowSequenceStart, in.range))
+        ctx.popPotentialKeysTo(queue).append(new Token(FlowSequenceStart, in.range))
       case ']' =>
         in.skipCharacter()
         ctx.leaveFlowSequence
-        queue.appendAll(ctx.popPotentialKeys()).append(new Token(FlowSequenceEnd, in.range))
+        ctx.popPotentialKeysTo(queue).append(new Token(FlowSequenceEnd, in.range))
       case '{' =>
         in.skipCharacter()
         ctx.enterFlowMapping
         ctx.isPlainKeyAllowed = true
-        queue.appendAll(ctx.popPotentialKeys()).append(new Token(FlowMappingStart, in.range))
+        ctx.popPotentialKeysTo(queue).append(new Token(FlowMappingStart, in.range))
       case '}' =>
         in.skipCharacter()
         ctx.leaveFlowMapping
-        queue.appendAll(ctx.popPotentialKeys()).append(new Token(FlowMappingEnd, in.range))
+        ctx.popPotentialKeysTo(queue).append(new Token(FlowMappingEnd, in.range))
       case '&' =>
         val anchorToken = parseAnchorToken(false)
         if (ctx.isPlainKeyAllowed) ctx.addPotentialKey(anchorToken)
@@ -525,10 +528,10 @@ private final class StringTokenizer(str: String) extends Tokenizer {
       case ',' =>
         in.skipCharacter()
         ctx.isPlainKeyAllowed = true
-        queue.appendAll(ctx.popPotentialKeys()).append(new Token(Comma, in.range))
+        ctx.popPotentialKeysTo(queue).append(new Token(Comma, in.range))
       case '\u0000' =>
-        queue
-          .appendAll(ctx.popPotentialKeys())
+        ctx
+          .popPotentialKeysTo(queue)
           .appendAll(ctx.checkIndents(-1))
           .append(new Token(StreamEnd, in.range))
       case c =>
@@ -537,28 +540,32 @@ private final class StringTokenizer(str: String) extends Tokenizer {
         ) {
           in.skipCharacter() // skip
           val mappingValueToken = new Token(MappingValue, in.range)
-          lazy val firstSimpleKey = ctx.potentialKeys.headOption.getOrElse(
-            throw ScannerError.from("Not found expected key for value", mappingValueToken)
-          )
-          if (ctx.isInBlockCollection && ctx.indent < firstSimpleKey.start.column) {
-            if (firstSimpleKey.start.line == documentStartLine) {
-              throw ScannerError.from(
-                "Block mapping is not allowed on the document start line",
-                mappingValueToken
-              )
+          if (ctx.isInBlockCollection) {
+            val potentialKeys = ctx.potentialKeys
+            if (potentialKeys.isEmpty) {
+              throw ScannerError.from("Not found expected key for value", mappingValueToken)
             }
-            ctx.addIndent(firstSimpleKey.start.column)
-            queue.append(new Token(MappingStart, firstSimpleKey.range))
+            val firstSimpleKey = potentialKeys.head
+            val start          = firstSimpleKey.start
+            if (ctx.indent < start.column) {
+              if (start.line == documentStartLine) {
+                throw ScannerError.from(
+                  "Block mapping is not allowed on the document start line",
+                  mappingValueToken
+                )
+              }
+              ctx.addIndent(start.column)
+              queue.append(new Token(MappingStart, firstSimpleKey.range))
+            }
+            firstSimpleKey.end match {
+              case Some(end) if end.line > start.line =>
+                throw ScannerError.from("Mapping value is not allowed", mappingValueToken)
+              case _ =>
+            }
           }
-          val potentialKeys = ctx.popPotentialKeys()
           ctx.isPlainKeyAllowed = false
-          if (
-            ctx.isInBlockCollection &&
-            firstSimpleKey.range.end.exists(_.line > firstSimpleKey.range.start.line)
-          ) throw ScannerError.from("Mapping value is not allowed", mappingValueToken)
-          queue
-            .append(new Token(MappingKey, in.range))
-            .appendAll(potentialKeys)
+          ctx
+            .popPotentialKeysTo(queue.append(new Token(MappingKey, in.range)))
             .append(mappingValueToken)
         } else if (c == '-' && in.column == 0 && isDocumentStart) {
           documentStartLine = in.line
@@ -574,7 +581,7 @@ private final class StringTokenizer(str: String) extends Tokenizer {
             throw ScannerError.from(in.range, "cannot start sequence")
           }
           in.skipCharacter() // skip '-'
-          queue.appendAll(ctx.popPotentialKeys()).append(new Token(SequenceValue, in.range))
+          ctx.popPotentialKeysTo(queue).append(new Token(SequenceValue, in.range))
         } else if (c == '.' && in.column == 0 && isDocumentEnd) {
           in.skipN(3)
           var next = in.peek()
@@ -587,35 +594,64 @@ private final class StringTokenizer(str: String) extends Tokenizer {
           }
           queue.appendAll(ctx.parseDocumentEnd())
         } else {
-          val sb = new java.lang.StringBuilder
+          val isInFlowCollection = ctx.isInFlowCollection
 
+          // Skips characters of a plain scalar till the end of the current line or the scalar
           @tailrec
-          def readScalar(): String = {
+          def skipLine(): Unit = {
             val c = in.peek()
             if (
-              c == '\u0000' ||
-              c == ':' && (in.isNextWhitespace || in.peek(1) == ',' && ctx.isInFlowCollection) ||
-              c == ' ' && in.peek(1) == '#' ||
-              c == '.' && in.column == 0 && isDocumentEnd ||
-              c == '-' && in.column == 0 && isDocumentStart ||
-              !ctx.isAllowedSpecialCharacter(c)
-            ) sb.toString
-            else if (c == '\n' || c == '\r' && in.peek(1) == '\n') {
-              ctx.isPlainKeyAllowed = true
-              if (in.isNextNewline) {
-                while (in.isNextNewline) {
-                  in.skipCharacter()
-                  sb.append('\n')
-                }
-              } else sb.append(' ')
-              skipUntilNextToken()
-              if (in.column > ctx.indent) readScalar()
-              else sb.toString
-            } else {
+              !(c == '\u0000' ||
+                c == ':' && (in.isNextWhitespace || in.peek(1) == ',' && isInFlowCollection) ||
+                c == ' ' && in.peek(1) == '#' ||
+                c == '.' && in.column == 0 && isDocumentEnd ||
+                c == '-' && in.column == 0 && isDocumentStart ||
+                !ctx.isAllowedSpecialCharacter(c) ||
+                c == '\n' || c == '\r' && in.peek(1) == '\n')
+            ) {
               in.skipCharacter()
-              sb.append(c)
-              readScalar()
+              // fast path: skip characters that cannot end the scalar or the line
+              val from  = in.offset
+              val limit = str.length
+              var i     = from
+              while (
+                i < limit && {
+                  val ch = str.charAt(i)
+                  if (ch == ' ') i + 1 == limit || str.charAt(i + 1) != '#'
+                  else
+                    (ch > ' ' || ch == '\t') && ch != ':' &&
+                    !(isInFlowCollection && (ch == ',' || ch == ']' || ch == '}'))
+                }
+              ) i += 1
+              in.skipInLine(i - from)
+              skipLine()
             }
+          }
+
+          @tailrec
+          def readLines(sb: java.lang.StringBuilder): String = {
+            ctx.isPlainKeyAllowed = true
+            if (in.isNextNewline) {
+              while (in.isNextNewline) {
+                in.skipCharacter()
+                sb.append('\n')
+              }
+            } else sb.append(' ')
+            skipUntilNextToken()
+            if (in.column > ctx.indent) {
+              val from = in.offset
+              skipLine()
+              sb.append(str, from, in.offset)
+              if (in.isNewline) readLines(sb)
+              else sb.toString
+            } else sb.toString
+          }
+
+          def readScalar(): String = {
+            val from = in.offset
+            skipLine()
+            if (in.isNewline) readLines(new java.lang.StringBuilder().append(str, from, in.offset))
+            else str.substring(from, in.offset)
           }
 
           val isPlainKeyAllowed = ctx.isPlainKeyAllowed
