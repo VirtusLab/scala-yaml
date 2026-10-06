@@ -1,6 +1,5 @@
 import org.virtuslab.yaml.*
 import org.virtuslab.yaml.Node.*
-import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
 class YamlEncoderSpec extends munit.FunSuite {
   test("sequence of mappings") {
@@ -8,11 +7,9 @@ class YamlEncoderSpec extends munit.FunSuite {
 
     val data = Seq(Data(1, 1.997), Data(2, 2.997))
     val expected =
-      s"""-
-         |  int: 1
+      s"""- int: 1
          |  double: 1.997
-         |-
-         |  int: 2
+         |- int: 2
          |  double: 2.997
          |""".stripMargin
     assertEquals(data.asYaml, expected)
@@ -139,10 +136,8 @@ class YamlEncoderSpec extends munit.FunSuite {
     val data = Data(Seq(Map("k1" -> "v1"), Map("k2" -> "v2")))
     val expected =
       s"""seq:
-         |  -
-         |    k1: v1
-         |  -
-         |    k2: v2
+         |  - k1: v1
+         |  - k2: v2
          |""".stripMargin
     assertEquals(data.asYaml, expected)
   }

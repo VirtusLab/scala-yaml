@@ -18,7 +18,10 @@ case object TestMlEntry {
       .findAllIn(testMl)
       .matchData
       .map { m =>
-        m.group(2)
+        val yaml = m.group(2)
+        // the '<' modifier means that the block content is indented by 4 spaces which should be stripped
+        if (m.group(1).contains('<')) yaml.split("\n", -1).map(_.stripPrefix("    ")).mkString("\n")
+        else yaml
       }
       .toList
       .head

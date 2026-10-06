@@ -21,7 +21,7 @@ object Event {
   val streamStart = Event(StreamStart, None)
   val streamEnd   = Event(StreamEnd, None)
 
-  def apply(kind: EventKind, pos: Range): Event = Event(kind, new Some(pos))
+  def apply(kind: EventKind, pos: Range): Event = new Event(kind, new Some(pos))
 }
 
 sealed abstract class EventKind
@@ -55,16 +55,16 @@ final case class NodeEventMetadata(
     anchor: Option[Anchor] = None,
     tag: Option[Tag] = None
 ) {
-  def withAnchor(anchor: Anchor) = this.copy(anchor = Some(anchor))
-  def withTag(tag: Tag)          = this.copy(tag = Some(tag))
+  def withAnchor(anchor: Anchor) = this.copy(anchor = new Some(anchor))
+  def withTag(tag: Tag)          = this.copy(tag = new Some(tag))
 }
 
 object NodeEventMetadata {
-  final val empty                              = NodeEventMetadata()
-  def apply(anchor: Anchor): NodeEventMetadata = NodeEventMetadata(anchor = Some(anchor))
+  final val empty                              = new NodeEventMetadata()
+  def apply(anchor: Anchor): NodeEventMetadata = new NodeEventMetadata(anchor = new Some(anchor))
   def apply(anchor: Anchor, tag: Tag): NodeEventMetadata =
-    NodeEventMetadata(anchor = Some(anchor), tag = Some(tag))
-  def apply(tag: Tag): NodeEventMetadata = NodeEventMetadata(tag = Some(tag))
+    new NodeEventMetadata(anchor = Some(anchor), tag = Some(tag))
+  def apply(tag: Tag): NodeEventMetadata = new NodeEventMetadata(tag = new Some(tag))
 }
 
 class Anchor(val anchor: String) extends AnyVal
