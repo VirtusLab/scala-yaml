@@ -406,7 +406,7 @@ private final class StringTokenizer(str: String) extends Tokenizer {
         parseBlockHeader()
         if (indentation eq None) skipUntilNextToken()
         val foldedIndent = indentation match {
-          case Some(fi) => fi
+          case Some(fi) => blockScalarIndent(fi)
           case _        => in.column
         }
         skipUntilNextIndent(foldedIndent)
@@ -498,7 +498,7 @@ private final class StringTokenizer(str: String) extends Tokenizer {
         parseBlockHeader()
         if (indentation eq None) in.skipWhitespaces()
         val foldedIndent = indentation match {
-          case Some(fi) => fi
+          case Some(fi) => blockScalarIndent(fi)
           case _        => in.column
         }
         skipUntilNextIndent(foldedIndent)
@@ -742,6 +742,13 @@ private final class StringTokenizer(str: String) extends Tokenizer {
         BlockChompingIndicator.Keep
       case _ => BlockChompingIndicator.Clip
     }
+
+  /**
+   * The indentation indicator is relative to the indentation of the parent node,
+   * which is 0 for a block scalar at the top level of a document.
+   */
+  private def blockScalarIndent(indentationIndicator: Int): Int =
+    Math.max(ctx.indent, 0) + indentationIndicator
 
   private def parseIndentationIndicator(): Option[Int] = {
     val c = in.peek()

@@ -125,6 +125,95 @@ class ScalarSuite extends BaseYamlSuite {
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
+  test("literal value with indentation indicator in a nested mapping") {
+    // The indentation indicator is relative to the indentation of the parent node
+    val yaml =
+      s"""|a:
+          |  x:
+          |    description: |2
+          |        two leading spaces
+          |    range: R
+          |  y:
+          |    range: Q
+          |b: 1
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("a"),
+      MappingStart(),
+      Scalar("x"),
+      MappingStart(),
+      Scalar("description"),
+      Scalar("  two leading spaces\n", ScalarStyle.Literal),
+      Scalar("range"),
+      Scalar("R"),
+      MappingEnd,
+      Scalar("y"),
+      MappingStart(),
+      Scalar("range"),
+      Scalar("Q"),
+      MappingEnd,
+      MappingEnd,
+      Scalar("b"),
+      Scalar("1"),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("folded value with indentation indicator in a nested mapping") {
+    val yaml =
+      s"""|a:
+          |  x: >2
+          |      two leading spaces
+          |  y: Q
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("a"),
+      MappingStart(),
+      Scalar("x"),
+      Scalar("  two leading spaces\n", ScalarStyle.Folded),
+      Scalar("y"),
+      Scalar("Q"),
+      MappingEnd,
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("literal value with indentation indicator in a top-level mapping") {
+    val yaml =
+      s"""|a: |1
+          |  one leading space
+          |b: 1
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("a"),
+      Scalar(" one leading space\n", ScalarStyle.Literal),
+      Scalar("b"),
+      Scalar("1"),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
   test("unescaped colon") {
     val yaml =
       s"""|targetPortal: 10.0.2.15:3260:1221:1221
