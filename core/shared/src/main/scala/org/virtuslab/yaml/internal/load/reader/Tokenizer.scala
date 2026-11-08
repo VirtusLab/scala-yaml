@@ -74,6 +74,7 @@ private final class StringTokenizer(str: String) extends Tokenizer {
       case '[' =>
         in.skipCharacter()
         ctx.enterFlowSequence
+        ctx.isPlainKeyAllowed = true
         ctx.popPotentialKeysTo(queue).append(new Token(FlowSequenceStart, in.range))
       case ']' =>
         in.skipCharacter()

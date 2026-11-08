@@ -243,6 +243,31 @@ class SequenceSuite extends BaseYamlSuite {
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
+  test("flow sequence starting with a pair in a mapping value") {
+    val yaml = "key: [ first: pair, second: pair ]"
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("key"),
+      SequenceStart(),
+      MappingStart(),
+      Scalar("first"),
+      Scalar("pair"),
+      MappingEnd,
+      MappingStart(),
+      Scalar("second"),
+      Scalar("pair"),
+      MappingEnd,
+      SequenceEnd,
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
   test("spec flow sequence") {
     val yaml = s"""[
                   |"double
