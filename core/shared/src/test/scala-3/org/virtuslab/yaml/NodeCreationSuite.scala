@@ -53,10 +53,8 @@ class NodeCreationSuite extends munit.FunSuite {
     )
     assertEquals(
       node.asYaml,
-      """|-
-         |  key: value
-         |-
-         |  key2: value2
+      """|- key: value
+         |- key2: value2
          |  seq:
          |    - v1
          |    - v2
