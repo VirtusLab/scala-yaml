@@ -27,6 +27,13 @@ object PresenterImpl extends Presenter {
             serializeScalar(s)
             sb.append(newline)
             tail
+          // Empty collections have no block form, so write them in flow style
+          case _: MappingStart if tail.headOption.contains(MappingEnd) =>
+            serializeEmptyCollection("{}")
+            tail.tail
+          case _: SequenceStart if tail.headOption.contains(SequenceEnd) =>
+            serializeEmptyCollection("[]")
+            tail.tail
           case _: MappingStart =>
             insertSequencePadding()
             pushAndIncreaseIndent(new MappingStart())
@@ -119,6 +126,14 @@ object PresenterImpl extends Presenter {
         sb.append('-')
         afterSequence = true
       case _ => ()
+    }
+
+    def serializeEmptyCollection(flow: String): Unit = {
+      insertSequencePadding()
+      if (sb.length() > 0) sb.append(' ')
+      afterSequence = false
+      sb.append(flow)
+      sb.append(newline)
     }
 
     def pushAndIncreaseIndent(event: EventKind) = {
