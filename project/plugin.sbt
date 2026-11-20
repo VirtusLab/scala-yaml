@@ -14,4 +14,4 @@ addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.12")
 
 addSbtPlugin("org.typelevel" % "sbt-typelevel-no-publish" % "0.8.7")
 
-addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.4.8")
+addSbtPlugin("com.github.sbt" % "sbt-jmh" % "0.4.9")
