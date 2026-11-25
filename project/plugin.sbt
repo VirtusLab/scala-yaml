@@ -10,7 +10,7 @@ addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.4.0")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "1.22.0")
 
-addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.12")
+addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.5.13")
 
 addSbtPlugin("org.typelevel" % "sbt-typelevel-no-publish" % "0.8.7")
 
