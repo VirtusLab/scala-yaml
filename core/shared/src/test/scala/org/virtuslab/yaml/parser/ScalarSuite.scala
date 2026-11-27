@@ -4,7 +4,7 @@ package parser
 import org.virtuslab.yaml.internal.load.parse.EventKind._
 import org.virtuslab.yaml.internal.load.reader.token.ScalarStyle
 
-class ScalarSpec extends BaseYamlSuite {
+class ScalarSuite extends BaseYamlSuite {
 
   test("plain value") {
     val yaml =
@@ -14,7 +14,7 @@ class ScalarSpec extends BaseYamlSuite {
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("mnt\\\\#dd", ScalarStyle.Plain),
+      Scalar("mnt\\#dd", ScalarStyle.Plain),
       DocumentEnd(),
       StreamEnd
     )
@@ -62,7 +62,7 @@ class ScalarSpec extends BaseYamlSuite {
       StreamStart,
       DocumentStart(),
       SequenceStart(),
-      Scalar("block\\n", ScalarStyle.Folded),
+      Scalar("block\n", ScalarStyle.Folded),
       Scalar("plain again"),
       SequenceEnd,
       DocumentEnd(),
@@ -119,6 +119,95 @@ class ScalarSpec extends BaseYamlSuite {
       SequenceStart(),
       Scalar(" folded", ScalarStyle.Folded),
       SequenceEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("literal value with indentation indicator in a nested mapping") {
+    // The indentation indicator is relative to the indentation of the parent node
+    val yaml =
+      s"""|a:
+          |  x:
+          |    description: |2
+          |        two leading spaces
+          |    range: R
+          |  y:
+          |    range: Q
+          |b: 1
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("a"),
+      MappingStart(),
+      Scalar("x"),
+      MappingStart(),
+      Scalar("description"),
+      Scalar("  two leading spaces\n", ScalarStyle.Literal),
+      Scalar("range"),
+      Scalar("R"),
+      MappingEnd,
+      Scalar("y"),
+      MappingStart(),
+      Scalar("range"),
+      Scalar("Q"),
+      MappingEnd,
+      MappingEnd,
+      Scalar("b"),
+      Scalar("1"),
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("folded value with indentation indicator in a nested mapping") {
+    val yaml =
+      s"""|a:
+          |  x: >2
+          |      two leading spaces
+          |  y: Q
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("a"),
+      MappingStart(),
+      Scalar("x"),
+      Scalar("  two leading spaces\n", ScalarStyle.Folded),
+      Scalar("y"),
+      Scalar("Q"),
+      MappingEnd,
+      MappingEnd,
+      DocumentEnd(),
+      StreamEnd
+    )
+    assertEquals(yaml.events, Right(expectedEvents))
+  }
+
+  test("literal value with indentation indicator in a top-level mapping") {
+    val yaml =
+      s"""|a: |1
+          |  one leading space
+          |b: 1
+          |""".stripMargin
+
+    val expectedEvents = List(
+      StreamStart,
+      DocumentStart(),
+      MappingStart(),
+      Scalar("a"),
+      Scalar(" one leading space\n", ScalarStyle.Literal),
+      Scalar("b"),
+      Scalar("1"),
+      MappingEnd,
       DocumentEnd(),
       StreamEnd
     )
@@ -238,13 +327,13 @@ class ScalarSpec extends BaseYamlSuite {
     assertEquals(yaml.events, Right(expectedEvents))
   }
 
-  test("dont escape in double quotes") {
+  test("escaping in double quotes") {
     val yaml = """ "double \n quote" """
 
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("""double \n quote""", ScalarStyle.DoubleQuoted),
+      Scalar("double \n quote", ScalarStyle.DoubleQuoted),
       DocumentEnd(),
       StreamEnd
     )
@@ -299,7 +388,7 @@ class ScalarSpec extends BaseYamlSuite {
       Scalar("command"),
       SequenceStart(),
       Scalar("bash"),
-      Scalar("set -e\\n\\ntest\\nyaml", ScalarStyle.Folded),
+      Scalar("set -e\n\ntest\nyaml", ScalarStyle.Folded),
       SequenceEnd,
       MappingEnd,
       DocumentEnd(),
@@ -319,7 +408,7 @@ class ScalarSpec extends BaseYamlSuite {
     val expectedEvents = List(
       StreamStart,
       DocumentStart(),
-      Scalar("folded text\\n", ScalarStyle.Folded),
+      Scalar("folded text\n", ScalarStyle.Folded),
       DocumentEnd(),
       StreamEnd
     )
@@ -343,7 +432,7 @@ class ScalarSpec extends BaseYamlSuite {
       Scalar("certificate"),
       Scalar(
         // should preserve line breaks and not consume next mapping (kind: v1)
-        "-----BEGIN CERTIFICATE----- 0MTk0MVoXDenkKThvP7IS9q +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w= -----END CERTIFICATE----\\n\\n\\n",
+        "-----BEGIN CERTIFICATE----- 0MTk0MVoXDenkKThvP7IS9q +Dzv5hG392KWh5f8xJNs4LbZyl901MeReiLrPH3w= -----END CERTIFICATE----\n\n\n",
         ScalarStyle.Folded
       ),
       Scalar("kind"),
@@ -367,7 +456,7 @@ class ScalarSpec extends BaseYamlSuite {
     val expectedEvents = List(
       StreamStart,
       DocumentStart(explicit = true),
-      Scalar("line1 line3\\n", ScalarStyle.Folded),
+      Scalar("line1 line3\n", ScalarStyle.Folded),
       DocumentEnd(),
       StreamEnd
     )
@@ -589,7 +678,7 @@ class ScalarSpec extends BaseYamlSuite {
       MappingStart(),
       Scalar("example"),
       Scalar(
-        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.\\n",
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\nand two blank lines:\n\nand some text with\n  extra indentation\non the next line, plus another line at the end.\n",
         ScalarStyle.Folded
       ),
       MappingEnd,
@@ -615,7 +704,7 @@ class ScalarSpec extends BaseYamlSuite {
       MappingStart(),
       Scalar("example"),
       Scalar(
-        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.",
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\nand two blank lines:\n\nand some text with\n  extra indentation\non the next line, plus another line at the end.",
         ScalarStyle.Folded
       ),
       MappingEnd,
@@ -643,7 +732,7 @@ class ScalarSpec extends BaseYamlSuite {
       MappingStart(),
       Scalar("example"),
       Scalar(
-        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\\nand two blank lines:\\n\\nand some text with\\n  extra indentation\\non the next line, plus another line at the end.\\n\\n\\n",
+        "Several lines of text, with some \"quotes\" of various 'types', and also a blank line:\nand two blank lines:\n\nand some text with\n  extra indentation\non the next line, plus another line at the end.\n\n\n",
         ScalarStyle.Folded
       ),
       MappingEnd,

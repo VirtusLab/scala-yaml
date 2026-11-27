@@ -108,7 +108,7 @@ class NodeVisitorSuite extends munit.FunSuite {
          |    volumes:
          |      - .:/code
          |      - logvolume01:/var/log
-         |    ports:
+         |    ports: []
          |""".stripMargin
     assertEquals(modifiedYaml, exptectedYaml)
   }

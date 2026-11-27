@@ -17,15 +17,44 @@ class BaseYamlEncoderSuite extends munit.FunSuite {
       Seq(3, 4)
     )
     val expected =
-      s"""-
-         |  - 1
+      s"""- - 1
          |  - 2
-         |-
-         |  - 3
+         |- - 3
          |  - 4
          |""".stripMargin
     assertEquals(data.asYaml, expected)
   }
+
+  test("empty sequence and mapping at the top level") {
+    assertEquals(Seq.empty[Int].asYaml, s"[]$newline")
+    assertEquals(Map.empty[String, Int].asYaml, s"{}$newline")
+    assertEquals("[]".as[Seq[Int]], Right(Seq.empty[Int]))
+    assertEquals("{}".as[Map[String, Int]], Right(Map.empty[String, Int]))
+  }
+
+  test("empty sequences and mappings in nested nodes") {
+    val node: Node = Node.MappingNode(
+      Node.ScalarNode("items") -> Node.SequenceNode(),
+      Node.ScalarNode("tags")  -> Node.MappingNode(),
+      Node.ScalarNode("list") -> Node.SequenceNode(
+        Node.SequenceNode(),
+        Node.MappingNode(),
+        Node.SequenceNode(Node.ScalarNode("a"))
+      )
+    )
+    val expected =
+      s"""items: []
+         |tags: {}
+         |list:
+         |  - []
+         |  - {}
+         |  - - a
+         |""".stripMargin
+    val yaml = node.asYaml
+    assertEquals(yaml, expected)
+    assertEquals(parseYaml(yaml).map(_.asYaml), Right(expected))
+  }
+
   test("strings requiring double quoting - special prefix/suffix & edge cases") {
     val data = Seq(
       "",   // length 0
